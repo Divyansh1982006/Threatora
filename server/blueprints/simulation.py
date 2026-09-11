@@ -10,6 +10,7 @@ from flask import Blueprint, request, jsonify, current_app
 from src.config import SAMPLES_DIR, SEQUENCE_LENGTH
 from src.features.windows import build_host_windows_from_flows
 from src.simulation import WhatIfSimulationEngine
+from server.blueprints.auth import login_required, permission_required
 
 simulation_bp = Blueprint("simulation", __name__)
 
@@ -31,6 +32,8 @@ def get_supported_actions():
 
 
 @simulation_bp.route("/api/v1/simulate", methods=["POST"])
+@login_required
+@permission_required("can_simulate")
 def simulate_action():
     """Executes a What-If counterfactual simulation on a host or telemetry window."""
     sim_engine: WhatIfSimulationEngine = current_app.extensions["simulation_engine"]

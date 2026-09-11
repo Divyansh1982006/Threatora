@@ -5,6 +5,7 @@ from __future__ import annotations
 from flask import Blueprint, request, jsonify, current_app
 from src.db.session import get_db_context
 from src.db.models import Asset, Incident, MitigationPlaybook
+from server.blueprints.auth import login_required, permission_required
 
 mitigation_bp = Blueprint("mitigation", __name__)
 
@@ -27,6 +28,8 @@ def get_playbooks():
 
 
 @mitigation_bp.route("/api/v1/mitigate", methods=["POST"])
+@login_required
+@permission_required("can_mitigate")
 def execute_mitigate():
     """Dispatches 1-click mitigation containment action against a target or playbook."""
     mitigation_engine = current_app.extensions["mitigation_engine"]

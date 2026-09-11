@@ -33,6 +33,172 @@ auth_bp = Blueprint("auth", __name__)
 # System API Key for headless scripts, tests, and CLI automated tasks
 SYSTEM_API_KEY = os.environ.get("THREATORA_API_KEY", "threatora-zero-trust")
 
+ROLE_PERMISSIONS = {
+    "CHIEF_CISO_ADMIN": {
+        "level": 5,
+        "title": "Chief CISO / SecOps Director",
+        "clearance": "TOP SECRET // LEVEL 5",
+        "badge_color": "#dc2626",
+        "badge_bg": "#fee2e2",
+        "badge_border": "#fecaca",
+        "can_mitigate": True,
+        "can_simulate": True,
+        "can_upload": True,
+        "can_manage_users": True,
+        "description": "Unrestricted administrative clearance. Full containment, playbooks, simulation, and operator management privileges."
+    },
+    "SOC_LEAD_ANALYST": {
+        "level": 4,
+        "title": "SOC Lead Analyst",
+        "clearance": "SECRET // LEVEL 4",
+        "badge_color": "#7c3aed",
+        "badge_bg": "#f3e8ff",
+        "badge_border": "#e9d5ff",
+        "can_mitigate": True,
+        "can_simulate": True,
+        "can_upload": True,
+        "can_manage_users": False,
+        "description": "Tactical threat hunting clearance. Authorized to dispatch active host quarantine and counterfactual models."
+    },
+    "SOC_ANALYST": {
+        "level": 3,
+        "title": "SOC Tier-2 Analyst",
+        "clearance": "CONFIDENTIAL // LEVEL 3",
+        "badge_color": "#2563eb",
+        "badge_bg": "#eff6ff",
+        "badge_border": "#bfdbfe",
+        "can_mitigate": True,
+        "can_simulate": True,
+        "can_upload": True,
+        "can_manage_users": False,
+        "description": "Operational threat analysis. Authorized for telemetry ingestion, playbook dispatch, and simulations."
+    },
+    "INCIDENT_RESPONDER": {
+        "level": 4,
+        "title": "Incident Responder",
+        "clearance": "SECRET // LEVEL 4",
+        "badge_color": "#e0523d",
+        "badge_bg": "#fef2f0",
+        "badge_border": "#fbdad4",
+        "can_mitigate": True,
+        "can_simulate": True,
+        "can_upload": True,
+        "can_manage_users": False,
+        "description": "Rapid containment specialist. Primary focus on playbook execution, iptables, and micro-segmentation."
+    },
+    "SECURITY_ENGINEER": {
+        "level": 4,
+        "title": "Security Engineer",
+        "clearance": "SECRET // LEVEL 4",
+        "badge_color": "#0284c7",
+        "badge_bg": "#e0f2fe",
+        "badge_border": "#bae6fd",
+        "can_mitigate": True,
+        "can_simulate": True,
+        "can_upload": True,
+        "can_manage_users": False,
+        "description": "Simulation and modeling specialist. Authorized to run counterfactual engines and ingest telemetry."
+    },
+    "SECURITY_AUDITOR": {
+        "level": 2,
+        "title": "Security & Compliance Auditor",
+        "clearance": "INTERNAL AUDIT // LEVEL 2",
+        "badge_color": "#b45309",
+        "badge_bg": "#fef3c7",
+        "badge_border": "#fde68a",
+        "can_mitigate": False,
+        "can_simulate": True,
+        "can_upload": False,
+        "can_manage_users": False,
+        "description": "Read-only compliance clearance. Inspection of live radar and simulations permitted; destructive containment prohibited."
+    },
+    "GUEST_OBSERVER": {
+        "level": 1,
+        "title": "Guest Observer",
+        "clearance": "UNCLASSIFIED // LEVEL 1",
+        "badge_color": "#64748b",
+        "badge_bg": "#f1f5f9",
+        "badge_border": "#e2e8f0",
+        "can_mitigate": False,
+        "can_simulate": False,
+        "can_upload": False,
+        "can_manage_users": False,
+        "description": "Demonstration observer clearance. Restricted to viewing baseline dashboard and public telemetry."
+    },
+}
+
+ROLE_ALIASES = {
+    "ADMIN": "CHIEF_CISO_ADMIN",
+    "CISO": "CHIEF_CISO_ADMIN",
+    "SUPERUSER": "CHIEF_CISO_ADMIN",
+    "LEAD": "SOC_LEAD_ANALYST",
+    "SOC_LEAD": "SOC_LEAD_ANALYST",
+    "ANALYST": "SOC_ANALYST",
+    "RESPONDER": "INCIDENT_RESPONDER",
+    "ENGINEER": "SECURITY_ENGINEER",
+    "AUDITOR": "SECURITY_AUDITOR",
+    "COMPLIANCE": "SECURITY_AUDITOR",
+    "GUEST": "GUEST_OBSERVER",
+    "OBSERVER": "GUEST_OBSERVER",
+}
+
+
+def normalize_role(role: Optional[str]) -> str:
+    """Standardizes input role string to a canonical Threatora RBAC role."""
+    if not role:
+        return "SOC_ANALYST"
+    role_clean = role.strip().upper()
+    if role_clean in ROLE_PERMISSIONS:
+        return role_clean
+    if role_clean in ROLE_ALIASES:
+        return ROLE_ALIASES[role_clean]
+    return "SOC_ANALYST"
+
+
+def get_current_role() -> str:
+    """Resolves the effective RBAC role of the active session or API client."""
+    # 1. API key auth from headers defaults to administrative level for automated pipelines/tests
+    api_key = request.headers.get("X-API-Key")
+    auth_header = request.headers.get("Authorization", "")
+    if (api_key and api_key == SYSTEM_API_KEY) or (auth_header.startswith("Bearer ") and auth_header[7:] == SYSTEM_API_KEY):
+        simulated_role = request.headers.get("X-Simulate-Role")
+        if simulated_role:
+            return normalize_role(simulated_role)
+        return "CHIEF_CISO_ADMIN"
+
+    # 2. Check session simulated role or stored role
+    if session.get("role"):
+        return normalize_role(session["role"])
+
+    # 3. Check DB if user_id in session
+    user_id = session.get("user_id")
+    if user_id:
+        try:
+            with get_db_context() as db:
+                user = db.query(User).filter_by(id=user_id).first()
+                if user and user.role:
+                    return normalize_role(user.role)
+        except Exception:
+            pass
+
+    return "GUEST_OBSERVER"
+
+
+def get_role_info(role: Optional[str] = None) -> dict:
+    """Returns the permission metadata and clearance metrics for a role."""
+    if not role:
+        role = get_current_role()
+    role = normalize_role(role)
+    info = ROLE_PERMISSIONS.get(role, ROLE_PERMISSIONS["SOC_ANALYST"]).copy()
+    info["role"] = role
+    return info
+
+
+def has_permission(permission: str) -> bool:
+    """Verifies whether the current active role possesses a designated permission."""
+    role_info = get_role_info()
+    return bool(role_info.get(permission, False))
+
 
 def is_authenticated() -> bool:
     """Check if the current request is authenticated via session or API token."""
@@ -65,6 +231,39 @@ def login_required(f):
             return redirect(url_for("auth.login", next=request.url))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def permission_required(permission: str):
+    """Decorator requiring a specific RBAC entitlement before executing route."""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not is_authenticated():
+                if request.path.startswith("/api/"):
+                    return jsonify({
+                        "status": "error",
+                        "error": "Unauthorized",
+                        "message": "Operator authentication required to access this endpoint."
+                    }), 401
+                return redirect(url_for("auth.login", next=request.url))
+
+            if not has_permission(permission):
+                current_role = get_current_role()
+                role_info = get_role_info(current_role)
+                err_payload = {
+                    "status": "error",
+                    "error": "Forbidden",
+                    "code": 403,
+                    "message": f"Elevated Clearance Required: Action requires '{permission}'. Your current role '{current_role}' ({role_info['title']}, Level {role_info['level']}) is restricted from executing this operation.",
+                    "required_permission": permission,
+                    "current_role": current_role,
+                    "clearance_level": role_info["level"],
+                    "title": role_info["title"],
+                }
+                return jsonify(err_payload), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -348,13 +547,23 @@ def profile():
 @auth_bp.route("/api/v1/auth/me", methods=["GET"])
 @login_required
 def me():
-    """Returns currently authenticated operator profile."""
+    """Returns currently authenticated operator profile with role entitlements."""
     user_id = session.get("user_id")
+    role = get_current_role()
+    role_info = get_role_info(role)
+
     if user_id:
         with get_db_context() as db:
             user = db.query(User).filter_by(id=user_id).first()
             if user:
-                return jsonify({"status": "success", "user": user.to_dict()})
+                user_dict = user.to_dict()
+                user_dict["role"] = role
+                user_dict["role_info"] = role_info
+                return jsonify({
+                    "status": "success",
+                    "user": user_dict,
+                    "role_info": role_info
+                })
 
     # Headless system session
     return jsonify({
@@ -363,8 +572,118 @@ def me():
             "id": 0,
             "username": "system-service",
             "full_name": "Automated Security Agent",
-            "role": "SYSTEM_SERVICE",
+            "role": role,
+            "role_info": role_info,
             "is_active": True
-        }
+        },
+        "role_info": role_info
     })
+
+
+@auth_bp.route("/api/v1/auth/roles", methods=["GET"])
+@login_required
+def list_roles():
+    """Returns all available RBAC roles, clearance levels, and permission specs."""
+    roles_list = [
+        {"key": k, **v}
+        for k, v in ROLE_PERMISSIONS.items()
+    ]
+    return jsonify({
+        "status": "success",
+        "count": len(roles_list),
+        "current_role": get_current_role(),
+        "roles": roles_list
+    })
+
+
+@auth_bp.route("/api/v1/auth/switch-role", methods=["POST"])
+@login_required
+def switch_role():
+    """Enables real-time RBAC role switching for testing, demonstrations, and clearance simulation."""
+    data = request.get_json(silent=True) or {}
+    target_role = data.get("role")
+    if not target_role:
+        return jsonify({"status": "error", "message": "Missing 'role' parameter in payload."}), 400
+
+    normalized = normalize_role(target_role)
+    session["role"] = normalized
+
+    user_id = session.get("user_id")
+    if user_id:
+        try:
+            with get_db_context() as db:
+                user = db.query(User).filter_by(id=user_id).first()
+                if user:
+                    user.role = normalized
+                    db.commit()
+        except Exception:
+            pass
+
+    role_info = get_role_info(normalized)
+    return jsonify({
+        "status": "success",
+        "message": f"Active clearance switched to {normalized} ({role_info['title']}).",
+        "role": normalized,
+        "role_info": role_info
+    })
+
+
+@auth_bp.route("/api/v1/users", methods=["GET"])
+@login_required
+def list_users():
+    """Returns operator directory with clearance ratings."""
+    with get_db_context() as db:
+        users = db.query(User).order_by(User.id.asc()).all()
+        user_list = []
+        for u in users:
+            r_info = get_role_info(u.role)
+            user_list.append({
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "full_name": u.full_name,
+                "role": u.role,
+                "role_title": r_info["title"],
+                "clearance_level": r_info["level"],
+                "badge_color": r_info["badge_color"],
+                "badge_bg": r_info["badge_bg"],
+                "badge_border": r_info["badge_border"],
+                "is_active": u.is_active,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+                "last_login": u.last_login.isoformat() if u.last_login else None,
+            })
+        return jsonify({
+            "status": "success",
+            "count": len(user_list),
+            "users": user_list,
+            "can_manage_users": has_permission("can_manage_users")
+        })
+
+
+@auth_bp.route("/api/v1/users/<int:user_id>/role", methods=["POST"])
+@login_required
+@permission_required("can_manage_users")
+def update_user_role(user_id: int):
+    """Updates an operator's clearance and role assignment (Requires CISO Admin)."""
+    data = request.get_json(silent=True) or {}
+    new_role = data.get("role")
+    if not new_role:
+        return jsonify({"status": "error", "message": "Missing 'role' parameter."}), 400
+
+    normalized = normalize_role(new_role)
+    with get_db_context() as db:
+        target_user = db.query(User).filter_by(id=user_id).first()
+        if not target_user:
+            return jsonify({"status": "error", "message": f"Operator #{user_id} not found."}), 404
+
+        target_user.role = normalized
+        db.commit()
+        r_info = get_role_info(normalized)
+        return jsonify({
+            "status": "success",
+            "message": f"Operator @{target_user.username} clearance updated to {normalized}.",
+            "user": target_user.to_dict(),
+            "role_info": r_info
+        })
+
 

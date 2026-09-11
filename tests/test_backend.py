@@ -335,6 +335,82 @@ except Exception as e:
     check("Benchmark endpoint reachable", False, str(e))
 
 
+# 14. ROLE-BASED ACCESS CONTROL (RBAC) ENFORCEMENT
+section("14. Role-Based Access Control (RBAC) Enforcement")
+
+try:
+    r = requests.get(f"{BASE_URL}/api/v1/auth/roles", headers=HEADERS, timeout=10)
+    check("GET /api/v1/auth/roles -> 200", r.status_code == 200, str(r.status_code))
+    roles_data = r.json()
+    check("Roles payload has count", roles_data.get("count", 0) >= 5)
+    check("Roles has CHIEF_CISO_ADMIN", any(x.get("key") == "CHIEF_CISO_ADMIN" for x in roles_data.get("roles", [])))
+except Exception as e:
+    check("Roles endpoint reachable", False, str(e))
+
+# Test Auditor Restricted Mitigation (403 Forbidden)
+auditor_headers = {
+    "X-API-Key": API_KEY,
+    "X-Simulate-Role": "SECURITY_AUDITOR",
+    "Content-Type": "application/json"
+}
+try:
+    r = requests.post(f"{BASE_URL}/api/v1/mitigate",
+                      headers=auditor_headers,
+                      json={"target_ip": "192.168.1.105", "action": "isolate"},
+                      timeout=10)
+    check("Auditor mitigate -> 403 Forbidden", r.status_code == 403, str(r.status_code))
+    data = r.json()
+    check("Forbidden error code 403", data.get("code") == 403 or data.get("error") == "Forbidden")
+    check("Specifies can_mitigate requirement", data.get("required_permission") == "can_mitigate")
+except Exception as e:
+    check("Auditor restriction reachable", False, str(e))
+
+# Test Auditor Restricted Upload (403 Forbidden)
+try:
+    files = {"file": ("test.csv", "timestamp,src_ip\n1,10.0.0.1", "text/csv")}
+    r = requests.post(f"{BASE_URL}/api/upload",
+                      headers={"X-API-Key": API_KEY, "X-Simulate-Role": "SECURITY_AUDITOR"},
+                      files=files,
+                      timeout=10)
+    check("Auditor upload -> 403 Forbidden", r.status_code == 403, str(r.status_code))
+except Exception as e:
+    check("Auditor upload restriction reachable", False, str(e))
+
+# Test Auditor Can Still Simulate (200 OK)
+try:
+    r = requests.post(f"{BASE_URL}/api/v1/simulate",
+                      headers=auditor_headers,
+                      json={"action": "BLOCK_MANAGEMENT_PORTS", "target_ip": "192.168.1.105", "horizon": 5},
+                      timeout=15)
+    check("Auditor simulate -> 200 OK", r.status_code == 200, str(r.status_code))
+except Exception as e:
+    check("Auditor simulate reachable", False, str(e))
+
+# Test Guest Observer Restricted Simulation (403 Forbidden)
+guest_headers = {
+    "X-API-Key": API_KEY,
+    "X-Simulate-Role": "GUEST_OBSERVER",
+    "Content-Type": "application/json"
+}
+try:
+    r = requests.post(f"{BASE_URL}/api/v1/simulate",
+                      headers=guest_headers,
+                      json={"action": "BLOCK_MANAGEMENT_PORTS", "target_ip": "192.168.1.105"},
+                      timeout=10)
+    check("Guest simulate -> 403 Forbidden", r.status_code == 403, str(r.status_code))
+except Exception as e:
+    check("Guest simulate restriction reachable", False, str(e))
+
+# Test Operators Directory Listing
+try:
+    r = requests.get(f"{BASE_URL}/api/v1/users", headers=HEADERS, timeout=10)
+    check("GET /api/v1/users -> 200", r.status_code == 200, str(r.status_code))
+    users_data = r.json()
+    check("Users list has operators", users_data.get("count", 0) >= 1)
+except Exception as e:
+    check("Users directory reachable", False, str(e))
+
+
 # SUMMARY
 print(f"\n{'='*60}")
 print(f"  TEST SUMMARY")

@@ -13,6 +13,7 @@ import pandas as pd
 
 from src.config import SAMPLES_DIR
 from src.prepare_data import generate_sample_attack_traffic
+from server.blueprints.auth import login_required, permission_required
 
 telemetry_bp = Blueprint("telemetry", __name__)
 
@@ -73,6 +74,8 @@ def run_demo():
 
 
 @telemetry_bp.route("/api/upload", methods=["POST"])
+@login_required
+@permission_required("can_upload")
 def upload_file():
     """Accepts PCAP or CSV flow file, runs forward simulation and synthesizes playbooks."""
     engine = current_app.extensions["inference_engine"]

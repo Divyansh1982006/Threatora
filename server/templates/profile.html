@@ -656,10 +656,13 @@
             <div class="form-group">
               <label class="form-label" for="role">Assigned Operational Role</label>
               <select class="form-select" id="role" name="role">
-                <option value="SOC_ANALYST" {% if user.role == 'SOC_ANALYST' %}selected{% endif %}>SOC Analyst (Telemetry & Kill-Chain Radar)</option>
-                <option value="INCIDENT_RESPONDER" {% if user.role == 'INCIDENT_RESPONDER' %}selected{% endif %}>Incident Responder (1-Click Quarantine & Playbooks)</option>
-                <option value="SECURITY_ENGINEER" {% if user.role == 'SECURITY_ENGINEER' %}selected{% endif %}>Security Engineer (Model Simulation & Architecture)</option>
-                <option value="CHIEF_CISO_ADMIN" {% if user.role == 'CHIEF_CISO_ADMIN' %}selected{% endif %}>Chief CISO / Administrator (Full Clearance)</option>
+                <option value="CHIEF_CISO_ADMIN" {% if user.role == 'CHIEF_CISO_ADMIN' %}selected{% endif %}>Chief CISO / SecOps Director (Level 5 - Unrestricted)</option>
+                <option value="SOC_LEAD_ANALYST" {% if user.role == 'SOC_LEAD_ANALYST' %}selected{% endif %}>SOC Lead Analyst (Level 4 - Threat Hunter)</option>
+                <option value="INCIDENT_RESPONDER" {% if user.role == 'INCIDENT_RESPONDER' %}selected{% endif %}>Incident Responder (Level 4 - 1-Click Quarantine)</option>
+                <option value="SECURITY_ENGINEER" {% if user.role == 'SECURITY_ENGINEER' %}selected{% endif %}>Security Engineer (Level 4 - Counterfactual Simulation)</option>
+                <option value="SOC_ANALYST" {% if user.role == 'SOC_ANALYST' %}selected{% endif %}>SOC Tier-2 Analyst (Level 3 - Radar & Telemetry)</option>
+                <option value="SECURITY_AUDITOR" {% if user.role == 'SECURITY_AUDITOR' %}selected{% endif %}>Security & Compliance Auditor (Level 2 - Read-Only)</option>
+                <option value="GUEST_OBSERVER" {% if user.role == 'GUEST_OBSERVER' %}selected{% endif %}>Guest Observer (Level 1 - Public Inspection)</option>
               </select>
             </div>
 
@@ -748,7 +751,9 @@ curl -H "X-API-Key: {{ api_key }}" \
               <span class="entitlement-name">
                 <span>📡</span> Telemetry Stream & PCAP Ingestion
               </span>
-              <span class="entitlement-status status-active">PERMITTED</span>
+              <span class="entitlement-status {% if user.role in ['CHIEF_CISO_ADMIN', 'SOC_LEAD_ANALYST', 'SOC_ANALYST', 'INCIDENT_RESPONDER', 'SECURITY_ENGINEER'] %}status-active{% else %}status-restricted{% endif %}">
+                {% if user.role in ['CHIEF_CISO_ADMIN', 'SOC_LEAD_ANALYST', 'SOC_ANALYST', 'INCIDENT_RESPONDER', 'SECURITY_ENGINEER'] %}PERMITTED{% else %}RESTRICTED{% endif %}
+              </span>
             </li>
             <li class="entitlement-item">
               <span class="entitlement-name">
@@ -760,19 +765,25 @@ curl -H "X-API-Key: {{ api_key }}" \
               <span class="entitlement-name">
                 <span>🛡️</span> 1-Click Endpoint Quarantine & Isolation
               </span>
-              <span class="entitlement-status status-active">PERMITTED</span>
+              <span class="entitlement-status {% if user.role in ['CHIEF_CISO_ADMIN', 'SOC_LEAD_ANALYST', 'SOC_ANALYST', 'INCIDENT_RESPONDER', 'SECURITY_ENGINEER'] %}status-active{% else %}status-restricted{% endif %}">
+                {% if user.role in ['CHIEF_CISO_ADMIN', 'SOC_LEAD_ANALYST', 'SOC_ANALYST', 'INCIDENT_RESPONDER', 'SECURITY_ENGINEER'] %}PERMITTED{% else %}RESTRICTED (READ-ONLY){% endif %}
+              </span>
             </li>
             <li class="entitlement-item">
               <span class="entitlement-name">
                 <span>🧪</span> Counterfactual What-If Sandbox
               </span>
-              <span class="entitlement-status status-active">PERMITTED</span>
+              <span class="entitlement-status {% if user.role != 'GUEST_OBSERVER' %}status-active{% else %}status-restricted{% endif %}">
+                {% if user.role != 'GUEST_OBSERVER' %}PERMITTED{% else %}RESTRICTED{% endif %}
+              </span>
             </li>
             <li class="entitlement-item">
               <span class="entitlement-name">
-                <span>📑</span> SQLite / Postgres State Ledger Audit
+                <span>👥</span> Operator Clearance Management
               </span>
-              <span class="entitlement-status status-active">PERMITTED</span>
+              <span class="entitlement-status {% if user.role == 'CHIEF_CISO_ADMIN' %}status-active{% else %}status-restricted{% endif %}">
+                {% if user.role == 'CHIEF_CISO_ADMIN' %}PERMITTED{% else %}CISO ONLY{% endif %}
+              </span>
             </li>
             <li class="entitlement-item">
               <span class="entitlement-name">

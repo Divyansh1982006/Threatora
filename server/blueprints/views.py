@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, jsonify, current_app, session
 from src.config import ALL_FEATURE_COLS, REPORTS_DIR
 from src.db.session import get_db_context
 from src.db.models import User
-from .auth import login_required
+from .auth import login_required, get_current_role, get_role_info, ROLE_PERMISSIONS
 
 views_bp = Blueprint("views", __name__)
 
@@ -16,12 +16,16 @@ views_bp = Blueprint("views", __name__)
 @login_required
 def index():
     """Serves the cybersecurity operations dashboard."""
+    role = get_current_role()
+    role_info = get_role_info(role)
+
     user_id = session.get("user_id")
     user = {
         "id": 1,
         "username": session.get("username", "admin"),
         "full_name": session.get("full_name", "Alex Kelly"),
-        "role": session.get("role", "CHIEF_CISO_ADMIN"),
+        "role": role,
+        "role_info": role_info,
     }
     if user_id:
         try:
@@ -33,14 +37,27 @@ def index():
                         "username": db_user.username,
                         "email": db_user.email,
                         "full_name": db_user.full_name,
-                        "role": db_user.role,
+                        "role": role,
+                        "role_info": role_info,
                         "is_active": db_user.is_active,
                         "created_at": db_user.created_at,
                         "last_login": db_user.last_login,
                     }
         except Exception:
             pass
-    return render_template("index.html", user=user)
+
+    available_roles = [
+        {"key": k, **v}
+        for k, v in ROLE_PERMISSIONS.items()
+    ]
+
+    return render_template(
+        "index.html",
+        user=user,
+        role_info=role_info,
+        available_roles=available_roles,
+        current_role=role,
+    )
 
 
 

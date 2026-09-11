@@ -371,6 +371,202 @@
       color: var(--green); 
       border: 1px solid var(--green-border); 
     }
+
+    /* RBAC Banner & Clearance Elements */
+    .rbac-banner {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+      border-left: 4px solid var(--accent);
+      transition: all 0.3s ease;
+    }
+    .rbac-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .rbac-shield-icon {
+      width: 42px;
+      height: 42px;
+      background: #fafaf8;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .clearance-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .rbac-entitlements-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .perm-chip {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+    .perm-active {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+    }
+    .perm-locked {
+      background: #f4f4f5;
+      color: #71717a;
+      border: 1px solid #e4e4e7;
+      opacity: 0.8;
+    }
+    .rbac-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .role-switcher-select {
+      background: #fafaf8;
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .role-switcher-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+      background: #ffffff;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .modal-backdrop.show {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-card {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      width: 92%;
+      max-width: 680px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+      transform: scale(0.96);
+      transition: transform 0.2s ease;
+    }
+    .modal-backdrop.show .modal-card {
+      transform: scale(1);
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-body {
+      padding: 24px;
+      max-height: 72vh;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: #fafaf8;
+    }
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .btn-close-modal:hover {
+      color: var(--text);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast-msg {
+      background: #1c1917;
+      color: #f4f4f5;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      animation: slideInToast 0.3s ease;
+    }
+    @keyframes slideInToast {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -378,17 +574,31 @@
   <header>
     <div class="brand">
       <div class="brand-icon">🛡️</div>
-      <span>Threatora</span>
-      <span class="brand-tag">NTRO PS 26153 // LSTM</span>
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span>Threatora</span>
+          <span class="brand-tag">NTRO PS 26153 // LSTM</span>
+        </div>
+        <div style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted);">Autonomous Cyber Defense & Forensics</div>
+      </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
       <div class="status-capsule" id="engineStatus">Engine Online (CPU-Optimized)</div>
+      
+      <!-- Operators Directory Button -->
+      <button class="btn btn-secondary" onclick="openOperatorsModal()" style="font-size: 0.76rem; padding: 6px 12px;" title="View Operator Clearance & Directory">
+        👥 Operators Directory
+      </button>
+
       <div style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 600; color: var(--text);">
         <a href="/profile" style="text-decoration: none; display: flex; align-items: center; gap: 8px; color: var(--text); padding: 4px 8px; border-radius: 8px; transition: background 0.15s ease;" onmouseover="this.style.background='#f0f0ec'" onmouseout="this.style.background='transparent'" title="View Operator Profile & Clearance">
           <div style="width: 32px; height: 32px; border-radius: 50%; background: #f3e8ff; color: #7e22ce; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 1px solid #e9d5ff;">
             {{ (user.full_name[:2] if user and user.full_name else 'AK') | upper }}
           </div>
-          <span>{{ user.full_name if user and user.full_name else 'Alex Kelly' }}</span>
+          <div>
+            <div style="line-height: 1.1;">{{ user.full_name if user and user.full_name else 'Alex Kelly' }}</div>
+            <div id="headerRoleSmall" style="font-size: 0.68rem; color: var(--text-muted); font-weight: 700;">{{ role_info.role }}</div>
+          </div>
         </a>
         <a href="/profile" style="color: var(--text-muted); font-size: 0.76rem; font-weight: 700; text-decoration: none; padding: 5px 11px; border-radius: 6px; background: #fafaf8; border: 1px solid var(--card-border); transition: all 0.15s ease;" onmouseover="this.style.background='#f0f0eb'" onmouseout="this.style.background='#fafaf8'">Profile</a>
         <a href="/logout" style="color: var(--accent); font-size: 0.76rem; font-weight: 700; text-decoration: none; padding: 5px 11px; border-radius: 6px; background: var(--accent-tint); border: 1px solid var(--accent-border); transition: all 0.15s ease;">Logout</a>
@@ -396,13 +606,64 @@
     </div>
   </header>
 
+  <!-- Dedicated Zero-Trust RBAC & Operational Clearance Matrix Banner -->
+  <div class="rbac-banner" id="rbacBanner">
+    <div class="rbac-left">
+      <div class="rbac-shield-icon">🛡️</div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span class="clearance-badge" id="activeClearanceBadge" style="background: {{ role_info.badge_bg }}; color: {{ role_info.badge_color }}; border: 1px solid {{ role_info.badge_border }};">
+            LEVEL-{{ role_info.level }} // {{ role_info.role }}
+          </span>
+          <span style="font-size: 0.88rem; font-weight: 800; color: var(--text);" id="activeRoleTitle">
+            {{ role_info.title }}
+          </span>
+        </div>
+        <div class="rbac-entitlements-row" style="margin-top: 8px;">
+          <span class="perm-chip {% if role_info.can_mitigate %}perm-active{% else %}perm-locked{% endif %}" id="chipMitigate">
+            <span id="iconMitigate">{% if role_info.can_mitigate %}✔{% else %}🔒{% endif %}</span> 1-Click Containment
+          </span>
+          <span class="perm-chip {% if role_info.can_upload %}perm-active{% else %}perm-locked{% endif %}" id="chipUpload">
+            <span id="iconUpload">{% if role_info.can_upload %}✔{% else %}🔒{% endif %}</span> Raw PCAP Ingest
+          </span>
+          <span class="perm-chip {% if role_info.can_simulate %}perm-active{% else %}perm-locked{% endif %}" id="chipSimulate">
+            <span id="iconSimulate">{% if role_info.can_simulate %}✔{% else %}🔒{% endif %}</span> What-If Simulator
+          </span>
+          <span class="perm-chip {% if role_info.can_manage_users %}perm-active{% else %}perm-locked{% endif %}" id="chipManage">
+            <span id="iconManage">{% if role_info.can_manage_users %}✔{% else %}🔒{% endif %}</span> Operator Admin
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Role Simulator -->
+    <div class="rbac-right">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <label for="roleSwitcherSelect" style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px;">
+          ⚡ Live Role Simulator:
+        </label>
+        <select id="roleSwitcherSelect" class="role-switcher-select" onchange="handleRoleSwitch(this.value)">
+          {% for r in available_roles %}
+          <option value="{{ r.key }}" {% if r.key == current_role %}selected{% endif %}>
+            {{ "🎖️" if r.level == 5 else ("🛡️" if r.level == 4 else ("🎯" if r.level == 3 else ("🔍" if r.level == 2 else "👁️"))) }} {{ r.title }} (Lvl {{ r.level }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div id="roleDescText" style="font-size: 0.73rem; color: var(--text-muted); max-width: 420px; text-align: right; line-height: 1.35;">
+        {{ role_info.description }}
+      </div>
+    </div>
+  </div>
+
   <!-- Controls Banner -->
   <div class="controls-banner">
     <div class="upload-group">
-      <label class="btn btn-secondary">
+      <label class="btn btn-secondary" id="uploadLabel">
         📁 Select Capture (PCAP or CSV)
         <input type="file" id="fileInput" accept=".pcap,.pcapng,.csv,.txt,.binetflow" onchange="handleFileUpload()">
       </label>
+      <span id="uploadLockedBadge" style="display: none; font-size: 0.72rem; font-weight: 700; color: var(--text-dim); background: #f4f4f5; border: 1px solid #e4e4e7; padding: 4px 8px; border-radius: 6px;">🔒 UPLOAD RESTRICTED</span>
       <span id="fileName" style="font-size: 0.8rem; color: var(--text-muted);">sample_telemetry_stream.pcap (Demo Loaded)</span>
     </div>
     <div>
@@ -603,9 +864,101 @@ conntrack -D -s 192.168.1.105</div>
     </table>
   </div>
 
+  <!-- 403 Access Denied Cyber Alert Modal -->
+  <div class="modal-backdrop" id="accessDeniedModal" onclick="if(event.target===this)closeAccessDeniedModal()">
+    <div class="modal-card" style="border-top: 4px solid var(--accent);">
+      <div class="modal-header">
+        <div class="modal-title" style="color: var(--accent);">
+          <span>⛔</span>
+          <span>403 Access Denied // Elevated Clearance Required</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeAccessDeniedModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: var(--accent-tint); border: 1px solid var(--accent-border); border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;">
+          <div style="font-size: 0.88rem; font-weight: 800; color: var(--accent); margin-bottom: 4px;">
+            Zero-Trust Policy Enforcement (NTRO PS 26153)
+          </div>
+          <div id="deniedDetailMsg" style="font-size: 0.82rem; color: var(--text); line-height: 1.5;">
+            Action requires elevated operational clearance.
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+          <div style="background: #fafaf8; border: 1px solid var(--card-border); padding: 12px; border-radius: 8px;">
+            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Your Current Clearance</div>
+            <div id="deniedCurrentRole" style="font-size: 0.92rem; font-weight: 800; color: var(--text); margin-top: 4px;">
+              LEVEL-{{ role_info.level }} // {{ role_info.role }}
+            </div>
+          </div>
+          <div style="background: #fafaf8; border: 1px solid var(--card-border); padding: 12px; border-radius: 8px;">
+            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Required Entitlement</div>
+            <div id="deniedRequiredPerm" style="font-size: 0.92rem; font-weight: 800; color: var(--accent); margin-top: 4px;">
+              can_mitigate (Level 4+)
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
+          <strong>Remediation:</strong> Destructive containment (host isolation, network severance) and raw telemetry ingestion are strictly isolated to authorized tactical roles. To evaluate or execute this operation, use the <em>Live Role Simulator</em> in the top banner to assume <strong>Chief CISO (Level 5)</strong> or <strong>Incident Responder (Level 4)</strong> privileges.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAccessDeniedModal()">Dismiss</button>
+        <button class="btn" style="background: var(--accent); color: #fff;" onclick="quickElevateToAdmin()">
+          ⚡ Elevate to Chief CISO (Level 5)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operator Directory Modal -->
+  <div class="modal-backdrop" id="operatorsModal" onclick="if(event.target===this)closeOperatorsModal()">
+    <div class="modal-card" style="max-width: 840px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>👥</span>
+          <span>Zero-Trust Operator Directory & Clearance Roster</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeOperatorsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">
+          Active operators verified by the local state ledger. Only <strong>Chief CISO / SecOps Director (Level 5)</strong> is authorized to adjust operational clearance assignments.
+        </p>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th>Operator</th>
+                <th>Call-Sign / Email</th>
+                <th>Role & Clearance</th>
+                <th>Status</th>
+                <th>Assignment</th>
+              </tr>
+            </thead>
+            <tbody id="operatorsTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading operator directory...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeOperatorsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <script>
     let currentActiveHostIp = "192.168.1.105";
     let currentPlaybookUid = "PB-E7EB29E8";
+    let currentRoleInfo = {{ role_info | tojson }};
+    let availableRoles = {{ available_roles | tojson }};
 
     // Default Mock Timeline Rollout for Initial Render
     const defaultMockTimeline = [
@@ -622,15 +975,246 @@ conntrack -D -s 192.168.1.105</div>
     ];
 
     window.addEventListener('DOMContentLoaded', () => {
-      // 1. Draw initial forward rollout timeline on canvas
+      // 1. Apply active RBAC role UI restrictions and styling
+      applyRbacUiState();
+
+      // 2. Draw initial forward rollout timeline on canvas
       drawTimelineChart(defaultMockTimeline);
 
-      // 2. Render initial What-If Plotly comparison chart
+      // 3. Render initial What-If Plotly comparison chart
       renderInitialPlotlyChart();
 
-      // 3. Connect to live health check
+      // 4. Connect to live health check
       pollHealthStatus();
     });
+
+    function applyRbacUiState() {
+      if (!currentRoleInfo) return;
+
+      // 1. Update RBAC clearance badge
+      const badge = document.getElementById('activeClearanceBadge');
+      if (badge) {
+        badge.style.background = currentRoleInfo.badge_bg;
+        badge.style.color = currentRoleInfo.badge_color;
+        badge.style.borderColor = currentRoleInfo.badge_border;
+        badge.innerText = `LEVEL-${currentRoleInfo.level} // ${currentRoleInfo.role}`;
+      }
+
+      const roleTitle = document.getElementById('activeRoleTitle');
+      if (roleTitle) roleTitle.innerText = currentRoleInfo.title;
+
+      const roleDesc = document.getElementById('roleDescText');
+      if (roleDesc) roleDesc.innerText = currentRoleInfo.description;
+
+      const headerRole = document.getElementById('headerRoleSmall');
+      if (headerRole) headerRole.innerText = currentRoleInfo.role;
+
+      // 2. Update entitlement chips
+      function setChip(id, iconId, isAllowed) {
+        const chip = document.getElementById(id);
+        const icon = document.getElementById(iconId);
+        if (chip && icon) {
+          if (isAllowed) {
+            chip.className = 'perm-chip perm-active';
+            icon.innerText = '✔';
+          } else {
+            chip.className = 'perm-chip perm-locked';
+            icon.innerText = '🔒';
+          }
+        }
+      }
+      setChip('chipMitigate', 'iconMitigate', currentRoleInfo.can_mitigate);
+      setChip('chipUpload', 'iconUpload', currentRoleInfo.can_upload);
+      setChip('chipSimulate', 'iconSimulate', currentRoleInfo.can_simulate);
+      setChip('chipManage', 'iconManage', currentRoleInfo.can_manage_users);
+
+      // 3. Containment 1-Click Button State
+      const btnIsolate = document.getElementById('btnIsolate');
+      if (btnIsolate) {
+        if (!currentRoleInfo.can_mitigate) {
+          btnIsolate.style.background = '#f4f4f5';
+          btnIsolate.style.color = '#71717a';
+          btnIsolate.style.border = '1px solid #e4e4e7';
+          btnIsolate.innerText = '🔒 Containment Locked (Auditor / Guest Clearance)';
+          btnIsolate.title = 'Clearance restricts execution of active containment';
+        } else {
+          btnIsolate.style.background = 'var(--accent)';
+          btnIsolate.style.color = '#ffffff';
+          btnIsolate.style.border = 'none';
+          btnIsolate.innerText = '🛡️ Execute 1-Click Containment (Isolate Host)';
+          btnIsolate.title = '';
+        }
+      }
+
+      // 4. Capture Ingest Upload State
+      const fileInput = document.getElementById('fileInput');
+      const uploadLabel = document.getElementById('uploadLabel');
+      const uploadLockedBadge = document.getElementById('uploadLockedBadge');
+      if (fileInput && uploadLabel) {
+        if (!currentRoleInfo.can_upload) {
+          fileInput.disabled = true;
+          uploadLabel.style.opacity = '0.55';
+          uploadLabel.style.cursor = 'not-allowed';
+          uploadLabel.onclick = (e) => {
+            if (!currentRoleInfo.can_upload) {
+              e.preventDefault();
+              showAccessDenied('can_upload', 'Raw Telemetry & PCAP Ingestion');
+            }
+          };
+          if (uploadLockedBadge) uploadLockedBadge.style.display = 'inline-block';
+        } else {
+          fileInput.disabled = false;
+          uploadLabel.style.opacity = '1';
+          uploadLabel.style.cursor = 'pointer';
+          uploadLabel.onclick = null;
+          if (uploadLockedBadge) uploadLockedBadge.style.display = 'none';
+        }
+      }
+    }
+
+    async function handleRoleSwitch(newRole) {
+      try {
+        const res = await fetch('/api/v1/auth/switch-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          currentRoleInfo = data.role_info;
+          applyRbacUiState();
+          showToast(`Clearance switched to ${currentRoleInfo.title} (Level ${currentRoleInfo.level})`);
+        } else {
+          alert('Failed to switch role: ' + (data.message || 'Unknown error'));
+        }
+      } catch (e) {
+        alert('Error communicating with auth service: ' + e);
+      }
+    }
+
+    function showAccessDenied(permission, actionName) {
+      const modal = document.getElementById('accessDeniedModal');
+      document.getElementById('deniedDetailMsg').innerText = 
+        `The operation '${actionName || permission}' cannot be dispatched. Your current operational clearance lacks the '${permission}' authorization.`;
+      document.getElementById('deniedCurrentRole').innerText = 
+        `LEVEL-${currentRoleInfo.level} // ${currentRoleInfo.role} (${currentRoleInfo.title})`;
+      document.getElementById('deniedRequiredPerm').innerText = 
+        `${permission} (Level 4+ Required)`;
+      modal.classList.add('show');
+    }
+
+    function closeAccessDeniedModal() {
+      document.getElementById('accessDeniedModal').classList.remove('show');
+    }
+
+    function quickElevateToAdmin() {
+      closeAccessDeniedModal();
+      const select = document.getElementById('roleSwitcherSelect');
+      if (select) select.value = 'CHIEF_CISO_ADMIN';
+      handleRoleSwitch('CHIEF_CISO_ADMIN');
+    }
+
+    async function openOperatorsModal() {
+      const modal = document.getElementById('operatorsModal');
+      modal.classList.add('show');
+      const tbody = document.getElementById('operatorsTableBody');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Fetching operator directory from local state ledger...</td></tr>';
+
+      try {
+        const res = await fetch('/api/v1/users');
+        const data = await res.json();
+        if (data.status === 'success') {
+          tbody.innerHTML = '';
+          data.users.forEach(u => {
+            const isMe = u.username === "{{ user.username }}";
+            const row = document.createElement('tr');
+            
+            let roleCellHtml = '';
+            if (data.can_manage_users) {
+              let optionsHtml = '';
+              availableRoles.forEach(r => {
+                optionsHtml += `<option value="${r.key}" ${r.key === u.role ? 'selected' : ''}>${r.title} (Lvl ${r.level})</option>`;
+              });
+              roleCellHtml = `
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <select id="userRoleSelect_${u.id}" class="form-select" style="font-size:0.75rem; padding:4px 8px; border-radius:6px; background:#fff; border:1px solid var(--card-border);">
+                    ${optionsHtml}
+                  </select>
+                  <button class="btn" style="padding:4px 8px; font-size:0.72rem; background:var(--accent); color:#fff;" onclick="updateOperatorRole(${u.id})">Save</button>
+                </div>
+              `;
+            } else {
+              roleCellHtml = `<span class="clearance-badge" style="background:${u.badge_bg}; color:${u.badge_color}; border:1px solid ${u.badge_border};">LEVEL-${u.clearance_level} // ${u.role}</span>`;
+            }
+
+            row.innerHTML = `
+              <td>
+                <div style="font-weight:700; color:var(--text);">${u.full_name} ${isMe ? '<span style="font-size:0.7rem; color:var(--accent);">(You)</span>' : ''}</div>
+                <div style="font-size:0.72rem; color:var(--text-muted);">ID: #OP-${String(u.id).padStart(4, '0')}</div>
+              </td>
+              <td>
+                <div style="font-family:monospace; font-size:0.8rem; font-weight:600;">@${u.username}</div>
+                <div style="font-size:0.74rem; color:var(--text-muted);">${u.email}</div>
+              </td>
+              <td>
+                <div><span class="clearance-badge" style="background:${u.badge_bg}; color:${u.badge_color}; border:1px solid ${u.badge_border};">LEVEL-${u.clearance_level} // ${u.role}</span></div>
+                <div style="font-size:0.72rem; color:var(--text-muted); margin-top:3px;">${u.role_title}</div>
+              </td>
+              <td>
+                <span class="pill pill-green">${u.is_active ? 'ACTIVE' : 'SUSPENDED'}</span>
+              </td>
+              <td>
+                ${roleCellHtml}
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red); padding:20px; text-align:center;">Failed to load directory: ${e}</td></tr>`;
+      }
+    }
+
+    function closeOperatorsModal() {
+      document.getElementById('operatorsModal').classList.remove('show');
+    }
+
+    async function updateOperatorRole(userId) {
+      const select = document.getElementById(`userRoleSelect_${userId}`);
+      if (!select) return;
+      const newRole = select.value;
+      try {
+        const res = await fetch(`/api/v1/users/${userId}/role`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          showToast(`Operator clearance updated to ${newRole}`);
+          openOperatorsModal();
+        } else {
+          alert('Failed to update operator role: ' + (data.message || 'Forbidden'));
+        }
+      } catch (e) {
+        alert('Error updating role: ' + e);
+      }
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = 'toast-msg';
+      toast.innerHTML = `<span>🛡️</span><span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'all 0.3s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
 
     function renderInitialPlotlyChart() {
       const xVals = defaultMockTimeline.map(t => t.minute);
@@ -681,6 +1265,11 @@ conntrack -D -s 192.168.1.105</div>
     }
 
     async function triggerMitigation() {
+      if (!currentRoleInfo.can_mitigate) {
+        showAccessDenied('can_mitigate', '1-Click Endpoint Quarantine & Isolation');
+        return;
+      }
+
       if (!currentActiveHostIp) return;
       const btn = document.getElementById('btnIsolate');
       btn.disabled = true;
@@ -696,6 +1285,11 @@ conntrack -D -s 192.168.1.105</div>
           })
         });
         const data = await res.json();
+        if (res.status === 403) {
+          showAccessDenied('can_mitigate', data.message);
+          applyRbacUiState();
+          return;
+        }
         if (data.status === 'success' || data.status === 'warning') {
           const badge = document.getElementById('playbookBadge');
           badge.innerText = "CONTAINMENT EXECUTED";
@@ -704,6 +1298,7 @@ conntrack -D -s 192.168.1.105</div>
           badge.style.background = "var(--green-bg)";
           document.getElementById('mitigateStatusMsg').innerText = "✔ Host isolated & iptables rules active";
           btn.innerText = "✔ Host Isolated";
+          showToast(`Host ${currentActiveHostIp} successfully isolated.`);
         } else {
           alert("Mitigation failed: " + data.message);
           btn.disabled = false;
@@ -717,6 +1312,11 @@ conntrack -D -s 192.168.1.105</div>
     }
 
     async function runWhatIfSimulation() {
+      if (!currentRoleInfo.can_simulate) {
+        showAccessDenied('can_simulate', 'Counterfactual World Model Simulation');
+        return;
+      }
+
       const action = document.getElementById('simActionSelect').value;
       const summaryBadge = document.getElementById('simSummaryBadge');
       const verdictBox = document.getElementById('simVerdictBox');
@@ -734,6 +1334,11 @@ conntrack -D -s 192.168.1.105</div>
           })
         });
         const data = await res.json();
+        if (res.status === 403) {
+          showAccessDenied('can_simulate', data.message);
+          summaryBadge.innerText = "";
+          return;
+        }
         if (data.status !== 'success') {
           alert("Simulation error: " + data.message);
           summaryBadge.innerText = "";
@@ -797,6 +1402,11 @@ conntrack -D -s 192.168.1.105</div>
     }
 
     async function handleFileUpload() {
+      if (!currentRoleInfo.can_upload) {
+        showAccessDenied('can_upload', 'Raw Telemetry & PCAP Ingestion');
+        return;
+      }
+
       const file = document.getElementById('fileInput').files[0];
       if (!file) return;
       document.getElementById('fileName').innerText = file.name + " (analyzing...)";
@@ -807,6 +1417,10 @@ conntrack -D -s 192.168.1.105</div>
       try {
         const res = await fetch('/api/upload', { method: 'POST', body: formData });
         const data = await res.json();
+        if (res.status === 403) {
+          showAccessDenied('can_upload', data.message);
+          return;
+        }
         renderDashboard(data);
       } catch (err) {
         alert("Upload analysis failed: " + err);
@@ -870,6 +1484,7 @@ conntrack -D -s 192.168.1.105</div>
         document.getElementById('btnIsolate').disabled = false;
         document.getElementById('btnIsolate').innerText = "🛡️ Execute 1-Click Containment (Isolate Host)";
         document.getElementById('mitigateStatusMsg').innerText = "";
+        applyRbacUiState();
       } else {
         socBox.style.display = 'none';
       }
