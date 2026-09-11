@@ -59,11 +59,25 @@ python cli.py predict --input data/samples/sample_traffic.csv --format json
 python cli.py benchmark
 ```
 
-### 5. Launch Offline Web Dashboard
+### 5. Launch Threatora Server (1-Click or Manual)
 ```bash
+# 1-Click Server Launcher (Auto-detects IP & configures multi-laptop access)
+start_server.bat
+
+# Or launch directly via Python:
 python server/app.py
 ```
-Open **`http://localhost:5000`** in your browser to inspect the interactive UI.
+Open **`http://localhost:5000`** (or your LAN IP `http://<YOUR_IP>:5000` from another laptop) in your browser. Default operator credentials: `admin` / `Threatora@2026`.
+
+### 6. Tactical Cyber CLI Terminal (Multi-Laptop Client)
+```bash
+# 1-Click CLI Client Launcher (Prompts for Server IP or connects locally)
+run_cli.bat
+
+# Or launch directly specifying remote host:
+python cli.py console --api-url http://<SERVER_IP>:5000
+```
+Authenticates seamlessly against the central Threatora server using `/login admin Threatora@2026`.
 
 ---
 

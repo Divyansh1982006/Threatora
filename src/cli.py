@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 if sys.platform == "win32":
@@ -150,8 +151,9 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     # console (default tactical shell)
+    default_api_url = os.environ.get("THREATORA_API_URL", "http://127.0.0.1:5000")
     p_con = subparsers.add_parser("console", help="Launch interactive Metasploit-style tactical terminal")
-    p_con.add_argument("--api-url", default="http://127.0.0.1:5000", help="Threatora Core API URL")
+    p_con.add_argument("--api-url", default=default_api_url, help=f"Threatora Core API URL (default: {default_api_url})")
     p_con.add_argument("-u", "--username", default=None, help="Web portal operator username (e.g. admin)")
     p_con.add_argument("-p", "--password", default=None, help="Web portal operator passphrase")
     p_con.add_argument("--no-auth", action="store_true", help="Run without web authentication gate")
@@ -188,7 +190,7 @@ def main():
     if not hasattr(args, "func"):
         # If no arguments provided, launch the interactive console directly
         from .interactive_cli import launch_console
-        launch_console()
+        launch_console(api_url=default_api_url)
     else:
         args.func(args)
 

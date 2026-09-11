@@ -225,6 +225,122 @@ python cli.py console --no-auth
 
 ---
 
+## Step 11 — Multi-Laptop Network Setup & Remote Cloud Deployment
+
+Threatora is engineered for seamless distributed operations across multiple laptops during hackathons, demonstrations, and air-gapped field setups.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│             LAPTOP A (Host Central Server)               │
+│  - Runs: start_server.bat (or python server/app.py)       │
+│  - Binds: 0.0.0.0:5000                                   │
+│  - IP: 172.16.190.142 (detected automatically)           │
+│  - SQLite Ledger: artifacts/data/threatora.db            │
+└────────────────────────────┬─────────────────────────────┘
+                             │
+            ┌────────────────┴────────────────┐
+            ▼                                 ▼
+┌───────────────────────────────┐ ┌───────────────────────────────┐
+│       LAPTOP B (Client)       │ │       LAPTOP C (Client)       │
+│  Web Browser Operator Console │ │  Tactical Cyber CLI Terminal  │
+│  http://172.16.190.142:5000   │ │  run_cli.bat 172.16.190.142   │
+│  Login: admin / Threatora@2026│ │  Login: /login admin ...      │
+└───────────────────────────────┘ └───────────────────────────────┘
+```
+
+---
+
+### Method A — Same Wi-Fi / Local Area Network (Recommended for SIH / Hackathon)
+
+#### 1. Server Host Setup (Laptop A):
+1. Simply double-click **`start_server.bat`** (or run `python server/app.py`).
+2. The launcher automatically detects your active network interface IP (e.g. `172.16.190.142`) and prints the remote access URLs.
+3. **Windows Firewall Rule (One-Time Setup):**
+   If other laptops cannot reach port 5000, run this command in **PowerShell (Run as Administrator)**:
+   ```powershell
+   New-NetFirewallRule -DisplayName "Threatora Server (Port 5000)" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow
+   ```
+
+#### 2. Client Web Access (Laptop B / Judges / Operators):
+1. Open any web browser on Laptop B (connected to same Wi-Fi / LAN).
+2. Navigate to:
+   ```
+   http://<SERVER_IP>:5000
+   Example: http://172.16.190.142:5000
+   ```
+3. Login using the default operator credentials:
+   - **Username:** `admin`
+   - **Passphrase:** `Threatora@2026`
+4. The full spectrum web dashboard, topology visualizer, what-if counterfactual simulator, and mitigation actions work live in real-time.
+
+#### 3. Client CLI Access (Laptop C / Security Analyst Terminal):
+1. Transfer or clone the Threatora repository onto Laptop C.
+2. Launch the CLI connected to Laptop A using either method:
+   - **Option 1 (1-Click Batch):**
+     Double-click **`run_cli.bat`** and enter the Server IP (e.g. `172.16.190.142`).
+   - **Option 2 (Direct Command):**
+     ```bash
+     python cli.py console --api-url http://172.16.190.142:5000
+     ```
+   - **Option 3 (Environment Variable):**
+     ```bash
+     # Windows PowerShell
+     $env:THREATORA_API_URL = "http://172.16.190.142:5000"
+     python cli.py console
+     ```
+3. Authenticate using the web credentials:
+   ```
+   THREATORA (unauth) > /login admin Threatora@2026
+   ```
+4. All CLI commands (`monitor`, `topology`, `forecast`, `explain`, `mitigate`, `simulate`) directly communicate with the remote server's API and state ledger!
+
+---
+
+### Method B — Instant Public Tunnel (Over Internet / Separate Mobile Hotspots)
+
+If the laptops are on different Wi-Fi networks or public venue Wi-Fi blocks peer-to-peer traffic:
+
+#### Using ngrok:
+1. On Laptop A (where server is running):
+   ```bash
+   ngrok http 5000
+   ```
+2. Copy the public HTTPS URL (e.g., `https://a1b2-c3d4.ngrok-free.app`).
+3. On any client laptop anywhere in the world:
+   - **Browser:** Open `https://a1b2-c3d4.ngrok-free.app`
+   - **CLI:** `python cli.py console --api-url https://a1b2-c3d4.ngrok-free.app`
+
+#### Using localtunnel (Free, No Sign-up Required):
+```bash
+npx localtunnel --port 5000
+```
+
+---
+
+### Method C — 1-Click Cloud Deployment (Render / Railway / Fly.io)
+
+You can deploy the Threatora Core Server directly from this GitHub repository to free cloud hosting.
+
+#### Deploy on Render (Free Web Service):
+1. Go to [dashboard.render.com](https://dashboard.render.com/) and click **New + → Web Service**.
+2. Connect your GitHub repository: `Divyansh1982006/Threatora`.
+3. Configure settings:
+   - **Runtime:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 server.app:app`
+4. Add Environment Variables:
+   - `HOST`: `0.0.0.0`
+   - `PORT`: `5000` (Render overrides this dynamically)
+   - `THREATORA_API_KEY`: `threatora-zero-trust`
+   - `SECRET_KEY`: `threatora-enterprise-jwt-key-2026`
+5. Click **Deploy Web Service**. Once deployed, Render provides a URL (e.g., `https://threatora-api.onrender.com`).
+6. Anyone can connect their browser or CLI:
+   ```bash
+   python cli.py console --api-url https://threatora-api.onrender.com
+   ```
+
+---
+
 ## API Key Reference
 
 All API endpoints require authentication.  

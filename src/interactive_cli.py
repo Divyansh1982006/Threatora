@@ -1323,4 +1323,16 @@ def launch_console(
 
 
 if __name__ == "__main__":
-    launch_console()
+    import argparse
+    cli_parser = argparse.ArgumentParser(description="Threatora Tactical Cyber Console")
+    cli_parser.add_argument("--api-url", default=os.environ.get("THREATORA_API_URL", DEFAULT_API_URL), help="API endpoint")
+    cli_parser.add_argument("-u", "--username", default=None, help="Operator username")
+    cli_parser.add_argument("-p", "--password", default=None, help="Operator password")
+    cli_parser.add_argument("--no-auth", action="store_true", help="Disable auth gate")
+    parsed = cli_parser.parse_args()
+    launch_console(
+        api_url=parsed.api_url,
+        username=parsed.username,
+        password=parsed.password,
+        require_auth=not parsed.no_auth,
+    )

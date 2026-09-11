@@ -26,5 +26,5 @@ COPY . .
 # Expose Flask Web Dashboard port
 EXPOSE 5000
 
-# Default command: launch Gunicorn WSGI production server
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "server.app:app"]
+# Default command: launch Gunicorn WSGI production server with dynamic port support
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120 server.app:app"]

@@ -267,6 +267,7 @@ def permission_required(permission: str):
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@auth_bp.route("/api/v1/auth/login", methods=["POST"])
 def login():
     """Operator authentication portal."""
     if request.method == "GET":
@@ -324,6 +325,7 @@ def login():
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
+@auth_bp.route("/api/v1/auth/register", methods=["POST"])
 def register():
     """Create new Operator / Analyst identity."""
     if request.method == "GET":

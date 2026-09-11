@@ -69,4 +69,11 @@ def create_app(config: dict = None) -> Flask:
     app.register_blueprint(mitigation_bp)
     app.register_blueprint(simulation_bp)
 
+    @app.after_request
+    def add_cors_headers(response):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-API-Key, X-Simulate-Role"
+        return response
+
     return app
