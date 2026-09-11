@@ -134,7 +134,12 @@ def handle_import_weights(args):
 
 def handle_console(args):
     from .interactive_cli import launch_console
-    launch_console(api_url=args.api_url)
+    launch_console(
+        api_url=args.api_url,
+        username=getattr(args, "username", None),
+        password=getattr(args, "password", None),
+        require_auth=not getattr(args, "no_auth", False),
+    )
 
 
 def main():
@@ -147,6 +152,9 @@ def main():
     # console (default tactical shell)
     p_con = subparsers.add_parser("console", help="Launch interactive Metasploit-style tactical terminal")
     p_con.add_argument("--api-url", default="http://127.0.0.1:5000", help="Threatora Core API URL")
+    p_con.add_argument("-u", "--username", default=None, help="Web portal operator username (e.g. admin)")
+    p_con.add_argument("-p", "--password", default=None, help="Web portal operator passphrase")
+    p_con.add_argument("--no-auth", action="store_true", help="Run without web authentication gate")
     p_con.set_defaults(func=handle_console)
 
     # predict

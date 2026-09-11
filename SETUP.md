@@ -184,6 +184,44 @@ python cli.py predict --input data/samples/sample_traffic.csv --format json
 
 ---
 
+## Step 10 — Interactive Tactical Cyber Terminal (Metasploit-Style)
+
+Threatora includes a state-of-the-art interactive tactical console with **Zero-Trust Web Authentication** integrated directly with the web portal.
+
+### Launching the Console
+
+```bash
+# Interactive mode (prompts for web portal username & passphrase)
+python cli.py console
+
+# Direct login with credentials
+python cli.py console -u admin -p Threatora@2026
+
+# Headless / automation mode (uses system API key)
+python cli.py console --no-auth
+```
+
+### Web Portal Default Operator Credentials
+- **Username:** `admin`
+- **Passphrase:** `Threatora@2026`
+
+### Key Tactical Directives
+
+| Category | Command | Description |
+|----------|---------|-------------|
+| **Executive HUD** | `dashboard` | Full-spectrum 3-panel Cyber HUD (Engine, Threat Radar, Zero-Trust Posture) |
+| **Autonomous Triage** | `quickscan` | 1-Click autonomous workflow: Scan → Lock Target → Forecast → Explain → Mitigate |
+| **Target Management** | `targets` / `use <#>` | Numbered target inventory and Metasploit-style target selector |
+| **Live Telemetry** | `scan --live` | Ingest real-time telemetry stream and evaluate MITRE ATT&CK stages |
+| **State Forecasting** | `forecast --steps 10` | 10-step forward Monte Carlo rollout (.imagine mode) with 95% CI |
+| **Explainable AI** | `explain` | Saliency attribution waterfall chart & SHAP feature ranking |
+| **What-If Simulation** | `simulate -a ISOLATE_HOST` | Counterfactual trajectory simulation & risk reduction comparison |
+| **Containment** | `mitigate --isolate` | Enforce Zero-Trust host isolation directive with audit log |
+| **Identity & Access** | `whoami` / `login` / `logout` | Inspect operator clearance badge or switch user credentials |
+| **Ledger Inspection** | `assets` / `incidents` / `playbooks` | Query enterprise assets, security incident log, and containment playbooks |
+
+---
+
 ## API Key Reference
 
 All API endpoints require authentication.  
