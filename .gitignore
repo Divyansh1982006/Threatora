@@ -1,0 +1,39 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual Environments
+venv/
+env/
+.env/
+.venv/
+
+# Database files
+*.db
+*.sqlite3
+
+# Model weights & artifacts (transfer manually)
+artifacts/checkpoints/*.pt
+artifacts/checkpoints/*.json
+artifacts/reports/
+
+# Logs & temp files
+*.log
+server_startup.log
+
+# IDE / OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Distribution
+dist/
+build/
+*.egg-info/
