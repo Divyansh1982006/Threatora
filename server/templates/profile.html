@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threatora // Operator Profile & Clearance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8f8f6;
+      --card-bg: #ffffff;
+      --card-border: #e8e8e3;
+      --card-border-subtle: #f0f0eb;
+      --accent: #e0523d;
+      --accent-hover: #c94330;
+      --accent-tint: #fef2f0;
+      --accent-border: #fbdad4;
+      --text: #1c1917;
+      --text-muted: #78716c;
+      --text-dim: #a1a1aa;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --red-border: #fecaca;
+      --green: #15803d;
+      --green-bg: #dcfce7;
+      --green-border: #bbf7d0;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
+      --blue-border: #bfdbfe;
+      --purple: #7e22ce;
+      --purple-bg: #f3e8ff;
+      --purple-border: #e9d5ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navbar */
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      background: var(--accent);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(224, 82, 61, 0.25);
+    }
+
+    .brand-name {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-tag {
+      background: var(--accent-tint);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      letter-spacing: 0.4px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-nav {
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-dashboard {
+      background: #fafaf8;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+
+    .btn-dashboard:hover {
+      background: #f0f0eb;
+      border-color: #d8d8d2;
+    }
+
+    .btn-logout {
+      background: var(--accent-tint);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+    }
+
+    .btn-logout:hover {
+      background: #fee6e1;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1060px;
+      width: 100%;
+      margin: 28px auto;
+      padding: 0 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* Hero Profile Card */
+    .profile-hero {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-hero::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent) 0%, #f97316 100%);
+    }
+
+    .hero-left {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .avatar-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--purple-bg);
+      border: 2px solid var(--purple-border);
+      color: var(--purple);
+      font-size: 2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(126, 34, 206, 0.12);
+      flex-shrink: 0;
+    }
+
+    .hero-info h1 {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .operator-handle {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .badges-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-clearance {
+      background: var(--accent-tint);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+    }
+
+    .badge-status {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+    }
+
+    .badge-status::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .badge-role {
+      background: var(--blue-bg);
+      color: var(--blue);
+      border: 1px solid var(--blue-border);
+    }
+
+    .hero-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      text-align: right;
+    }
+
+    .meta-item {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .meta-item strong {
+      color: var(--text);
+    }
+
+    /* Alerts */
+    .alert {
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .alert-success {
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      color: var(--green);
+    }
+
+    .alert-error {
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      color: var(--red);
+    }
+
+    /* Two-Column Grid */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 22px;
+    }
+
+    @media (max-width: 860px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-right {
+        align-items: flex-start;
+        text-align: left;
+      }
+    }
+
+    /* Card Panels */
+    .panel-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+      margin-bottom: 22px;
+    }
+
+    .panel-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .panel-header {
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-subtitle {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      background: #fafaf8;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.86rem;
+      color: var(--text);
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(224, 82, 61, 0.12);
+    }
+
+    .form-input[readonly] {
+      background: #f4f4f1;
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .btn-submit {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      padding: 11px 20px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(224, 82, 61, 0.2);
+    }
+
+    .btn-submit:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #fafaf8;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 11px 20px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #f0f0eb;
+      border-color: #d8d8d2;
+    }
+
+    /* Token / API Key Box */
+    .token-box {
+      background: #fafaf8;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text);
+      margin: 12px 0 16px;
+    }
+
+    .token-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .btn-copy {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .btn-copy:hover {
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-tint);
+    }
+
+    .code-snippet {
+      background: #1c1917;
+      color: #f4f4f5;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    /* Entitlements List */
+    .entitlement-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .entitlement-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #fafaf8;
+      border: 1px solid var(--card-border-subtle);
+      border-radius: 8px;
+      font-size: 0.82rem;
+    }
+
+    .entitlement-name {
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .entitlement-status {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .status-active {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+    }
+
+    .status-restricted {
+      background: #f4f4f5;
+      color: #71717a;
+      border: 1px solid #e4e4e7;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header>
+    <a href="/" class="brand-link">
+      <div class="brand-icon">T</div>
+      <div>
+        <span class="brand-name">Threatora</span>
+        <span class="brand-tag">OPERATOR PROFILE</span>
+      </div>
+    </a>
+
+    <div class="nav-actions">
+      <a href="/" class="btn-nav btn-dashboard">
+        <span>←</span>
+        <span>Back to Operations Dashboard</span>
+      </a>
+      <a href="/logout" class="btn-nav btn-logout">
+        <span>Logout</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Hero Profile Card -->
+    <div class="profile-hero">
+      <div class="hero-left">
+        <div class="avatar-circle">
+          {{ (user.full_name[:2] if user.full_name else 'OP') | upper }}
+        </div>
+        <div class="hero-info">
+          <h1>
+            {{ user.full_name }}
+          </h1>
+          <div class="operator-handle">
+            <span>@{{ user.username }}</span> &middot; <span>{{ user.email }}</span>
+          </div>
+          <div class="badges-row">
+            <span class="badge badge-clearance">LEVEL-4 TOP SECRET // ZERO-TRUST</span>
+            <span class="badge badge-status">AUTHENTICATED & ACTIVE</span>
+            <span class="badge badge-role">{{ user.role }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="meta-item">Operator ID: <strong>#OP-{{ "%04d" | format(user.id) }}</strong></div>
+        <div class="meta-item">
+          Account Created:
+          <strong>{{ user.created_at.strftime('%d %b %Y') if user.created_at else 'Active' }}</strong>
+        </div>
+        <div class="meta-item">
+          Last Session:
+          <strong>{{ user.last_login.strftime('%d %b %Y, %H:%M UTC') if user.last_login else 'Active Now' }}</strong>
+        </div>
+        <div class="meta-item">
+          World Model Protocol: <strong>LSTM CPU-Optimized (Zero Egress)</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Alerts -->
+    {% if success %}
+    <div class="alert alert-success">
+      <span>✅</span>
+      <span>{{ success }}</span>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-error">
+      <span>⚠️</span>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Main Two-Column Layout -->
+    <div class="profile-grid">
+
+      <!-- Left Column: Identity & Passphrase Forms -->
+      <div>
+        <!-- Panel 1: Profile Information -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">👤 Operator Information</div>
+              <div class="panel-subtitle">Manage your personal identification details and operational assignment</div>
+            </div>
+          </div>
+
+          <form action="/profile" method="POST">
+            <input type="hidden" name="action" value="update_profile">
+
+            <div class="form-group">
+              <label class="form-label" for="full_name">Full Name</label>
+              <input class="form-input" type="text" id="full_name" name="full_name" value="{{ user.full_name }}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="username">Operator Call-Sign / Username (Immutable)</label>
+              <input class="form-input" type="text" id="username" value="{{ user.username }}" readonly>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="email">Security Communications Email</label>
+              <input class="form-input" type="email" id="email" name="email" value="{{ user.email }}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="role">Assigned Operational Role</label>
+              <select class="form-select" id="role" name="role">
+                <option value="SOC_ANALYST" {% if user.role == 'SOC_ANALYST' %}selected{% endif %}>SOC Analyst (Telemetry & Kill-Chain Radar)</option>
+                <option value="INCIDENT_RESPONDER" {% if user.role == 'INCIDENT_RESPONDER' %}selected{% endif %}>Incident Responder (1-Click Quarantine & Playbooks)</option>
+                <option value="SECURITY_ENGINEER" {% if user.role == 'SECURITY_ENGINEER' %}selected{% endif %}>Security Engineer (Model Simulation & Architecture)</option>
+                <option value="CHIEF_CISO_ADMIN" {% if user.role == 'CHIEF_CISO_ADMIN' %}selected{% endif %}>Chief CISO / Administrator (Full Clearance)</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn-submit">
+              Save Profile Changes &rarr;
+            </button>
+          </form>
+        </div>
+
+        <!-- Panel 2: Security Passphrase Change -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🔑 Security Passphrase</div>
+              <div class="panel-subtitle">Update your Zero-Trust authentication secret (minimum 6 characters)</div>
+            </div>
+          </div>
+
+          <form action="/profile" method="POST">
+            <input type="hidden" name="action" value="change_password">
+
+            <div class="form-group">
+              <label class="form-label" for="current_password">Current Passphrase</label>
+              <input class="form-input" type="password" id="current_password" name="current_password" placeholder="••••••••••••" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="new_password">New Passphrase</label>
+              <input class="form-input" type="password" id="new_password" name="new_password" placeholder="••••••••••••" minlength="6" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="confirm_password">Confirm New Passphrase</label>
+              <input class="form-input" type="password" id="confirm_password" name="confirm_password" placeholder="••••••••••••" minlength="6" required>
+            </div>
+
+            <button type="submit" class="btn-secondary">
+              Update Passphrase &rarr;
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: API Keys & Entitlements -->
+      <div>
+        <!-- Panel 3: Zero-Trust API Token -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🛡️ Zero-Trust Operator Token</div>
+              <div class="panel-subtitle">Use this key for headless CLI pipelines, remote telemetry, and audit ingestion</div>
+            </div>
+          </div>
+
+          <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+            This token authenticates commands initiated via the <code>threatora</code> CLI and automated Python integration test runners without browser cookies.
+          </p>
+
+          <div class="token-box">
+            <span class="token-value" id="apiKeyDisplay">{{ api_key }}</span>
+            <button class="btn-copy" type="button" onclick="copyApiKey()">Copy Token</button>
+          </div>
+
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--text); margin-top: 14px;">
+            Example CLI Usage:
+          </div>
+          <pre class="code-snippet"># Predict real-time stream via CLI
+python cli.py predict --stream sample.pcap
+
+# Direct REST invocation with Zero-Trust Header
+curl -H "X-API-Key: {{ api_key }}" \
+     http://127.0.0.1:5000/api/health</pre>
+        </div>
+
+        <!-- Panel 4: Security Clearances & Entitlements -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🔒 Role Entitlements & Authorizations</div>
+              <div class="panel-subtitle">Operational privileges granted by NTRO PS 26153 protocol</div>
+            </div>
+          </div>
+
+          <ul class="entitlement-list">
+            <li class="entitlement-item">
+              <span class="entitlement-name">
+                <span>📡</span> Telemetry Stream & PCAP Ingestion
+              </span>
+              <span class="entitlement-status status-active">PERMITTED</span>
+            </li>
+            <li class="entitlement-item">
+              <span class="entitlement-name">
+                <span>⚡</span> Real-time LSTM Anomaly Forecasting
+              </span>
+              <span class="entitlement-status status-active">PERMITTED</span>
+            </li>
+            <li class="entitlement-item">
+              <span class="entitlement-name">
+                <span>🛡️</span> 1-Click Endpoint Quarantine & Isolation
+              </span>
+              <span class="entitlement-status status-active">PERMITTED</span>
+            </li>
+            <li class="entitlement-item">
+              <span class="entitlement-name">
+                <span>🧪</span> Counterfactual What-If Sandbox
+              </span>
+              <span class="entitlement-status status-active">PERMITTED</span>
+            </li>
+            <li class="entitlement-item">
+              <span class="entitlement-name">
+                <span>📑</span> SQLite / Postgres State Ledger Audit
+              </span>
+              <span class="entitlement-status status-active">PERMITTED</span>
+            </li>
+            <li class="entitlement-item">
+              <span class="entitlement-name">
+                <span>🧠</span> World Model Weights Sync & Overwrite
+              </span>
+              <span class="entitlement-status {% if user.role == 'CHIEF_CISO_ADMIN' %}status-active{% else %}status-restricted{% endif %}">
+                {% if user.role == 'CHIEF_CISO_ADMIN' %}PERMITTED{% else %}CISO ONLY{% endif %}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-note">
+      Threatora Cyber Defense Platform &middot; Zero-Trust Offline Architecture &middot; Confidential
+    </div>
+
+  </div>
+
+  <script>
+    function copyApiKey() {
+      const keyText = document.getElementById('apiKeyDisplay').innerText;
+      navigator.clipboard.writeText(keyText).then(() => {
+        const btn = document.querySelector('.btn-copy');
+        const orig = btn.innerText;
+        btn.innerText = 'Copied! ✓';
+        btn.style.color = '#15803d';
+        setTimeout(() => {
+          btn.innerText = orig;
+          btn.style.color = '';
+        }, 2000);
+      }).catch(err => {
+        alert('API Key: ' + keyText);
+      });
+    }
+  </script>
+
+</body>
+</html>
