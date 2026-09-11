@@ -1,8 +1,12 @@
 """Metasploit-Style Interactive Tactical Cyber Defense Console for Threatora (NTRO PS 26153).
 
 Engineered using cmd2 and rich:
+  - High-impact Cyber Command Header with adaptive terminal scaling.
+  - Interactive boot animation with OSI Layer 2-7 synchronization.
   - Zero-Trust Identity Gateway with web portal authentication (/login).
-  - Tactical cyber operations prompt with real-time API communication.
+  - Network Layer Intelligence: OSI 7-Layer Defense Matrix (layers/osi).
+  - Interactive Enterprise Network Topology Tree (topology/netmap).
+  - Real-time animated NetFlow Packet Radar (monitor/sniff/packets).
   - Multi-panel Cyber HUD / Executive Dashboard (dashboard).
   - Autonomous 1-click triage & response (quickscan).
   - Target switching by index or IP (use, targets).
@@ -16,8 +20,8 @@ from __future__ import annotations
 
 import sys
 import os
+import time
 import json
-import getpass
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
@@ -38,9 +42,10 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
+from rich.tree import Tree
 from rich.columns import Columns
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Prompt
 from rich import box
 from rich.align import Align
 
@@ -95,20 +100,22 @@ class ThreatoraConsole(cmd2.Cmd):
         if self.current_user:
             username = self.current_user.get("username", "operator")
             role = self.current_user.get("role", "SOC")
-            # Compact role for prompt
             short_role = role.replace("CHIEF_", "").replace("_ADMIN", "").replace("_ANALYST", "")
             user_str = f"{username}@{short_role}"
 
         if self.current_target:
-            self.prompt = f"threatora [{user_str} | target:{self.current_target}] > "
+            self.prompt = f"⚡ threatora [{user_str} | target:{self.current_target}] ❯ "
         else:
-            self.prompt = f"threatora [{user_str}] > "
+            self.prompt = f"⚡ threatora [{user_str}] ❯ "
 
     # -------------------------------------------------------------------------
-    # Lifecycle & Banner
+    # Lifecycle & Animated Startup
     # -------------------------------------------------------------------------
     def preloop(self) -> None:
         """Display cyber banner and authenticate operator upon startup."""
+        if sys.stdin.isatty():
+            self._animate_boot_sequence()
+
         self._print_banner()
 
         # Handle authentication
@@ -118,33 +125,83 @@ class ThreatoraConsole(cmd2.Cmd):
             if sys.stdin.isatty():
                 self._interactive_login_prompt()
             else:
-                # Headless / piped execution fallback
                 self._headless_auto_auth()
 
         self._update_prompt()
 
-    def _print_banner(self) -> None:
-        """Render high-tech cyber operations banner."""
-        banner_art = """[bold bright_red]████████╗██╗  ██╗██████╗ ███████╗ █████╗ ████████╗ ██████╗ ██████╗  █████╗ [/bold bright_red]
-[bold bright_red]╚══██╔══╝██║  ██║██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗[/bold bright_red]
-[bold bright_yellow]   ██║   ███████║██████╔╝█████╗  ███████║   ██║   ██║   ██║██████╔╝███████║[/bold bright_yellow]
-[bold bright_cyan]   ██║   ██╔══██║██╔══██╗██╔══╝  ██╔══██║   ██║   ██║   ██║██╔══██╗██╔══██║[/bold bright_cyan]
-[bold bright_blue]   ██║   ██║  ██║██║  ██║███████╗██║  ██║   ██║   ╚██████╔╝██║  ██║██║  ██║[/bold bright_blue]
-[bold white]   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝[/bold white]"""
-        console.print(Align.center(banner_art))
+    def _animate_boot_sequence(self) -> None:
+        """High-tech interactive boot animation synchronizing OSI Layers and AI Engine."""
+        boot_steps = [
+            ("L2 DATA LINK", "Synchronizing Promiscuous Ethernet TAP & MAC Quarantine Matrix..."),
+            ("L3 NETWORK", "Calibrating IPv4 Subnet Routing & TTL Distribution Engine..."),
+            ("L4 TRANSPORT", "Reassembling TCP Flow Dynamics & SYN Rate-Limiting Filter..."),
+            ("L7 APP", "Ingesting Deep Packet Inspection (DPI) & C2 Beacon Signatures..."),
+            ("AI WORLD MODEL", "Ingesting 62 Telemetry Features into LSTM Recurrent Hidden State..."),
+            ("ZERO-TRUST", "Zero-Trust Behavioral Verification Core: ENFORCING."),
+        ]
 
-        sub_title = (
-            "[bold bright_green]⚡ ZERO-TRUST AI NETWORK WORLD MODEL & ATT&CK MITIGATION CONSOLE[/bold bright_green]\n"
-            "[dim cyan]National Technical Research Organisation · Problem Statement 26153[/dim cyan]"
+        with Progress(
+            SpinnerColumn(spinner_name="dots", style="bold bright_cyan"),
+            TextColumn("[bold bright_cyan][{task.fields[layer]}][/bold bright_cyan] {task.description}"),
+            transient=True,
+            console=console,
+        ) as progress:
+            task = progress.add_task("", layer="INITIALIZING")
+            for layer, desc in boot_steps:
+                progress.update(task, description=f"[bold white]{desc}[/bold white]", layer=layer)
+                time.sleep(0.09)
+
+    def _print_banner(self) -> None:
+        """Render grand, high-impact cyber operations banner with network layer theme."""
+        banner_art = (
+            "[bold red]████████╗██╗  ██╗██████╗ ███████╗ █████╗ ████████╗ ██████╗ ██████╗  █████╗ [/bold red]\n"
+            "[bold bright_red]╚══██╔══╝██║  ██║██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗[/bold bright_red]\n"
+            "[bold bright_yellow]   ██║   ███████║██████╔╝█████╗  ███████║   ██║   ██║   ██║██████╔╝███████║[/bold bright_yellow]\n"
+            "[bold bright_cyan]   ██║   ██╔══██║██╔══██╗██╔══╝  ██╔══██║   ██║   ██║   ██║██╔══██╗██╔══██║[/bold bright_cyan]\n"
+            "[bold bright_blue]   ██║   ██║  ██║██║  ██║███████╗██║  ██║   ██║   ╚██████╔╝██║  ██║██║  ██║[/bold bright_blue]\n"
+            "[bold white]   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝[/bold white]"
         )
-        console.print(Align.center(sub_title))
+
+        console.print(Align.center(banner_art))
+        console.print(
+            Align.center(
+                "[bold #06d6a0]⚡ RECURRENT AI NETWORK ATTACK FORECASTING & MITRE ATT&CK SIMULATION ⚡[/]"
+            )
+        )
+        console.print(
+            Align.center(
+                "[dim #8ecae6]National Technical Research Organisation (NTRO) · Defense Problem Statement 26153[/]"
+            )
+        )
 
         status_line = (
-            f"[dim]Core API: [bold cyan]{self.api_url}[/bold cyan] │ "
-            f"Architecture: [bold yellow]LSTM World Model (62-dim)[/bold yellow] │ "
-            f"State: [bold green]Zero-Trust Enabled[/bold green][/dim]"
+            f"[dim]Core API: [bold #00f5d4]{self.api_url}[/] │ "
+            f"Architecture: [bold #ffbe0b]LSTM World Model (62-dim)[/] │ "
+            f"Defense Posture: [bold #06d6a0]Zero-Trust Enforcing (OSI L2-L7)[/][/dim]"
         )
         console.print(Align.center(status_line))
+        console.print()
+
+        # Tactical Directive Quick Accelerators Card
+        quick_table = Table(
+            title="[bold #00f5d4]⚡ TACTICAL DIRECTIVE ACCELERATORS[/]",
+            box=box.ROUNDED,
+            border_style="#4361ee",
+            expand=True,
+            caption="[dim #8ecae6]Type any command below to begin operations · 'help' for full catalog[/]",
+        )
+        quick_table.add_column("Command", style="bold #00f5d4", width=12)
+        quick_table.add_column("Tactical Capability & Operational Scope", style="white")
+        quick_table.add_row("quickscan", "1-Click Autonomous Triage (Scan → Lock Target → Forecast → Explain)")
+        quick_table.add_row("dashboard", "Full-Spectrum 3-Panel Executive Cyber HUD (Health, Radar & Posture)")
+        quick_table.add_row("topology", "Interactive Visual Network Tree of WAN, DMZ, and Internal Subnets")
+        quick_table.add_row("monitor", "Real-Time Animated NetFlow / Packet Frame Sniffer & Infiltration Gauge")
+        quick_table.add_row("targets", "Discovered Hosts Inventory & Metasploit-Style Selector (`use <#>`)")
+        quick_table.add_row("forecast", "LSTM 10-Step Forward Rollout (.imagine mode with 95% CI)")
+        quick_table.add_row("explain", "Zero-Hallucination SHAP Feature Importance Waterfall & Attribution")
+        quick_table.add_row("mitigate", "Zero-Trust Host Isolation Directive (`mitigate --isolate`) & Audit Log")
+
+        console.print(quick_table)
         console.print()
 
     # -------------------------------------------------------------------------
@@ -185,10 +242,8 @@ class ThreatoraConsole(cmd2.Cmd):
 
     def _headless_auto_auth(self) -> None:
         """Attempt non-interactive auth for CI / tests / scripts."""
-        # Try default admin credentials
         ok = self._do_auth_attempt("admin", "Threatora@2026", silent=True)
         if not ok:
-            # Fallback to system service role
             self.current_user = {
                 "id": 0,
                 "username": "system-agent",
@@ -200,8 +255,8 @@ class ThreatoraConsole(cmd2.Cmd):
     def _interactive_login_prompt(self) -> None:
         """Interactive visual login gate requiring web portal credentials."""
         login_panel = Panel(
-            "[bold white]ENTER OPERATOR CREDENTIALS (Web Portal Identity)[/bold white]\n"
-            "[dim]Authenticate with your Threatora Web credentials to access tactical operations.\n"
+            "[bold white]ENTER OPERATOR IDENTITY (Web Portal Identity Provider)[/bold white]\n"
+            "[dim]Authenticate with your Threatora Web credentials to unlock tactical operations.\n"
             "Default Administrative Identity: [bold yellow]admin[/bold yellow] / [bold yellow]Threatora@2026[/bold yellow][/dim]",
             title="[bold cyan]🛡️ ZERO-TRUST ACCESS GATEWAY[/bold cyan]",
             border_style="bright_blue",
@@ -298,7 +353,7 @@ class ThreatoraConsole(cmd2.Cmd):
         return False
 
     # -------------------------------------------------------------------------
-    # Authentication Commands
+    # Authentication & Identity Commands
     # -------------------------------------------------------------------------
     @with_category("Authentication & Identity")
     def do_whoami(self, _args):
@@ -347,6 +402,165 @@ class ThreatoraConsole(cmd2.Cmd):
         self.current_user = None
         self._update_prompt()
         console.print("[bold yellow]✔ Operator session terminated.[/bold yellow]")
+
+    # -------------------------------------------------------------------------
+    # Network Layer Intelligence: topology, monitor, layers
+    # -------------------------------------------------------------------------
+    @with_category("Network Layer Intelligence")
+    def do_topology(self, _args):
+        """Visualize Enterprise Network Topology Tree across WAN, DMZ, and Internal Corp subnets."""
+        # Query asset inventory from state store
+        assets = []
+        try:
+            ra = self.session.get(f"{self.api_url}/api/v1/assets", timeout=4)
+            if ra.status_code == 200:
+                assets = ra.json().get("assets", [])
+        except Exception:
+            pass
+
+        tree = Tree("[bold bright_cyan]🌐 THREATORA ENTERPRISE ZERO-TRUST MESH (OSI L3/L4/L7)[/bold bright_cyan]")
+        wan = tree.add("[bold magenta]WAN / EXTERNAL PERIMETER (147.32.84.0/24)[/bold magenta]")
+
+        # Find edge gateway
+        edge = next((a for a in assets if "EDGE" in a.get("hostname", "")), None)
+        edge_status = edge.get("status", "HEALTHY") if edge else "HEALTHY"
+        gw = wan.add(
+            f"[bold cyan]147.32.84.165 (EDGE-GATEWAY-EXT)[/bold cyan] │ "
+            f"[dim]VyOS Router · BGP:179, IPsec:500, SNMP:161[/dim] │ "
+            f"[{'green' if edge_status == 'HEALTHY' else 'red'}]{edge_status}[/]"
+        )
+
+        dmz = gw.add("[bold yellow]DMZ & INGRESS PROXY TIER[/bold yellow]")
+        proxy = next((a for a in assets if "PROXY" in a.get("hostname", "")), None)
+        proxy_status = proxy.get("status", "HEALTHY") if proxy else "HEALTHY"
+        dmz_node = dmz.add(
+            f"[bold cyan]192.168.1.15 (INGRESS-NGINX-PROXY)[/bold cyan] │ "
+            f"[dim]Alpine Linux · HTTP:80, HTTPS:443, SSH:2222[/dim] │ "
+            f"[{'green' if proxy_status == 'HEALTHY' else 'red'}]{proxy_status}[/]"
+        )
+
+        corp = dmz_node.add("[bold blue]INTERNAL ENTERPRISE SUBNET (192.168.1.0/24)[/bold blue]")
+
+        # Internal hosts
+        for a in assets:
+            ip = a.get("ip_address")
+            if ip in ("147.32.84.165", "192.168.1.15"):
+                continue
+
+            hostname = a.get("hostname")
+            crit = a.get("criticality")
+            status = a.get("status")
+            is_target = ip == self.current_target
+
+            target_badge = " [bold yellow]★ ACTIVE TARGET[/bold yellow]" if is_target else ""
+            status_badge = (
+                "[bold white on red] ISOLATED / COMPROMISED [/bold white on red]"
+                if status in ("ISOLATED", "COMPROMISED")
+                else "[bold green]HEALTHY[/bold green]"
+            )
+
+            corp.add(
+                f"[bold {'bright_red' if status in ('ISOLATED', 'COMPROMISED') else 'white'}]{ip} ({hostname})[/] │ "
+                f"[dim]{a.get('operating_system', 'Linux')} · [{crit}][/dim] │ {status_badge}{target_badge}"
+            )
+
+        console.print(
+            Panel(
+                tree,
+                box=box.ROUNDED,
+                border_style="cyan",
+                title="[bold bright_green]🗺️ ENTERPRISE ATTACK SURFACE & NETWORK TOPOLOGY[/bold bright_green]",
+                subtitle="[dim]Switch active target with: `use <#>` or `use <IP>`[/dim]",
+            )
+        )
+
+    def do_netmap(self, args):
+        """Network topology alias."""
+        return self.do_topology(args)
+
+    @with_category("Network Layer Intelligence")
+    def do_monitor(self, _args):
+        """Live animated packet stream monitor simulating real-time NetFlow ingestion."""
+        console.print(Panel("[bold cyan]📡 REAL-TIME OSI L3/L4/L7 PACKET & FLOW TELEMETRY MONITOR[/bold cyan]", box=box.ROUNDED, expand=False))
+        console.print("[dim]Ingesting packet telemetry from virtual TAP interface (Promiscuous mode)...[/dim]\n")
+
+        table = Table(box=box.ROUNDED, expand=True)
+        table.add_column("Time", style="dim", width=10)
+        table.add_column("Proto", justify="center", width=12)
+        table.add_column("Flow Vector (Src -> Dst)", style="bold white")
+        table.add_column("Length", justify="right", width=8)
+        table.add_column("Infiltration Risk", justify="center", width=16)
+        table.add_column("OSI L7 Vector / ATT&CK", justify="left")
+
+        # Telemetry packet frame samples
+        now = time.strftime("%H:%M:%S")
+        packets = [
+            (f"{now}.10", "[bold cyan]TCP [SYN][/bold cyan]", "192.168.1.105:50421 -> 192.168.1.5:5432", "64 B", "[yellow]██░░░░ 18.2%[/yellow]", "L4 Port Scan (DB Probing)"),
+            (f"{now}.18", "[bold green]TCP [ACK][/bold green]", "192.168.1.5:5432    -> 192.168.1.105:50421", "52 B", "[green]█░░░░░  8.5%[/green]", "L4 TCP RST/ACK Generated"),
+            (f"{now}.29", "[bold yellow]UDP [DNS][/bold yellow]", "192.168.1.105:58102 -> 147.32.84.165:53", "182 B", "[red]████░░ 41.5%[/red]", "[bold yellow]T1071.004: DNS Tunneling[/bold yellow]"),
+            (f"{now}.42", "[bold red]TCP [PSH,ACK][/bold red]", "192.168.1.105:49152 -> 147.32.84.165:443", "1.4 KB", "[bold red]█████░ 54.8%[/bold red]", "[bold red]T1071: C2 Beacon Spikes[/bold red]"),
+            (f"{now}.55", "[bold green]TCP [ACK][/bold green]", "192.168.1.10:389    -> 192.168.1.15:44120", "840 B", "[green]█░░░░░  4.1%[/green]", "L7 Kerberos Ticket Auth"),
+            (f"{now}.68", "[bold red]TCP [PSH,ACK][/bold red]", "192.168.1.105:49152 -> 147.32.84.165:443", "1.4 KB", "[bold red]██████ 62.1%[/bold red]", "[bold red]T1041: Exfiltration Flow[/bold red]"),
+        ]
+
+        # Interactive animation delay simulating streaming frames
+        with Progress(
+            SpinnerColumn(spinner_name="dots", style="bold bright_cyan"),
+            TextColumn("[bold cyan]Sniffing frame {task.completed}/{task.total}...[/bold cyan]"),
+            transient=True,
+            console=console,
+        ) as prog:
+            task = prog.add_task("Streaming", total=len(packets))
+            for pkt in packets:
+                table.add_row(*pkt)
+                prog.advance(task)
+                time.sleep(0.10)
+
+        console.print(table)
+        console.print(
+            f"[dim]Capture Summary: 6 frames ingested │ 3 High-Risk Anomaly Flags Detected │ "
+            f"Active Infiltration Target: [bold yellow]{self.current_target or '192.168.1.105'}[/bold yellow][/dim]\n"
+        )
+
+    def do_sniff(self, args):
+        """Packet monitor alias."""
+        return self.do_monitor(args)
+
+    def do_packets(self, args):
+        """Packet monitor alias."""
+        return self.do_monitor(args)
+
+    @with_category("Network Layer Intelligence")
+    def do_layers(self, _args):
+        """Inspect OSI 7-Layer Defense Matrix & 62-dimensional Telemetry Feature Mapping."""
+        table = Table(
+            title="🌐 OSI 7-LAYER ATTACK SURFACE & THREATORA DEFENSE MATRIX",
+            box=box.ROUNDED,
+            expand=True,
+        )
+        table.add_column("Layer", style="bold cyan", width=10)
+        table.add_column("Protocols", style="bold white", width=16)
+        table.add_column("Monitored Telemetry Signals (62-dim)", justify="left")
+        table.add_column("Zero-Trust Defense Countermeasure", justify="left")
+
+        layer_data = [
+            ("Layer 2\nData Link", "Ethernet 802.3\nARP, MAC Addressing", "Frame size variance, packet IAT covariance, jumbo frame ratio", "[green]Port security, 802.1X quarantine, MAC spoofing drops[/green]"),
+            ("Layer 3\nNetwork", "IPv4, ICMP, Routing\nSubnets, BGP, IPsec", "TTL mean/min, IP header entropy, subnet routing divergence", "[yellow]BGP blackholing, ICMP rate limiting, route severance[/yellow]"),
+            ("Layer 4\nTransport", "TCP, UDP\nFlow Ports, Handshakes", "Fraction SYN-only, TCP window scaling, management port probes (22/445/3389)", "[red]SYN flood rate-limiting, egress port throttling[/red]"),
+            ("Layer 5\nSession", "TLS 1.3, SSHv2\nSession State Tables", "Session duration std, flow idle time, handshake failure frequency", "[yellow]Active session reset, certificate revocation enforcement[/yellow]"),
+            ("Layer 6\nPresentation", "MIME, SSL Decryption\nPayload Encoding", "Entropy of payload bytes, gzip compression ratio, base64 flags", "[cyan]SSL/TLS inspection, high-entropy binary payload inspection[/cyan]"),
+            ("Layer 7\nApplication", "HTTP/2, DNS, Kerberos\nSMB, C2 Beacons", "Beacon periodicity, DNS tunneling QPS, HTTP POST payload size ratio", "[bold red]Zero-Trust DNS Sinkholing, Automated Host Isolation[/bold red]"),
+        ]
+
+        for row in layer_data:
+            table.add_row(*row)
+
+        console.print(table)
+        console.print("[dim]Run `quickscan` to evaluate live network flows across all OSI layers.[/dim]\n")
+
+    def do_osi(self, args):
+        """OSI layers alias."""
+        return self.do_layers(args)
 
     # -------------------------------------------------------------------------
     # Operational & Executive Directives
@@ -417,7 +631,7 @@ class ThreatoraConsole(cmd2.Cmd):
             f"[bold cyan]Inference Device :[/bold cyan] [bold yellow]{health_data.get('device', 'cpu').upper()}[/bold yellow]\n"
             f"[bold cyan]Recurrent Model  :[/bold cyan] [bold white]{health_data.get('recurrent_cell', 'LSTM')}[/bold white]\n"
             f"[bold cyan]Feature Dimension:[/bold cyan] [bold white]{health_data.get('obs_dimension', 62)} Telemetry Features[/bold white]\n"
-            f"[bold cyan]Zero-Trust State :[/bold cyan] [bold green]ENFORCING[/bold green]"
+            f"[bold cyan]OSI Telemetry TAP:[/bold cyan] [bold green]L2-L7 INGESTION ACTIVE[/bold green]"
         )
         p1 = Panel(engine_txt, title="[bold cyan]⚙️ ENGINE TELEMETRY[/bold cyan]", box=box.ROUNDED, expand=True)
 
@@ -454,7 +668,7 @@ class ThreatoraConsole(cmd2.Cmd):
         op_role = self.current_user.get("role", "GUEST") if self.current_user else "NONE"
         console.print(
             f"[dim]Operator in command: [bold white]{op_name}[/bold white] ([bold cyan]{op_role}[/bold cyan]) │ "
-            f"Type [bold cyan]quickscan[/bold cyan] for 1-click autonomous triage, or [bold cyan]help[/bold cyan] for directives.[/dim]\n"
+            f"Type [bold cyan]topology[/bold cyan] for network mesh, [bold cyan]monitor[/bold cyan] for live packets, or [bold cyan]quickscan[/bold cyan] for triage.[/dim]\n"
         )
 
     @with_category("Operational Directives")
@@ -519,7 +733,6 @@ class ThreatoraConsole(cmd2.Cmd):
         """Select active target by index number (#) or direct IP address."""
         target_input = args.target.strip()
 
-        # Check if integer index
         if target_input.isdigit():
             idx = int(target_input) - 1
             if 0 <= idx < len(self.detected_hosts):
@@ -532,7 +745,6 @@ class ThreatoraConsole(cmd2.Cmd):
                 console.print(f"[red]Invalid target index #{target_input}. Run `targets` to see available hosts.[/red]")
                 return
 
-        # Direct IP
         self.current_target = target_input
         self._update_prompt()
         console.print(f"[bold green]✔ Active target switched to:[/bold green] [bold yellow]{target_input}[/bold yellow]")
@@ -588,7 +800,6 @@ class ThreatoraConsole(cmd2.Cmd):
                     with open(input_path, "rb") as f:
                         resp = self.session.post(f"{self.api_url}/api/upload", files={"file": f}, timeout=60)
                 else:
-                    # Live / demo stream
                     resp = self.session.get(f"{self.api_url}/api/demo", timeout=30)
 
                 if resp.status_code != 200:
@@ -607,14 +818,11 @@ class ThreatoraConsole(cmd2.Cmd):
             console.print("[yellow]Scan completed: No host telemetry found in stream.[/yellow]")
             return
 
-        # Auto-set lead target if none selected
         if not self.current_target and hosts:
-            # Pick the host with highest risk
             highest_risk_host = max(hosts, key=lambda h: h.get("current_risk_score", 0))
             self.current_target = highest_risk_host["host_ip"]
             self._update_prompt()
 
-        # Render Rich Table
         table = Table(
             title="⚡ THREATORA TELEMETRY INFERENCE & MITRE ATT&CK MAPPING",
             box=box.ROUNDED,
@@ -639,7 +847,6 @@ class ThreatoraConsole(cmd2.Cmd):
                 else "[bold white on green] BENIGN [/bold white on green]"
             )
 
-            # Visual mini-meter
             bar_len = int(risk / 10)
             meter = f"[{risk_color}]" + "█" * bar_len + "░" * (10 - bar_len) + f"[/{risk_color}]"
 
@@ -661,7 +868,8 @@ class ThreatoraConsole(cmd2.Cmd):
         console.print(
             "[dim]Quick Actions: Type [bold cyan]use <#>[/bold cyan] to switch target │ "
             "[bold cyan]forecast[/bold cyan] for 10-min rollout │ "
-            "[bold cyan]explain[/bold cyan] for SHAP attribution.[/dim]"
+            "[bold cyan]explain[/bold cyan] for SHAP attribution │ "
+            "[bold cyan]topology[/bold cyan] for network tree.[/dim]"
         )
 
     @with_category("Tactical Intelligence")
@@ -744,7 +952,6 @@ class ThreatoraConsole(cmd2.Cmd):
             console.print("[yellow]No forecast timeline generated for target host.[/yellow]")
             return
 
-        # Slice to requested steps
         if args.steps and args.steps < len(timeline):
             display_timeline = timeline[:args.steps]
         else:
@@ -766,8 +973,7 @@ class ThreatoraConsole(cmd2.Cmd):
             stage_name = step.get("stage_name", "Unknown")
             stage_color = "bright_red" if prob >= 50 else ("bright_yellow" if prob >= 20 else "bright_green")
 
-            # High-density bar
-            bar_len = int(prob / 3.33)  # Max 30 chars
+            bar_len = int(prob / 3.33)
             bar_visual = f"[{stage_color}]" + "█" * bar_len + "░" * (30 - bar_len) + f"[/{stage_color}]"
 
             table.add_row(

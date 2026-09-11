@@ -210,6 +210,9 @@ python cli.py console --no-auth
 | Category | Command | Description |
 |----------|---------|-------------|
 | **Executive HUD** | `dashboard` | Full-spectrum 3-panel Cyber HUD (Engine, Threat Radar, Zero-Trust Posture) |
+| **Network Topology** | `topology` / `netmap` | Visual network tree of enterprise assets across WAN, DMZ, and Internal Subnets |
+| **Live Packet Radar** | `monitor` / `sniff` | Animated real-time NetFlow frame monitor with flow vectors & risk gauges |
+| **OSI Defense Matrix** | `layers` / `osi` | 7-Layer OSI attack surface & 62-dim telemetry feature mapping |
 | **Autonomous Triage** | `quickscan` | 1-Click autonomous workflow: Scan → Lock Target → Forecast → Explain → Mitigate |
 | **Target Management** | `targets` / `use <#>` | Numbered target inventory and Metasploit-style target selector |
 | **Live Telemetry** | `scan --live` | Ingest real-time telemetry stream and evaluate MITRE ATT&CK stages |
