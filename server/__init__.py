@@ -69,6 +69,17 @@ def create_app(config: dict = None) -> Flask:
     app.register_blueprint(mitigation_bp)
     app.register_blueprint(simulation_bp)
 
+    @app.errorhandler(413)
+    def handle_file_too_large(e):
+        max_mb = app.config.get("MAX_CONTENT_LENGTH", 0) // (1024 * 1024)
+        return jsonify({
+            "status": "error",
+            "code": 413,
+            "error": "RequestEntityTooLarge",
+            "message": f"File exceeds the maximum upload size ({max_mb} MB). "
+                       f"Please reduce the file size or split the capture.",
+        }), 413
+
     @app.errorhandler(Exception)
     def handle_api_exception(e):
         if request.path.startswith("/api/"):

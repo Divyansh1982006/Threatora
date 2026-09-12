@@ -1420,6 +1420,17 @@ conntrack -D -s 192.168.1.105</div>
 
       const file = document.getElementById('fileInput').files[0];
       if (!file) return;
+
+      // Client-side file size validation (must match server MAX_CONTENT_LENGTH = 1 GB)
+      const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        alert(`File too large (${sizeMB} MB). Maximum allowed size is 1 GB.\nPlease split the capture or use a smaller file.`);
+        document.getElementById('fileInput').value = '';
+        document.getElementById('fileName').innerText = 'File rejected — exceeds 1 GB limit';
+        return;
+      }
+
       document.getElementById('fileName').innerText = file.name + " (analyzing...)";
 
       const formData = new FormData();
@@ -1432,8 +1443,12 @@ conntrack -D -s 192.168.1.105</div>
         if (contentType.includes("application/json")) {
           data = await res.json();
         } else {
+          // Server returned non-JSON (e.g. Werkzeug HTML error page)
+          if (res.status === 413) {
+            throw new Error("File is too large. Please upload a smaller file (max 1 GB).");
+          }
           const text = await res.text();
-          throw new Error(text.slice(0, 120) || `HTTP error ${res.status}`);
+          throw new Error(text.slice(0, 200) || `Server error (HTTP ${res.status})`);
         }
 
         if (res.status === 401) {
