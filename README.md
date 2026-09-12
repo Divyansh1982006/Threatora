@@ -1,7 +1,7 @@
 <div align="center">
 
 <a href="https://github.com/Divyansh1982006/Threatora">
-  <img src="docs/assets/banner.svg" alt="Threatora - Recurrent AI Network Attack Forecasting & MITRE ATT&CK Simulation" width="100%"/>
+  <img src="docs/assets/banner.png" alt="Threatora - Recurrent AI Network Attack Forecasting & MITRE ATT&CK Simulation" width="100%"/>
 </a>
 
 <br/><br/>
