@@ -15,7 +15,7 @@ import torch
 
 from .config import (
     ALL_FEATURE_COLS, SEQUENCE_LENGTH, FORECAST_HORIZON,
-    CHECKPOINT_DIR, ModelConfig
+    ModelConfig
 )
 from .mitre import STAGE_NAMES, STAGE_COLORS
 from .model.world_model import NetworkWorldModel
@@ -84,21 +84,9 @@ class WhatIfSimulationEngine:
         },
     }
 
-    def __init__(self, model: Optional[NetworkWorldModel] = None, device: Optional[torch.device] = None):
+    def __init__(self, model: NetworkWorldModel, device: Optional[torch.device] = None):
+        self.model = model
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        if model is not None and isinstance(model, NetworkWorldModel):
-            self.model = model.to(self.device)
-        else:
-            self.model = NetworkWorldModel().to(self.device)
-            ckpt_path = CHECKPOINT_DIR / "world_model.pt"
-            if ckpt_path.exists():
-                try:
-                    ckpt = torch.load(ckpt_path, map_location=self.device, weights_only=False)
-                    state_dict = ckpt.get("model_state_dict", ckpt)
-                    self.model.load_state_dict(state_dict)
-                except Exception:
-                    pass
-        self.model.eval()
 
     def simulate_action(
         self,

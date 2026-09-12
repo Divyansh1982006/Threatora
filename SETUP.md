@@ -62,45 +62,6 @@ This installs:
 
 ---
 
-## Step 3.5 — CTU-13 Dataset Setup & Extraction
-
-Threatora integrates the **CTU-13 Botnet Benchmark Dataset** across 13 full-capture scenarios:
-
-### Included Processed Dataset (`data/processed/`)
-- `scenario_01.parquet` through `scenario_13.parquet`: **258,229 preprocessed host-window state cells** with 60-second temporal aggregation and lookahead targets.
-- `scenario_01_edges.parquet` through `scenario_13_edges.parquet`: Communication topology graphs.
-- `ingest_report.json`: Dataset metrics, cell counts, and malicious activity rates.
-- `processed_cells.csv`: 62-feature training-ready matrix.
-
-### Extraction & Sample Utilities (`scripts/`)
-1. **Extracting raw CTU-13 archives**:
-   If downloading the complete `CTU-13-Dataset.tar.bz2`, extract only `.binetflow` files without unpacking 54 GB of unneeded PCAPs:
-   ```bash
-   python scripts/extract_binetflow.py --archive data/raw/CTU-13-Dataset.tar.bz2
-   ```
-
-2. **Generating transition sample (`host-becomes-infected.csv`)**:
-   Splice clean and botnet traffic to create a machine transitioning from benign to infected:
-   ```bash
-   python scripts/make_transition_sample.py
-   ```
-
-3. **Running data preparation pipeline**:
-   ```bash
-   python -m src.prepare_data
-   ```
-
-### MITRE ATT&CK Taxonomy & Engine (`src/mitre.py`)
-Threatora maps flows directly into the 6-stage ATT&CK taxonomy:
-- **0. Benign (`-`)**: Normal enterprise traffic
-- **1. Reconnaissance (`TA0043 / T1046`)**: Probing, scan attempts, DNS discovery
-- **2. Initial Access (`TA0001 / T1190`)**: Malicious payload download, binary retrieval
-- **3. Lateral Movement (`TA0008 / T1021`)**: Internal administrative traffic (SMB, RDP)
-- **4. Command & Control (`TA0011 / T1071`)**: Periodic C2 beacons, IRC channels, fast-flux
-- **5. Exfiltration (`TA0010 / T1041`)**: Outbound volumetric data transfers, spam relays
-
----
-
 ## Step 4 — Start the Server
 
 ```bash
@@ -213,30 +174,12 @@ and saves the report to `artifacts/reports/benchmark.json`.
 
 ## Step 9 — Run CLI Forecast
 
-### A. Forecast from Flow CSV / BinetFlow
 ```bash
-# Multi-stage attack sample
-python cli.py predict --flow data/samples/sample_traffic.csv
+# Forecast from a CSV flow file (10-minute horizon)
+python cli.py predict --input data/samples/sample_traffic.csv --horizon 10
 
-# Real transition sample (benign host compromised)
-python cli.py predict --flow data/samples/host-becomes-infected.csv
-
-# CTU-13 Scenario 5 (Virut Fast-Flux capture)
-python cli.py predict --flow F:\SIH\5\capture20110815-2.binetflow
-```
-
-### B. Dual-Modality Inference (Flow + PCAP)
-```bash
-# Run simultaneous dual-branch inference on CTU-13 Scenario 5
-python cli.py predict \
-  --flow F:\SIH\5\capture20110815-2.binetflow \
-  --packet F:\SIH\5\botnet-capture-20110815-fast-flux.pcap
-```
-
-### C. Output Formats
-```bash
-# Output formatted JSON report
-python cli.py predict --flow data/samples/host-becomes-infected.csv --format json
+# Output as JSON
+python cli.py predict --input data/samples/sample_traffic.csv --format json
 ```
 
 ---

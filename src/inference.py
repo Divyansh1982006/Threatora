@@ -107,13 +107,9 @@ class InferenceEngine:
 
         # Group by host
         unique_hosts = sorted(list(set(m[0] for m in meta)))
-        # Prioritize top active hosts (cap at 50 to maintain sub-second response times)
-        host_activity = [(hip, sum(1 for m in meta if m[0] == hip)) for hip in unique_hosts]
-        host_activity.sort(key=lambda x: x[1], reverse=True)
-        eval_hosts = [hip for hip, _ in host_activity[:50]]
+        host_results = []
 
-        host_candidates = []
-        for host_ip in eval_hosts:
+        for host_ip in unique_hosts:
             host_indices = [idx for idx, m in enumerate(meta) if m[0] == host_ip]
             host_cells = X_scaled[host_indices]
             host_stages = y_stage[host_indices]
@@ -134,52 +130,20 @@ class InferenceEngine:
                 curr_prob = float(out["infiltration_prob"][0, -1].cpu().item())
                 curr_stage_idx = int(torch.argmax(out["stage_logits"][0, -1], dim=-1).item())
 
-            host_candidates.append({
-                "host_ip": host_ip,
-                "host_indices": host_indices,
-                "context_cells": context_cells,
-                "curr_prob": curr_prob,
-                "curr_stage_idx": curr_stage_idx,
-                "final_h": out["final_lstm_h"],
-                "final_c": out["final_lstm_c"],
-            })
-
-        # Sort candidate hosts by initial risk score descending
-        host_candidates.sort(key=lambda x: x["curr_prob"], reverse=True)
-
-        host_results = []
-        for rank_idx, cand in enumerate(host_candidates):
-            host_ip = cand["host_ip"]
-            curr_prob = cand["curr_prob"]
-            curr_stage_idx = cand["curr_stage_idx"]
-            context_cells = cand["context_cells"]
-            is_priority = (rank_idx < 10) or (curr_prob >= 0.3) or (curr_stage_idx > 0)
-
-            # Rollout simulation (16 trajectories for high-risk / top hosts; 2 for benign)
-            with torch.no_grad():
-                n_traj = 16 if is_priority else 2
+                # Run K-step simulation rollout WITHOUT observations
                 sim = self.model.imagine(
-                    initial_lstm_h=cand["final_h"],
-                    initial_lstm_c=cand["final_c"],
+                    initial_lstm_h=out["final_lstm_h"],
+                    initial_lstm_c=out["final_lstm_c"],
                     horizon=FORECAST_HORIZON,
-                    n_trajectories=n_traj
+                    n_trajectories=16
                 )
 
-            # Generate Explainability (deep attribution for priority hosts)
-            if is_priority:
-                explanations = generate_full_explanation(
-                    self.model,
-                    context_cells,
-                    forecast_seq=np.array(sim["feature_forecast"])
-                )
-            else:
-                explanations = {
-                    "top_features": {"n_flows": 18.5, "tot_bytes": 14.2, "bytes_per_sec": 11.0},
-                    "all_attributions": {},
-                    "temporal_attention_weights": [round(1.0 / SEQUENCE_LENGTH, 4)] * SEQUENCE_LENGTH,
-                    "state_deltas": [],
-                    "primary_threat_driver": "n_flows"
-                }
+            # Generate Explainability
+            explanations = generate_full_explanation(
+                self.model,
+                context_cells,
+                forecast_seq=np.array(sim["feature_forecast"])
+            )
 
             # Forecast timeline formatting
             forecast_timeline = []
@@ -206,7 +170,7 @@ class InferenceEngine:
 
             host_results.append({
                 "host_ip": host_ip,
-                "window_count": len(cand["host_indices"]),
+                "window_count": len(host_indices),
                 "current_risk_score": round(curr_prob, 4),
                 "is_anomalous": bool(curr_prob >= 0.5 or curr_stage_idx > 0),
                 "current_stage": {

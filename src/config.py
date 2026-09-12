@@ -44,25 +44,6 @@ MIN_FLOWS_PER_CELL = 2       # Minimum flows required to form a valid state cell
 USE_PACKET_FEATURES = True   # Enable dual-tier packet + flow features
 
 # --------------------------------------------------------------------------
-# Network Address & Port Taxonomy (CTU-13 / Enterprise Monitored Ranges)
-# --------------------------------------------------------------------------
-
-INTERNAL_PREFIXES = ("147.32.",)
-LATERAL_PORTS = frozenset({135, 137, 138, 139, 445, 3389, 5985, 5986, 22, 23})
-C2_PORTS = frozenset({6667, 6668, 6669, 7000, 1863, 8080, 8000, 443, 53})
-
-# CTU-13 scenario -> malware family mappings and splits
-CTU13_FAMILIES = {
-    1: "Neris", 2: "Neris", 3: "Rbot", 4: "Rbot", 5: "Virut",
-    6: "Menti", 7: "Sogou", 8: "Murlo", 9: "Neris", 10: "Rbot",
-    11: "Rbot", 12: "NSIS.ay", 13: "Virut",
-}
-
-TRAIN_SCENARIOS = (1, 2, 3, 4, 6, 7, 9, 10, 11)   # Neris, Rbot, Menti, Sogou
-VAL_SCENARIOS = (12,)                              # NSIS.ay - unseen family
-TEST_SCENARIOS = (5, 8, 13)                        # Virut, Murlo - unseen families
-
-# --------------------------------------------------------------------------
 # 62 Features Definition (39 Flow + 23 Packet)
 # --------------------------------------------------------------------------
 
@@ -130,7 +111,7 @@ class ServerConfig:
     host: str = "0.0.0.0"
     port: int = 5000
     debug: bool = False
-    max_content_length: int = 1024 * 1024 * 1024  # 1 GB upload limit
+    max_content_length: int = 64 * 1024 * 1024  # 64 MB upload limit
 
 
 default_model_config = ModelConfig()
