@@ -130,7 +130,7 @@ class ServerConfig:
     host: str = "0.0.0.0"
     port: int = 5000
     debug: bool = False
-    max_content_length: int = 64 * 1024 * 1024  # 64 MB upload limit
+    max_content_length: int = 1024 * 1024 * 1024  # 1 GB upload limit
 
 
 default_model_config = ModelConfig()

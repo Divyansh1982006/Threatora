@@ -1,4 +1,4 @@
-"""Telemetry Ingestion & Multi-Modal Inference Blueprint."""
+"""Telemetry Ingestion & Inference Blueprint."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def api_v1_telemetry():
         if not sample_path.exists():
             generate_sample_attack_traffic(sample_path)
         df = pd.read_csv(sample_path)
-        res = engine.process_flow_csv(df)
+        res = engine.process_traffic_dataframe(df)
         playbooks = mitigation_engine.evaluate_and_generate_playbooks(res)
         res["playbooks"] = playbooks
         return jsonify(res)
@@ -45,12 +45,12 @@ def api_v1_telemetry():
             df = pd.DataFrame(data["flows"])
         else:
             return jsonify({"status": "error", "message": "Expected JSON array of flow records or {'flows': [...]}"}), 400
-        res = engine.process_flow_csv(df)
-    elif "file" in request.files or "flow_file" in request.files or "packet_file" in request.files or "pcap_file" in request.files:
+        res = engine.process_traffic_dataframe(df)
+    elif "file" in request.files:
         return upload_file()
     else:
         df = pd.read_csv(sample_path)
-        res = engine.process_flow_csv(df)
+        res = engine.process_traffic_dataframe(df)
 
     playbooks = mitigation_engine.evaluate_and_generate_playbooks(res)
     res["playbooks"] = playbooks
@@ -66,7 +66,7 @@ def run_demo():
     if not sample_path.exists():
         generate_sample_attack_traffic(sample_path)
     df = pd.read_csv(sample_path)
-    res = engine.process_flow_csv(df)
+    res = engine.process_traffic_dataframe(df)
 
     playbooks = mitigation_engine.evaluate_and_generate_playbooks(res)
     res["playbooks"] = playbooks
@@ -77,55 +77,35 @@ def run_demo():
 @login_required
 @permission_required("can_upload")
 def upload_file():
-    """Accepts single (CSV/PCAP) or dual-modal (Flow CSV + PCAP) files, runs world model & fusion."""
+    """Accepts PCAP or CSV flow file, runs forward simulation and synthesizes playbooks."""
     engine = current_app.extensions["inference_engine"]
     mitigation_engine = current_app.extensions["mitigation_engine"]
 
-    # Check for dual-file upload: flow_file + packet_file (or pcap_file)
-    has_dual = ("flow_file" in request.files) and ("packet_file" in request.files or "pcap_file" in request.files)
-    
-    saved_tmp_files = []
+    if "file" not in request.files:
+        return jsonify({"status": "error", "message": "No file uploaded."}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"status": "error", "message": "Empty filename."}), 400
+
+    filename = secure_filename(file.filename) or "upload_file"
+    suffix = Path(filename).suffix.lower()
+    if suffix not in (".pcap", ".pcapng", ".cap", ".csv", ".txt", ".binetflow"):
+        return jsonify({"status": "error", "message": f"Unsupported format '{suffix}'."}), 400
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+    tmp_path = tmp.name
+    tmp.close()  # Close the file handle on Windows so file.save can write to it
 
     try:
-        if has_dual:
-            flow_file = request.files["flow_file"]
-            packet_file = request.files.get("packet_file", request.files.get("pcap_file"))
-
-            flow_suffix = Path(secure_filename(flow_file.filename)).suffix.lower()
-            packet_suffix = Path(secure_filename(packet_file.filename)).suffix.lower()
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=flow_suffix) as f_tmp:
-                flow_file.save(f_tmp.name)
-                saved_tmp_files.append(f_tmp.name)
-                flow_tmp_path = f_tmp.name
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=packet_suffix) as p_tmp:
-                packet_file.save(p_tmp.name)
-                saved_tmp_files.append(p_tmp.name)
-                packet_tmp_path = p_tmp.name
-
-            res = engine.process_network_input(flow_input=flow_tmp_path, packet_input=packet_tmp_path)
-        elif "file" in request.files:
-            file = request.files["file"]
-            if file.filename == "":
-                return jsonify({"status": "error", "message": "Empty filename."}), 400
-
-            filename = secure_filename(file.filename)
-            suffix = Path(filename).suffix.lower()
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                file.save(tmp.name)
-                saved_tmp_files.append(tmp.name)
-                tmp_path = tmp.name
-
-            if suffix in (".pcap", ".pcapng", ".cap"):
-                res = engine.process_pcap(tmp_path)
-            elif suffix in (".csv", ".txt", ".binetflow"):
-                res = engine.process_flow_csv(tmp_path)
-            else:
-                return jsonify({"status": "error", "message": f"Unsupported format '{suffix}'."}), 400
+        file.save(tmp_path)
+        if suffix in (".pcap", ".pcapng", ".cap"):
+            res = engine.process_pcap(tmp_path)
+        elif suffix in (".csv", ".txt", ".binetflow"):
+            df = pd.read_csv(tmp_path)
+            res = engine.process_traffic_dataframe(df)
         else:
-            return jsonify({"status": "error", "message": "No file uploaded."}), 400
+            return jsonify({"status": "error", "message": f"Unsupported format '{suffix}'."}), 400
 
         playbooks = mitigation_engine.evaluate_and_generate_playbooks(res)
         res["playbooks"] = playbooks
@@ -133,9 +113,8 @@ def upload_file():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
     finally:
-        for tmp_path in saved_tmp_files:
-            if os.path.exists(tmp_path):
-                try:
-                    os.remove(tmp_path)
-                except Exception:
-                    pass
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass

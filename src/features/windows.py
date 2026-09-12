@@ -111,7 +111,11 @@ def build_host_windows_from_flows(
     if flows_df.empty:
         return np.empty((0, len(ALL_FEATURE_COLS))), np.empty((0,)), np.empty((0,)), []
 
-    df = flows_df.copy()
+    # If massive dataset (>100k flows), prioritize the most recent 100k rows for responsive analysis
+    if len(flows_df) > 100_000:
+        df = flows_df.tail(100_000).copy()
+    else:
+        df = flows_df.copy()
 
     # Resolve timestamps to epoch seconds
     ts_col = None

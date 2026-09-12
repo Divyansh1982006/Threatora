@@ -1394,10 +1394,21 @@ conntrack -D -s 192.168.1.105</div>
       document.getElementById('fileName').innerText = "Running multi-stage scenario (sample_traffic.csv)...";
       try {
         const res = await fetch('/api/demo');
-        const data = await res.json();
+        const contentType = res.headers.get("content-type") || "";
+        let data;
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text();
+          throw new Error(text.slice(0, 120) || `HTTP error ${res.status}`);
+        }
+        if (!res.ok) {
+          alert("Demo error: " + (data.message || data.error || `HTTP ${res.status}`));
+          return;
+        }
         renderDashboard(data);
       } catch (err) {
-        alert("Error running demo scenario: " + err);
+        alert("Error running demo scenario: " + (err.message || err));
       }
     }
 
@@ -1416,14 +1427,37 @@ conntrack -D -s 192.168.1.105</div>
 
       try {
         const res = await fetch('/api/upload', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (res.status === 403) {
-          showAccessDenied('can_upload', data.message);
+        const contentType = res.headers.get("content-type") || "";
+        let data;
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text();
+          throw new Error(text.slice(0, 120) || `HTTP error ${res.status}`);
+        }
+
+        if (res.status === 401) {
+          alert("Operator session expired. Redirecting to authentication...");
+          window.location.href = "/login";
           return;
         }
+
+        if (res.status === 403) {
+          showAccessDenied('can_upload', data.message || 'Access denied.');
+          return;
+        }
+
+        if (!res.ok) {
+          alert("Upload analysis failed: " + (data.message || data.error || `HTTP ${res.status}`));
+          document.getElementById('fileName').innerText = file.name + " (failed)";
+          return;
+        }
+
+        document.getElementById('fileName').innerText = file.name + " (analyzed)";
         renderDashboard(data);
       } catch (err) {
-        alert("Upload analysis failed: " + err);
+        alert("Upload analysis failed: " + (err.message || err));
+        document.getElementById('fileName').innerText = file.name + " (error)";
       }
     }
 
