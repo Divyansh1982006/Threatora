@@ -12,10 +12,8 @@ from .auth import login_required, get_current_role, get_role_info, ROLE_PERMISSI
 views_bp = Blueprint("views", __name__)
 
 
-@views_bp.route("/")
-@login_required
-def index():
-    """Serves the cybersecurity operations dashboard."""
+def _get_view_context(active_page: str = "home") -> dict:
+    """Helper to assemble standard user and RBAC context for views."""
     role = get_current_role()
     role_info = get_role_info(role)
 
@@ -51,14 +49,45 @@ def index():
         for k, v in ROLE_PERMISSIONS.items()
     ]
 
-    return render_template(
-        "index.html",
-        user=user,
-        role_info=role_info,
-        available_roles=available_roles,
-        current_role=role,
-    )
+    return {
+        "user": user,
+        "role_info": role_info,
+        "available_roles": available_roles,
+        "current_role": role,
+        "active_page": active_page,
+    }
 
+
+@views_bp.route("/")
+@login_required
+def index():
+    """Enterprise Landing / Home Page with Project Details & ASCII Art."""
+    ctx = _get_view_context(active_page="home")
+    return render_template("home.html", **ctx)
+
+
+@views_bp.route("/dashboard")
+@login_required
+def dashboard():
+    """Serves the SOC Operations Dashboard (Telemetry & World Model HUD)."""
+    ctx = _get_view_context(active_page="dashboard")
+    return render_template("dashboard.html", **ctx)
+
+
+@views_bp.route("/visualizations")
+@login_required
+def visualizations():
+    """Deep Visualization Studio (Interactive Topology Map & What-If Sandbox)."""
+    ctx = _get_view_context(active_page="visualizations")
+    return render_template("visualizations.html", **ctx)
+
+
+@views_bp.route("/mitigation")
+@login_required
+def mitigation_view():
+    """Threat Mitigation Center (Incidents Forensics, Playbooks, Asset Ledger)."""
+    ctx = _get_view_context(active_page="mitigation")
+    return render_template("mitigation_page.html", **ctx)
 
 
 @views_bp.route("/api/health", methods=["GET"])

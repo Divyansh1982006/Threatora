@@ -17,9 +17,15 @@ from server.blueprints.auth import login_required, permission_required
 
 telemetry_bp = Blueprint("telemetry", __name__)
 
-sample_path = SAMPLES_DIR / "sample_traffic.csv"
-if not sample_path.exists():
-    generate_sample_attack_traffic(sample_path)
+def get_target_dataset(dataset_name: str | None = None) -> pd.DataFrame:
+    if dataset_name in ("host-becomes-infected", "ctu13", "infected"):
+        p = SAMPLES_DIR / "host-becomes-infected.csv"
+        if p.exists():
+            return pd.read_csv(p, nrows=2000)
+    p = SAMPLES_DIR / "sample_traffic.csv"
+    if not p.exists():
+        generate_sample_attack_traffic(p)
+    return pd.read_csv(p)
 
 
 @telemetry_bp.route("/api/v1/telemetry", methods=["POST", "GET"])
@@ -29,9 +35,8 @@ def api_v1_telemetry():
     mitigation_engine = current_app.extensions["mitigation_engine"]
 
     if request.method == "GET":
-        if not sample_path.exists():
-            generate_sample_attack_traffic(sample_path)
-        df = pd.read_csv(sample_path)
+        dataset = request.args.get("dataset", "sample_traffic")
+        df = get_target_dataset(dataset)
         res = engine.process_traffic_dataframe(df)
         playbooks = mitigation_engine.evaluate_and_generate_playbooks(res)
         res["playbooks"] = playbooks
@@ -49,7 +54,7 @@ def api_v1_telemetry():
     elif "file" in request.files:
         return upload_file()
     else:
-        df = pd.read_csv(sample_path)
+        df = get_target_dataset()
         res = engine.process_traffic_dataframe(df)
 
     playbooks = mitigation_engine.evaluate_and_generate_playbooks(res)
@@ -63,9 +68,8 @@ def run_demo():
     engine = current_app.extensions["inference_engine"]
     mitigation_engine = current_app.extensions["mitigation_engine"]
 
-    if not sample_path.exists():
-        generate_sample_attack_traffic(sample_path)
-    df = pd.read_csv(sample_path)
+    dataset = request.args.get("dataset", "host-becomes-infected")
+    df = get_target_dataset(dataset)
     res = engine.process_traffic_dataframe(df)
 
     playbooks = mitigation_engine.evaluate_and_generate_playbooks(res)

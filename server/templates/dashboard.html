@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Threatora // Operations HUD // Live Threat Forecasting{% endblock %}
+
+{% block content %}
+
+<!-- Real Dataset Testing & Model Execution Controller -->
+<div class="control-banner">
+  <div class="banner-left" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+        Test Dataset:
+      </span>
+      <select id="datasetSelect" class="cyber-select" style="font-size: 0.82rem; padding: 6px 12px; min-width: 290px;">
+        <option value="host-becomes-infected" selected>CTU-13 Infiltration (host-becomes-infected.csv)</option>
+        <option value="sample_traffic">Multi-Stage Lateral Attack (sample_traffic.csv)</option>
+      </select>
+    </div>
+
+    <button class="btn-cyber btn-cyber-primary" id="btnExecuteInference" onclick="runSelectedDatasetTest()">
+      <span>⚡ Run Model Inference</span>
+    </button>
+  </div>
+
+  <div class="banner-right" style="display: flex; align-items: center; gap: 12px;">
+    <label class="btn-cyber btn-cyber-outline" id="uploadLabel" style="cursor: pointer; padding: 6px 14px; font-size: 0.78rem;">
+      <span>📁 Upload Custom PCAP / CSV</span>
+      <input type="file" id="fileInput" accept=".pcap,.pcapng,.cap,.csv,.binetflow" style="display: none;" onchange="handleFileUpload()">
+    </label>
+    <span class="status-pill status-pill-green" id="inferenceStatusBadge" style="font-size: 0.72rem;">
+      <span class="beacon-dot"></span>
+      <span>MODEL READY</span>
+    </span>
+  </div>
+</div>
+
+<!-- Key Metrics Telemetry Grid -->
+<div class="metrics-grid">
+  <div class="metric-card danger">
+    <div class="metric-header">
+      <span class="metric-title">Infiltration Risk Score</span>
+      <span class="metric-icon">⚠️</span>
+    </div>
+    <div class="metric-value" id="valRisk" style="color: var(--neon-crimson);">74.8%</div>
+    <div class="metric-subtitle">Autoregressive State Estimation</div>
+  </div>
+
+  <div class="metric-card warning">
+    <div class="metric-header">
+      <span class="metric-title">Predicted ATT&CK Stage</span>
+      <span class="metric-icon">🎯</span>
+    </div>
+    <div class="metric-value" id="valStage" style="font-size: 1.35rem; color: var(--neon-amber);">Lateral Movement</div>
+    <div class="metric-subtitle">Active MITRE Kill-Chain Phase</div>
+  </div>
+</div>
+
+<!-- Main Operations Grid -->
+<div class="dashboard-grid">
+  <!-- Left Column: 10-Min World Model Rollout & Containment -->
+  <div class="cyber-panel corner-hud">
+    <div class="panel-header" style="flex-wrap: wrap; gap: 10px;">
+      <div class="panel-title">
+        <span>📈</span>
+        <span>10-Minute Infiltration Trajectory // World Model Forward Rollout</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="trajectory-toggle-btn active" id="toggleCiBtn" onclick="toggleTrajectoryCI()" title="Toggle 95% Monte Carlo Confidence Band">
+          <span>95% CI Cloud</span>
+        </button>
+        <button type="button" class="trajectory-toggle-btn active" id="toggleBreachBtn" onclick="toggleTrajectoryThreshold()" title="Toggle 70% Breach Threshold Boundary">
+          <span>70% Breach Line</span>
+        </button>
+        <span class="panel-tag" id="peakRiskBadge">PEAK: 81.6% @ +10m</span>
+      </div>
+    </div>
+
+    <!-- Enhanced High-Def Canvas Rollout Chart -->
+    <div class="timeline-container" id="timelineChartContainer">
+      <canvas id="timelineChart"></canvas>
+      <div class="timeline-hud-legend">
+        <div class="legend-group">
+          <div class="legend-item"><span class="legend-dot" style="background:#F25623;"></span> Trajectory Spline</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:rgba(242, 86, 35, 0.25); border: 1px dashed #F25623;"></span> 95% CI Cloud</div>
+          <div class="legend-item"><span class="legend-line" style="border-top: 1px dashed #FF3333;"></span> 70% Breach Boundary</div>
+        </div>
+        <div class="legend-item hint mono"><span style="color:var(--neon-cyan);">🎯 HOVER / TOUCH NODES TO INSPECT</span></div>
+      </div>
+    </div>
+
+    <!-- MITRE ATT&CK Kill-Chain Progress Radar -->
+    <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 10px;">
+      Adversary Kill-Chain Migration Radar
+    </div>
+    <div class="mitre-radar-strip">
+      <div class="mitre-step-box passed" id="stage1">
+        <div class="step-num">Step 1</div>
+        <div class="step-name">Reconnaissance</div>
+      </div>
+      <div class="mitre-step-box passed" id="stage2">
+        <div class="step-num">Step 2</div>
+        <div class="step-name">Initial Access</div>
+      </div>
+      <div class="mitre-step-box active" id="stage3">
+        <div class="step-num">Step 3</div>
+        <div class="step-name">Lateral Movement</div>
+      </div>
+      <div class="mitre-step-box" id="stage4">
+        <div class="step-num">Step 4</div>
+        <div class="step-name">C2 Beacon</div>
+      </div>
+      <div class="mitre-step-box" id="stage5">
+        <div class="step-num">Step 5</div>
+        <div class="step-name">Exfiltration</div>
+      </div>
+    </div>
+
+    <!-- SOC Incident Damage Assessment & Containment Box -->
+    <div class="soc-incident-box" id="socIncidentBox">
+      <div class="soc-header-row">
+        <div style="font-size: 0.88rem; font-weight: 800; color: var(--neon-crimson); display: flex; align-items: center; gap: 8px;">
+          <span>🚨</span>
+          <span>CRITICAL INCIDENT DETECTED // HOST 192.168.1.105</span>
+        </div>
+        <span class="soc-playbook-badge" id="playbookBadge">PLAYBOOK ACTIVE</span>
+      </div>
+
+      <div class="soc-body-grid">
+        <div class="soc-info-block">
+          <div class="soc-label">AI Damage Assessment:</div>
+          <div class="soc-text" id="damageAssessmentText">
+            Host 192.168.1.105 (DEV-WORKSTATION-05) exhibiting high-rate lateral SMB scanning (Port 445) toward Domain Controller. High probability of impending exfiltration burst.
+          </div>
+        </div>
+        <div class="soc-info-block">
+          <div class="soc-label">Zero-Trust Mitigation Strategy:</div>
+          <div class="soc-text mono" id="socActionText">
+            Strategy: Sever lateral ingress & block SMB/RDP routing.
+            
+            Rules:
+            iptables -A INPUT -s 192.168.1.105 -p tcp --dport 445 -j DROP
+            iptables -A FORWARD -s 192.168.1.105 -j DROP
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <button class="btn-cyber btn-cyber-danger" id="btnIsolate" onclick="triggerMitigation()">
+          🛡️ Execute 1-Click Containment (Isolate Host)
+        </button>
+        <span class="mono" id="mitigateStatusMsg" style="font-size: 0.74rem; color: var(--neon-emerald);"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: 62-D Telemetry Explainability & Feature Drivers -->
+  <div class="cyber-panel corner-hud">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span>🧠</span>
+        <span>Threat Explainability // Telemetry Saliency</span>
+      </div>
+      <div class="panel-tag">Causal Attention</div>
+    </div>
+
+    <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 16px;">
+      Primary telemetry metrics driving the LSTM World Model anomaly score:
+    </p>
+
+    <div class="feat-bar-list" id="explainBars">
+      <div class="feat-bar-row">
+        <div class="feat-header">
+          <span>tot_bytes (Outbound Volume)</span>
+          <span style="color: var(--neon-cyan);">82.4%</span>
+        </div>
+        <div class="feat-track"><div class="feat-fill" style="width: 82%;"></div></div>
+      </div>
+      <div class="feat-bar-row">
+        <div class="feat-header">
+          <span>frac_syn_only (SYN Probe Ratio)</span>
+          <span style="color: var(--neon-cyan);">71.1%</span>
+        </div>
+        <div class="feat-track"><div class="feat-fill" style="width: 71%;"></div></div>
+      </div>
+      <div class="feat-bar-row">
+        <div class="feat-header">
+          <span>beacon_regularity (C2 Heartbeat)</span>
+          <span style="color: var(--neon-cyan);">58.0%</span>
+        </div>
+        <div class="feat-track"><div class="feat-fill" style="width: 58%;"></div></div>
+      </div>
+      <div class="feat-bar-row">
+        <div class="feat-header">
+          <span>dport_entropy (Lateral Spread)</span>
+          <span style="color: var(--neon-cyan);">44.2%</span>
+        </div>
+        <div class="feat-track"><div class="feat-fill" style="width: 44%;"></div></div>
+      </div>
+      <div class="feat-bar-row">
+        <div class="feat-header">
+          <span>payload_entropy (Encrypted Tunnel)</span>
+          <span style="color: var(--neon-cyan);">32.8%</span>
+        </div>
+        <div class="feat-track"><div class="feat-fill" style="width: 33%;"></div></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">
+        Predicted Feature Deltas (Next 10 Min):
+      </div>
+      <div id="stateDeltasList" class="mono" style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.6;">
+        <div>• <strong>tot_bytes</strong> expected to shift 13.77 → 0.12 (-99.1%)</div>
+        <div>• <strong>src_bytes</strong> expected to shift 13.65 → 0.21 (-98.5%)</div>
+        <div>• <strong>ttl_mean</strong> expected to shift 64.0 → -0.16 (-100.3%)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

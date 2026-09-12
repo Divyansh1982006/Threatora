@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Threatora // Threat Mitigation & Containment Center{% endblock %}
+
+{% block content %}
+
+<!-- Header & Quick Actions -->
+<div class="control-banner">
+  <div class="banner-left">
+    <div style="font-size: 1.1rem; font-weight: 800; color: #ffffff;">
+      ZERO-TRUST MITIGATION & ASSET LEDGER
+    </div>
+    <span class="status-pill status-pill-green">AIR-GAPPED DEFENSE ACTIVE</span>
+  </div>
+
+  <div class="banner-right">
+    <a href="{{ url_for('views.dashboard') }}" class="btn-cyber btn-cyber-outline">
+      <span>← Operations HUD</span>
+    </a>
+  </div>
+</div>
+
+<!-- Monitored Endpoints & Asset Inventory -->
+<div class="cyber-panel corner-hud" style="margin-bottom: 24px;">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🛡️</span>
+      <span>Enterprise Network Asset Inventory & Monitored Endpoints</span>
+    </div>
+    <div class="panel-tag">PostgreSQL / SQLite State Ledger</div>
+  </div>
+
+  <div class="cyber-table-wrapper">
+    <table class="cyber-table">
+      <thead>
+        <tr>
+          <th>Host IP Address</th>
+          <th>Hostname / Asset</th>
+          <th>Subnet</th>
+          <th>Criticality</th>
+          <th>Quarantine Status</th>
+          <th>Tactical Action</th>
+        </tr>
+      </thead>
+      <tbody id="assetsTableBody">
+        <tr>
+          <td><strong class="mono" style="color: var(--neon-cyan);">192.168.1.105</strong></td>
+          <td>DEV-WORKSTATION-05</td>
+          <td>192.168.1.0/24</td>
+          <td><span class="status-pill status-pill-cyan" style="font-size: 0.65rem;">MEDIUM</span></td>
+          <td><span class="badge-threat" id="statusBadge_192_168_1_105">COMPROMISED</span></td>
+          <td>
+            <button class="btn-cyber btn-cyber-danger" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('192.168.1.105')">
+              Isolate Host
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong class="mono" style="color: var(--neon-cyan);">192.168.1.10</strong></td>
+          <td>DC-CORP-AD01</td>
+          <td>192.168.1.0/24</td>
+          <td><span class="status-pill status-pill-crimson" style="font-size: 0.65rem;">MISSION_CRITICAL</span></td>
+          <td><span class="badge-benign">HEALTHY</span></td>
+          <td>
+            <button class="btn-cyber btn-cyber-outline" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('192.168.1.10')">
+              Isolate Host
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong class="mono" style="color: var(--neon-cyan);">192.168.1.5</strong></td>
+          <td>SRV-DATABASE-01</td>
+          <td>192.168.1.0/24</td>
+          <td><span class="status-pill status-pill-crimson" style="font-size: 0.65rem;">HIGH</span></td>
+          <td><span class="badge-benign">HEALTHY</span></td>
+          <td>
+            <button class="btn-cyber btn-cyber-outline" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('192.168.1.5')">
+              Isolate Host
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong class="mono" style="color: var(--neon-cyan);">147.32.84.165</strong></td>
+          <td>EDGE-GATEWAY-01</td>
+          <td>147.32.84.0/24</td>
+          <td><span class="status-pill status-pill-crimson" style="font-size: 0.65rem;">MISSION_CRITICAL</span></td>
+          <td><span class="badge-benign">HEALTHY</span></td>
+          <td>
+            <button class="btn-cyber btn-cyber-outline" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('147.32.84.165')">
+              Isolate Gateway
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Active Security Incidents & Containment Playbooks -->
+<div class="cyber-panel corner-hud">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🚨</span>
+      <span>Active Incidents & Synthesized Zero-Trust Playbooks</span>
+    </div>
+    <div class="panel-tag">Containment Automation</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;" id="playbooksContainer">
+    <!-- Default Synthesized Playbook Card -->
+    <div class="soc-incident-box" style="margin-top: 0;">
+      <div class="soc-header-row">
+        <div style="font-size: 0.88rem; font-weight: 800; color: var(--neon-crimson); display: flex; align-items: center; gap: 8px;">
+          <span>PB-E7EB29E8</span>
+          <span style="color: var(--text-main); font-weight: 600;">// TARGET: 192.168.1.105 (DEV-WORKSTATION-05)</span>
+        </div>
+        <span class="soc-playbook-badge" id="playbookBadge">AUTOMATED PLAYBOOK READY</span>
+      </div>
+
+      <div class="soc-body-grid">
+        <div class="soc-info-block">
+          <div class="soc-label">Forensic Threat Assessment:</div>
+          <div class="soc-text">
+            Adversary actively executing <strong>Lateral Movement (T1021.002 SMB Shares)</strong>. High anomalous outbound byte velocity to external destination <code>198.51.100.42</code>. Estimated time to exfiltration burst: &lt; 4 minutes.
+          </div>
+        </div>
+
+        <div class="soc-info-block">
+          <div class="soc-label">Zero-Trust Executable Rule Commands:</div>
+          <div class="code-box"># Sever Lateral SMB and RDP Probing
+iptables -A INPUT -s 192.168.1.105 -p tcp -m multiport --dports 445,3389,22 -j DROP
+iptables -A FORWARD -s 192.168.1.105 -j DROP
+
+# Isolate host ARP boundary
+arp -s 192.168.1.105 00:00:00:00:00:00</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <button class="btn-cyber btn-cyber-danger" id="btnIsolate" onclick="triggerDirectIsolation('192.168.1.105')">
+          🛡️ Execute 1-Click Zero-Trust Containment
+        </button>
+        <span class="mono" id="mitigateStatusMsg" style="font-size: 0.74rem; color: var(--neon-emerald);"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

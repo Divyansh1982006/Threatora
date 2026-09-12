@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Threatora // Deep Visualizations & Network Topology Studio{% endblock %}
+
+{% block content %}
+
+<!-- Header Information -->
+<div class="cyber-panel corner-hud" style="margin-bottom: 20px;">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🌐</span>
+      <span>Enterprise Network Topology // Visual Threat Radar</span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn-cyber" onclick="topologyInstance && topologyInstance.loadTopology()">
+        <span>🔄</span>
+        <span>Refresh Graph</span>
+      </button>
+      <a href="{{ url_for('views.dashboard') }}" class="btn-cyber btn-cyber-outline">
+        <span>← Back to HUD</span>
+      </a>
+    </div>
+  </div>
+
+  <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+    Real-time force-directed topology visualizer modeling corporate subnet <code class="mono" style="color: var(--neon-cyan);">192.168.1.0/24</code>, perimeter edge gateway <code class="mono" style="color: var(--neon-cyan);">147.32.84.165</code>, and detected adversary C2 channels. Dynamic animated particles indicate live packet streams. Click any endpoint node to inspect security telemetry and dispatch containment actions.
+  </p>
+
+  <!-- Interactive Topology Canvas -->
+  <div class="topology-container" style="height: 580px;">
+    <canvas id="topologyCanvas"></canvas>
+
+    <!-- Topology HUD Status Overlay -->
+    <div class="topology-hud-overlay">
+      <div><strong>SUBNET:</strong> 192.168.1.0/24 [ENTERPRISE LAN]</div>
+      <div><strong>PERIMETER GATEWAY:</strong> 147.32.84.165</div>
+      <div><strong>STATUS:</strong> DRAG NODES TO REORGANIZE // CLICK TO INSPECT</div>
+    </div>
+
+    <!-- Node Inspector Panel (Opens on node click) -->
+    <div class="node-inspector" id="nodeInspector">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+        <strong id="inspHostName" style="color: var(--neon-cyan); font-size: 0.9rem;">DEV-WORKSTATION-05</strong>
+        <button class="btn-cyber" id="closeNodeInspector" style="padding: 2px 6px;">&times;</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 9px; font-size: 0.78rem;" class="mono">
+        <div><span style="color: var(--text-muted);">IP Address:</span> <strong id="inspIp">192.168.1.105</strong></div>
+        <div><span style="color: var(--text-muted);">Subnet:</span> <span id="inspSubnet">192.168.1.0/24</span></div>
+        <div><span style="color: var(--text-muted);">Criticality:</span> <span id="inspCrit">MEDIUM</span></div>
+        <div><span style="color: var(--text-muted);">Infiltration Risk:</span> <strong id="inspRisk" style="color: var(--neon-crimson);">74.8%</strong></div>
+        <div><span style="color: var(--text-muted);">ATT&CK Phase:</span> <span id="inspStage">Lateral Movement</span></div>
+        <div><span style="color: var(--text-muted);">Quarantine Status:</span> <span id="inspStatus" class="badge-threat">COMPROMISED</span></div>
+      </div>
+
+      <div style="margin-top: 16px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+        <button class="btn-cyber btn-cyber-danger" id="inspBtnIsolate" style="width: 100%; justify-content: center;">
+          Quarantine Host
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- What-If Counterfactual Action Simulation Studio -->
+<div class="cyber-panel corner-hud" style="margin-bottom: 24px;">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🔮</span>
+      <span>What-If Action Simulator // Counterfactual World Model Engine</span>
+    </div>
+    <div class="panel-tag">PyTorch LSTM Dynamic Rollout</div>
+  </div>
+
+  <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 18px;">
+    Simulates defensive interventions on the active latent network state ($S_t$) without modifying production infrastructure. The PyTorch recurrent world model re-unrolls future trajectories to quantify predicted risk reduction: $\Delta \text{Risk} = \text{Risk}_{\text{unmitigated}} - \text{Risk}_{\text{intervention}}$ up to 10 minutes ahead.
+  </p>
+
+  <!-- Simulation Controls -->
+  <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px;">
+    <label style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+      Defensive Action to Simulate:
+    </label>
+    <select id="simActionSelect" class="cyber-select" style="min-width: 340px;">
+      <option value="BLOCK_MANAGEMENT_PORTS" selected>Block Ingress Management Ports (SSH 22 / RDP 3389 / SMB 445)</option>
+      <option value="ISOLATE_HOST">Host Isolation (Full Air-gap Quarantine)</option>
+      <option value="RATE_LIMIT_SYN">Rate-Limit TCP SYN Probing Bursts</option>
+      <option value="SINKHOLE_C2_DNS">DNS Sinkhole & Terminate Periodic C2 Beacons</option>
+      <option value="THROTTLE_EGRESS">Throttle High-Volume Outbound Bandwidth</option>
+    </select>
+    <button class="btn-cyber btn-cyber-primary" onclick="runWhatIfSimulation()">
+      <span>🔮</span>
+      <span>Run What-If Simulation</span>
+    </button>
+    <span id="simSummaryBadge" class="mono" style="font-size: 0.82rem; font-weight: 700; color: var(--neon-emerald);">
+      ✔ 34.5% Risk Reduction (HIGH_IMPACT)
+    </span>
+  </div>
+
+  <!-- AI Tactical Assessment Box -->
+  <div id="simVerdictBox" style="background: var(--neon-cyan-tint); border: 1px solid var(--neon-cyan); border-radius: 8px; padding: 12px 16px; font-size: 0.82rem; color: var(--text-main); margin-bottom: 18px;">
+    <strong>AI Tactical Assessment:</strong> Action 'Block Ingress Management Ports (22/3389/445)' severs lateral SMB/RDP exploration. Modeled Peak Risk Reduction: 34.5% (HIGH_IMPACT).
+  </div>
+
+  <!-- Plotly Comparative Simulation Chart -->
+  <div id="plotlySimChart" style="width: 100%; height: 320px;"></div>
+</div>
+
+{% endblock %}
