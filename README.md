@@ -1,9 +1,16 @@
 <div align="center">
 
-<a href="https://github.com/Divyansh1982006/Threatora">
-  <img src="docs/assets/banner.png" alt="Threatora - Recurrent AI Network Attack Forecasting & MITRE ATT&CK Simulation" width="100%"/>
-</a>
+<pre>
+<font color="#FF3333">████████╗██╗  ██╗██████╗ ███████╗ █████╗ ████████╗ ██████╗ ██████╗  █████╗ </font>
+<font color="#FF5555">╚══██╔══╝██║  ██║██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗</font>
+<font color="#FFBE0B">   ██║   ███████║██████╔╝█████╗  ███████║   ██║   ██║   ██║██████╔╝███████║</font>
+<font color="#00F5D4">   ██║   ██╔══██║██╔══██╗██╔══╝  ██╔══██║   ██║   ██║   ██║██╔══██╗██╔══██║</font>
+<font color="#3B82F6">   ██║   ██║  ██║██║  ██║███████╗██║  ██║   ██║   ╚██████╔╝██║  ██║██║  ██║</font>
+<font color="#8ECAE6">   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝</font>
+</pre>
 
+<br/>
+<font color="#8ECAE6"><i>National Technical Research Organisation (NTRO) &middot; Defense Problem Statement 26153</i></font>
 <br/><br/>
 
 [![SIH 2026](https://img.shields.io/badge/SIH%202026-Problem%20Statement%2026153-red?style=for-the-badge&logo=shield)](https://www.sih.gov.in/)
