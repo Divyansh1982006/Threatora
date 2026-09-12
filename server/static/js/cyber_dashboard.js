@@ -673,10 +673,11 @@ async function handleFileUpload() {
   const file = fileInput.files[0];
   if (!file) return;
 
-  const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
+  // Cloud deployments have a 200MB upload limit to prevent OOM on free tier
+  const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB
   if (file.size > MAX_FILE_SIZE) {
     const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-    alert(`File too large (${sizeMB} MB). Maximum upload size is 1 GB.`);
+    showToast(`File too large (${sizeMB} MB). Max upload is 200 MB on cloud.`, 'error');
     fileInput.value = '';
     return;
   }
@@ -691,18 +692,57 @@ async function handleFileUpload() {
 
   try {
     const res = await fetch('/api/upload', { method: 'POST', body: formData });
-    const data = await res.json();
+
+    // Safely parse JSON — server may return empty body on crash or HTML on redirect
+    let data = null;
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      try { data = await res.json(); } catch (_) { data = null; }
+    } else {
+      // Non-JSON response (HTML redirect, empty body, nginx error page, etc.)
+      const rawText = await res.text().catch(() => '');
+      if (res.status === 401 || res.redirected) {
+        window.location.href = '/login';
+        return;
+      }
+      const badge2 = document.getElementById('inferenceStatusBadge');
+      if (badge2) {
+        badge2.innerHTML = '<span class="beacon-dot" style="background:#F25623;"></span><span>SERVER ERROR</span>';
+        badge2.className = 'status-pill status-pill-crimson';
+      }
+      showToast(`Server error (HTTP ${res.status}). The engine may still be loading — please retry in 30s.`, 'error');
+      fileInput.value = '';
+      return;
+    }
 
     if (res.status === 401) {
-      window.location.href = "/login";
+      window.location.href = '/login';
       return;
     }
     if (res.status === 403) {
-      showAccessDenied('can_upload', data.message);
+      showAccessDenied('can_upload', (data && data.message) || 'Elevated clearance required.');
+      if (badge) {
+        badge.innerHTML = '<span class="beacon-dot" style="background:#F25623;"></span><span>ACCESS DENIED</span>';
+        badge.className = 'status-pill status-pill-crimson';
+      }
+      return;
+    }
+    if (res.status === 503) {
+      showToast('ML engines are still initializing — please retry in ~30 seconds.', 'error');
+      if (badge) {
+        badge.innerHTML = '<span class="beacon-dot" style="background:#F25623;"></span><span>ENGINE LOADING</span>';
+        badge.className = 'status-pill status-pill-crimson';
+      }
+      fileInput.value = '';
       return;
     }
     if (!res.ok) {
-      alert("Upload analysis failed: " + (data.message || `HTTP ${res.status}`));
+      const msg = (data && data.message) || `HTTP ${res.status} — server error`;
+      showToast('Upload failed: ' + msg, 'error');
+      if (badge) {
+        badge.innerHTML = '<span class="beacon-dot" style="background:#F25623;"></span><span>UPLOAD FAILED</span>';
+        badge.className = 'status-pill status-pill-crimson';
+      }
       return;
     }
 
@@ -715,7 +755,14 @@ async function handleFileUpload() {
     renderDashboard(data);
     showToast(`Capture ${file.name} successfully analyzed.`);
   } catch (err) {
-    alert("Upload analysis failed: " + err);
+    // Network-level failure (fetch itself threw — offline, CORS, etc.)
+    const msg = err && err.message ? err.message : String(err);
+    showToast('Upload failed: ' + msg + '. Check your connection and retry.', 'error');
+    if (badge) {
+      badge.innerHTML = '<span class="beacon-dot" style="background:#F25623;"></span><span>NETWORK ERROR</span>';
+      badge.className = 'status-pill status-pill-crimson';
+    }
+    fileInput.value = '';
   }
 }
 
@@ -925,17 +972,18 @@ async function pollHealthStatus() {
 }
 
 /* Floating Toast Notifications */
-function showToast(msg) {
+function showToast(msg, type) {
   const container = document.getElementById('toastContainer');
   if (!container) return;
   const toast = document.createElement('div');
-  toast.className = 'toast-msg';
-  toast.innerHTML = `<span>🛡️</span><span>${msg}</span>`;
+  toast.className = 'toast-msg' + (type === 'error' ? ' toast-msg-error' : '');
+  const icon = type === 'error' ? '⚠️' : '🛡️';
+  toast.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
   container.appendChild(toast);
   setTimeout(() => {
     toast.style.transition = 'all 0.3s ease';
     toast.style.opacity = '0';
     toast.style.transform = 'translateY(10px)';
     setTimeout(() => toast.remove(), 300);
-  }, 3200);
+  }, 4500);
 }
