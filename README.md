@@ -1,6 +1,17 @@
 <div align="center">
 
-<img src="docs/assets/banner.png" alt="Threatora - Recurrent AI Network Attack Forecasting & MITRE ATT&CK Simulation" width="100%"/>
+<pre>
+<font color="#FF3333">████████╗██╗  ██╗██████╗ ███████╗ █████╗ ████████╗ ██████╗ ██████╗  █████╗ </font>
+<font color="#FF5555">╚══██╔══╝██║  ██║██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗</font>
+<font color="#FFBE0B">   ██║   ███████║██████╔╝█████╗  ███████║   ██║   ██║   ██║██████╔╝███████║</font>
+<font color="#00F5D4">   ██║   ██╔══██║██╔══██╗██╔══╝  ██╔══██║   ██║   ██║   ██║██╔══██╗██╔══██║</font>
+<font color="#3B82F6">   ██║   ██║  ██║██║  ██║███████╗██║  ██║   ██║   ╚██████╔╝██║  ██║██║  ██║</font>
+<font color="#8ECAE6">   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝</font>
+</pre>
+
+<b><font color="#06D6A0">⚡ RECURRENT AI NETWORK ATTACK FORECASTING & MITRE ATT&CK SIMULATION ⚡</font></b>
+<br/>
+<font color="#8ECAE6"><i>National Technical Research Organisation (NTRO) &middot; Defense Problem Statement 26153</i></font>
 
 <br/><br/>
 
