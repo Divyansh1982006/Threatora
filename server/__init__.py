@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from flask import Flask
+from flask import Flask, request, jsonify
 
 from src.db.session import init_db
 from src.inference import InferenceEngine
@@ -29,7 +29,7 @@ def create_app(config: dict = None) -> Flask:
         template_folder=str(template_folder),
         static_folder=str(static_folder),
     )
-    app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 MB upload limit
+    app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1 GB upload limit
     app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "threatora_zero_trust_super_secret_key_2026")
 
@@ -69,11 +69,17 @@ def create_app(config: dict = None) -> Flask:
     app.register_blueprint(mitigation_bp)
     app.register_blueprint(simulation_bp)
 
-    @app.after_request
-    def add_cors_headers(response):
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-API-Key, X-Simulate-Role"
-        return response
+    @app.errorhandler(Exception)
+    def handle_api_exception(e):
+        if request.path.startswith("/api/"):
+            code = getattr(e, "code", 500)
+            description = getattr(e, "description", str(e))
+            return jsonify({
+                "status": "error",
+                "code": code,
+                "error": type(e).__name__,
+                "message": description,
+            }), code
+        return e
 
     return app

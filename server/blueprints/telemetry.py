@@ -88,14 +88,17 @@ def upload_file():
     if file.filename == "":
         return jsonify({"status": "error", "message": "Empty filename."}), 400
 
-    filename = secure_filename(file.filename)
+    filename = secure_filename(file.filename) or "upload_file"
     suffix = Path(filename).suffix.lower()
+    if suffix not in (".pcap", ".pcapng", ".cap", ".csv", ".txt", ".binetflow"):
+        return jsonify({"status": "error", "message": f"Unsupported format '{suffix}'."}), 400
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        file.save(tmp.name)
-        tmp_path = tmp.name
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+    tmp_path = tmp.name
+    tmp.close()  # Close the file handle on Windows so file.save can write to it
 
     try:
+        file.save(tmp_path)
         if suffix in (".pcap", ".pcapng", ".cap"):
             res = engine.process_pcap(tmp_path)
         elif suffix in (".csv", ".txt", ".binetflow"):

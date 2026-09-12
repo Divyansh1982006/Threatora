@@ -93,7 +93,8 @@ def generate_full_explanation(
     forecast_seq: Optional[np.ndarray] = None
 ) -> Dict[str, Any]:
     """Generates complete explainability package for API and dashboard."""
-    tensor_in = torch.tensor(input_seq, dtype=torch.float32)
+    device = next(model.parameters()).device if list(model.parameters()) else torch.device("cpu")
+    tensor_in = torch.tensor(input_seq, dtype=torch.float32, device=device)
     if tensor_in.ndim == 2:
         tensor_in = tensor_in.unsqueeze(0)
 
