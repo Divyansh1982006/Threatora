@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 import threading
 from pathlib import Path
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify
 
 
 def create_app(config: dict = None) -> Flask:

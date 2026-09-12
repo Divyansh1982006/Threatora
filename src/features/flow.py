@@ -57,26 +57,35 @@ def extract_flow_window_features(flows_df: pd.DataFrame, window_duration: float 
         ]}
 
     # Addresses & Ports
-    daddrs = flows_df.get("daddr", flows_df.get("Dst IP", pd.Series(["unknown"] * n_flows))).astype(str).tolist()
-    dports = flows_df.get("dport", flows_df.get("Dst Port", pd.Series([0] * n_flows))).astype(int).tolist()
-    sports = flows_df.get("sport", flows_df.get("Src Port", pd.Series([0] * n_flows))).astype(int).tolist()
+    daddr_col = next((c for c in ("daddr", "Dst IP") if c in flows_df.columns), None)
+    dport_col = next((c for c in ("dport", "Dst Port") if c in flows_df.columns), None)
+    sport_col = next((c for c in ("sport", "Src Port") if c in flows_df.columns), None)
+
+    daddrs = flows_df[daddr_col].astype(str).tolist() if daddr_col else ["unknown"] * n_flows
+    dports = flows_df[dport_col].astype(int).tolist() if dport_col else [0] * n_flows
+    sports = flows_df[sport_col].astype(int).tolist() if sport_col else [0] * n_flows
 
     # Bytes & Packets
-    tot_bytes = float(flows_df.get("tot_bytes", flows_df.get("TotLen Fwd Pkts", pd.Series([0] * n_flows))).sum())
-    tot_pkts = float(flows_df.get("tot_pkts", flows_df.get("Tot Fwd Pkts", pd.Series([0] * n_flows))).sum())
-    src_bytes = float(flows_df.get("src_bytes", pd.Series([tot_bytes * 0.5] * n_flows)).sum())
+    tot_bytes_col = next((c for c in ("tot_bytes", "TotLen Fwd Pkts") if c in flows_df.columns), None)
+    tot_pkts_col = next((c for c in ("tot_pkts", "Tot Fwd Pkts") if c in flows_df.columns), None)
+    src_bytes_col = "src_bytes" if "src_bytes" in flows_df.columns else None
+
+    tot_bytes = float(flows_df[tot_bytes_col].sum()) if tot_bytes_col else 0.0
+    tot_pkts = float(flows_df[tot_pkts_col].sum()) if tot_pkts_col else 0.0
+    src_bytes = float(flows_df[src_bytes_col].sum()) if src_bytes_col else tot_bytes * 0.5
     dst_bytes = max(tot_bytes - src_bytes, 0.0)
 
     # Durations & Timestamps
-    durs = flows_df.get("dur", flows_df.get("Flow Duration", pd.Series([0.0] * n_flows))).astype(float).values
+    dur_col = next((c for c in ("dur", "Flow Duration") if c in flows_df.columns), None)
+    durs = flows_df[dur_col].astype(float).values if dur_col else np.zeros(n_flows)
     dur_mean = float(np.mean(durs))
     dur_std = float(np.std(durs))
     dur_max = float(np.max(durs))
 
-    start_ts = flows_df.get("StartTime", flows_df.get("timestamp", None))
-    if start_ts is not None and len(start_ts) > 1:
+    ts_col_flow = next((c for c in ("StartTime", "timestamp") if c in flows_df.columns), None)
+    if ts_col_flow is not None and len(flows_df) > 1:
         try:
-            ts_num = pd.to_numeric(start_ts, errors="coerce").fillna(0).values
+            ts_num = pd.to_numeric(flows_df[ts_col_flow], errors="coerce").fillna(0).values
             iats = np.diff(np.sort(ts_num))
             iat_mean = float(np.mean(iats))
             iat_std = float(np.std(iats))
@@ -96,27 +105,31 @@ def extract_flow_window_features(flows_df: pd.DataFrame, window_duration: float 
     egress_ratio = float(src_bytes / max(tot_bytes, 1.0))
 
     # Direction & States (Argus state mapping)
-    states = flows_df.get("state", flows_df.get("State", pd.Series([""] * n_flows))).astype(str).str.upper()
-    frac_established = float((states.str.contains("CON|EST")).sum() / n_flows)
-    frac_reset = float((states.str.contains("RST")).sum() / n_flows)
-    frac_interrupted = float((states.str.contains("INT|URH")).sum() / n_flows)
+    state_col = next((c for c in ("state", "State") if c in flows_df.columns), None)
+    states = flows_df[state_col].astype(str).str.upper() if state_col else pd.Series([""] * n_flows)
+    frac_established = float((states.str.contains("CON|EST", regex=True)).sum() / n_flows)
+    frac_reset = float((states.str.contains("RST", regex=False)).sum() / n_flows)
+    frac_interrupted = float((states.str.contains("INT|URH", regex=True)).sum() / n_flows)
 
-    dirs = flows_df.get("dir", flows_df.get("Dir", pd.Series(["->"] * n_flows))).astype(str)
+    dir_col = next((c for c in ("dir", "Dir") if c in flows_df.columns), None)
+    dirs = flows_df[dir_col].astype(str) if dir_col else pd.Series(["->"] * n_flows)
     frac_outbound = float((dirs == "->").sum() / n_flows)
     frac_inbound = float((dirs == "<-").sum() / n_flows)
 
     # TCP Flags expanded
-    flags_col = flows_df.get("flags", pd.Series([""] * n_flows)).astype(str).str.upper()
-    frac_syn_only = float((flags_col.str.contains("S") & ~flags_col.str.contains("A")).sum() / n_flows)
-    frac_syn_ack = float((flags_col.str.contains("S") & flags_col.str.contains("A")).sum() / n_flows)
-    frac_fin = float(flags_col.str.contains("F").sum() / n_flows)
-    frac_rst = float(flags_col.str.contains("R").sum() / n_flows)
-    frac_psh = float(flags_col.str.contains("P").sum() / n_flows)
-    frac_urg = float(flags_col.str.contains("U").sum() / n_flows)
-    frac_ack = float(flags_col.str.contains("A").sum() / n_flows)
+    flags_col_name = "flags" if "flags" in flows_df.columns else None
+    flags_col = flows_df[flags_col_name].astype(str).str.upper() if flags_col_name else pd.Series([""] * n_flows)
+    frac_syn_only = float((flags_col.str.contains("S", regex=False) & ~flags_col.str.contains("A", regex=False)).sum() / n_flows)
+    frac_syn_ack = float((flags_col.str.contains("S", regex=False) & flags_col.str.contains("A", regex=False)).sum() / n_flows)
+    frac_fin = float(flags_col.str.contains("F", regex=False).sum() / n_flows)
+    frac_rst = float(flags_col.str.contains("R", regex=False).sum() / n_flows)
+    frac_psh = float(flags_col.str.contains("P", regex=False).sum() / n_flows)
+    frac_urg = float(flags_col.str.contains("U", regex=False).sum() / n_flows)
+    frac_ack = float(flags_col.str.contains("A", regex=False).sum() / n_flows)
 
     # Protocols
-    protos = flows_df.get("proto", flows_df.get("Protocol", pd.Series(["tcp"] * n_flows))).astype(str).str.lower()
+    proto_col = next((c for c in ("proto", "Protocol") if c in flows_df.columns), None)
+    protos = flows_df[proto_col].astype(str).str.lower() if proto_col else pd.Series(["tcp"] * n_flows)
     frac_tcp = float((protos == "tcp").sum() / n_flows)
     frac_udp = float((protos == "udp").sum() / n_flows)
     frac_icmp = float((protos == "icmp").sum() / n_flows)

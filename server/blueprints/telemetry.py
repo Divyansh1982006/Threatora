@@ -31,8 +31,11 @@ def get_target_dataset(dataset_name: str | None = None) -> pd.DataFrame:
 @telemetry_bp.route("/api/v1/telemetry", methods=["POST", "GET"])
 def api_v1_telemetry():
     """REST API endpoint for real-time telemetry stream ingestion and analysis."""
-    engine = current_app.extensions["inference_engine"]
-    mitigation_engine = current_app.extensions["mitigation_engine"]
+    engine = current_app.extensions.get("inference_engine")
+    mitigation_engine = current_app.extensions.get("mitigation_engine")
+
+    if engine is None:
+        return jsonify({"status": "error", "message": "ML engines are still initializing. Retry in ~30 seconds."}), 503
 
     if request.method == "GET":
         dataset = request.args.get("dataset", "sample_traffic")
@@ -52,7 +55,34 @@ def api_v1_telemetry():
             return jsonify({"status": "error", "message": "Expected JSON array of flow records or {'flows': [...]}"}), 400
         res = engine.process_traffic_dataframe(df)
     elif "file" in request.files:
-        return upload_file()
+        # NOTE: File uploads via /api/upload require authentication.
+        # This path handles telemetry-level raw file ingestion (unauthenticated demo use).
+        # Full authenticated upload with permission check is at /api/upload.
+        import os, tempfile
+        from pathlib import Path
+        from werkzeug.utils import secure_filename
+        file = request.files["file"]
+        if not file or file.filename == "":
+            return jsonify({"status": "error", "message": "Empty or missing file."}), 400
+        filename = secure_filename(file.filename) or "upload"
+        suffix = Path(filename).suffix.lower()
+        if suffix not in (".pcap", ".pcapng", ".cap", ".csv", ".txt", ".binetflow"):
+            return jsonify({"status": "error", "message": f"Unsupported format '{suffix}'."}), 400
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+        tmp_path = tmp.name
+        tmp.close()
+        try:
+            file.save(tmp_path)
+            if suffix in (".pcap", ".pcapng", ".cap"):
+                res = engine.process_pcap(tmp_path)
+            else:
+                res = engine.process_traffic_dataframe(pd.read_csv(tmp_path))
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            if os.path.exists(tmp_path):
+                try: os.remove(tmp_path)
+                except Exception: pass
     else:
         df = get_target_dataset()
         res = engine.process_traffic_dataframe(df)
@@ -65,8 +95,11 @@ def api_v1_telemetry():
 @telemetry_bp.route("/api/demo", methods=["GET"])
 def run_demo():
     """Runs instant inference and mitigation synthesis on multi-stage attack scenario."""
-    engine = current_app.extensions["inference_engine"]
-    mitigation_engine = current_app.extensions["mitigation_engine"]
+    engine = current_app.extensions.get("inference_engine")
+    mitigation_engine = current_app.extensions.get("mitigation_engine")
+
+    if engine is None:
+        return jsonify({"status": "error", "message": "ML engines are still initializing. Retry in ~30 seconds."}), 503
 
     dataset = request.args.get("dataset", "host-becomes-infected")
     df = get_target_dataset(dataset)
@@ -82,9 +115,11 @@ def run_demo():
 @permission_required("can_upload")
 def upload_file():
     """Accepts PCAP or CSV flow file, runs forward simulation and synthesizes playbooks."""
-    engine = current_app.extensions["inference_engine"]
-    mitigation_engine = current_app.extensions["mitigation_engine"]
+    engine = current_app.extensions.get("inference_engine")
+    mitigation_engine = current_app.extensions.get("mitigation_engine")
 
+    if engine is None:
+        return jsonify({"status": "error", "message": "ML engines are still initializing. Retry in ~30 seconds."}), 503
     if "file" not in request.files:
         return jsonify({"status": "error", "message": "No file uploaded."}), 400
 

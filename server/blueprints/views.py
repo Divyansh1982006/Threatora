@@ -93,7 +93,14 @@ def mitigation_view():
 @views_bp.route("/api/health", methods=["GET"])
 def health():
     """Health check endpoint exposing device backend and model configuration."""
-    engine = current_app.extensions["inference_engine"]
+    engine = current_app.extensions.get("inference_engine")
+    if engine is None:
+        return jsonify({
+            "status": "loading",
+            "service": "Threatora World Model & Mitigation Engine",
+            "message": "ML engines are still initializing. Please retry in ~30 seconds.",
+            "obs_dimension": len(ALL_FEATURE_COLS),
+        }), 503
     return jsonify({
         "status": "healthy",
         "service": "Threatora World Model & Mitigation Engine",

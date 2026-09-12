@@ -32,7 +32,9 @@ def get_playbooks():
 @permission_required("can_mitigate")
 def execute_mitigate():
     """Dispatches 1-click mitigation containment action against a target or playbook."""
-    mitigation_engine = current_app.extensions["mitigation_engine"]
+    mitigation_engine = current_app.extensions.get("mitigation_engine")
+    if mitigation_engine is None:
+        return jsonify({"status": "error", "message": "ML engines are still initializing. Retry in ~30 seconds."}), 503
     data = request.get_json(silent=True) or {}
     playbook_uid = data.get("playbook_uid")
     target_ip = data.get("target_ip")

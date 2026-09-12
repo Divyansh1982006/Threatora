@@ -26,5 +26,15 @@ echo.
 echo [*] Launching Threatora WSGI Server (Binding 0.0.0.0:5000)...
 echo [*] Press CTRL+C to stop the server.
 echo.
-python server/app.py
+set PY_BIN=python
+where py >nul 2>&1
+if %errorlevel% equ 0 (
+    py -3.13 -c "import sys; sys.exit(0)" >nul 2>&1
+    if %errorlevel% equ 0 (
+        set PY_BIN=py -3.13
+    )
+)
+
+%PY_BIN% server/app.py
 pause
+

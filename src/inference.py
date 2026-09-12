@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import torch
@@ -22,6 +22,10 @@ from .config import (
     ModelConfig, default_model_config
 )
 from .model.world_model import NetworkWorldModel
+from .model.flow_world_model import FlowLSTMWorldModel, FLOW_FEATURE_NAMES
+from .model.packet_world_model import PacketLSTMWorldModel, PACKET_FEATURE_NAMES
+from .model.fusion import FusionLayer
+from .model.decision import DecisionLayer
 from .features.windows import FeatureScaler, build_host_windows_from_flows
 from .features.packet import parse_pcap_file
 from .mitre import STAGE_NAMES, STAGE_METADATA, STAGE_COLORS
@@ -90,6 +94,25 @@ class InferenceEngine:
             print(f"[*] Checkpoint not found at {ckpt}. Ready to receive weights from training pipeline.")
 
         self.model.eval()
+
+        # Initialize Flow and Packet LSTM World Models if checkpoints exist
+        try:
+            self.flow_model = FlowLSTMWorldModel().to(self.device)
+            flow_ckpt = Path(__file__).resolve().parents[1] / "artifacts" / "checkpoints" / "flow" / "ciciot_lstm_world_model_fast_best.pt"
+            if flow_ckpt.exists():
+                self.flow_model.load_state_dict(torch.load(flow_ckpt, map_location=self.device))
+            self.flow_model.eval()
+        except Exception:
+            self.flow_model = None
+
+        try:
+            self.packet_model = PacketLSTMWorldModel().to(self.device)
+            pkt_ckpt = Path(__file__).resolve().parents[1] / "artifacts" / "checkpoints" / "packet" / "packet_lstm_world_model_best.pt"
+            if pkt_ckpt.exists():
+                self.packet_model.load_state_dict(torch.load(pkt_ckpt, map_location=self.device))
+            self.packet_model.eval()
+        except Exception:
+            self.packet_model = None
 
     def process_traffic_dataframe(self, flows_df: pd.DataFrame) -> Dict[str, Any]:
         """Runs end-to-end forecasting pipeline on a DataFrame of flow records."""
@@ -229,9 +252,93 @@ class InferenceEngine:
             "hosts": host_results
         }
 
-    def process_pcap(self, pcap_path: str) -> Dict[str, Any]:
-        """Ingests and parses PCAP file into flow representations and runs inference."""
-        pkts = parse_pcap_file(pcap_path)
+    def process_flow_csv(
+        self,
+        flow_input: Union[str, Path, pd.DataFrame],
+        horizon: int = 10,
+    ) -> Dict[str, Any]:
+        """Processes flow records from CSV file or DataFrame."""
+        if isinstance(flow_input, (str, Path)):
+            df = pd.read_csv(flow_input)
+        else:
+            df = flow_input
+
+        # Check if df matches the 12 FlowLSTMWorldModel features
+        flow_cols = [c for c in FLOW_FEATURE_NAMES if c in df.columns]
+        if len(flow_cols) >= 8 and hasattr(self, "flow_model") and self.flow_model is not None:
+            from .features.flow_preprocessor import FlowPreprocessor
+            try:
+                fp = FlowPreprocessor()
+                seqs, _ = fp.process_csv(df)
+                if len(seqs) == 0:
+                    seqs = np.zeros((1, 20, 12), dtype=np.float32)
+                seq_tensor = torch.tensor(seqs, dtype=torch.float32).to(self.device)
+                with torch.no_grad():
+                    out = self.flow_model(seq_tensor)
+                    p_flow = float(torch.mean(out["attack_prob"]).cpu().item())
+                    rollout = self.flow_model.imagine(seq_tensor[:1], horizon=horizon)
+                    timeline = rollout.get("forecast_timeline", [])
+                decision = DecisionLayer().decide(p_attack=p_flow)
+                return {
+                    "status": "success",
+                    "p_flow": float(round(p_flow, 4)),
+                    "p_attack": float(round(p_flow, 4)),
+                    "decision": decision,
+                    "forecast_timeline": timeline,
+                }
+            except Exception:
+                pass
+
+        flow_res = self.process_traffic_dataframe(df)
+        hosts = flow_res.get("hosts", [])
+        p_flow = hosts[0].get("current_risk_score", 0.0) if hosts else 0.0
+        timeline = hosts[0].get("forecast_timeline", []) if hosts else []
+        decision = DecisionLayer().decide(p_attack=p_flow)
+        return {
+            "status": "success",
+            "p_flow": float(round(p_flow, 4)),
+            "p_attack": float(round(p_flow, 4)),
+            "decision": decision,
+            "forecast_timeline": timeline,
+            "flow_hosts": hosts,
+        }
+
+    def process_pcap(
+        self,
+        pcap_input: Union[str, Path, pd.DataFrame],
+        horizon: int = 5,
+    ) -> Dict[str, Any]:
+        """Ingests and parses PCAP file or packet states DataFrame."""
+        if isinstance(pcap_input, pd.DataFrame):
+            df = pcap_input
+            pkt_cols = [c for c in PACKET_FEATURE_NAMES if c in df.columns]
+            if len(pkt_cols) >= 8 and hasattr(self, "packet_model") and self.packet_model is not None:
+                from .features.packet_preprocessor import PacketPreprocessor
+                try:
+                    pp = PacketPreprocessor()
+                    seqs, _ = pp.process_dataframe_states(df)
+                    if len(seqs) == 0:
+                        seqs = np.zeros((1, 10, 20), dtype=np.float32)
+                    seq_tensor = torch.tensor(seqs, dtype=torch.float32).to(self.device)
+                    with torch.no_grad():
+                        out = self.packet_model(seq_tensor)
+                        p_pkt = float(torch.mean(out["risk_prob"]).cpu().item())
+                        rollout = self.packet_model.imagine(seq_tensor[:1], horizon=horizon)
+                        timeline = rollout.get("forecast_timeline", [])
+                        stg_name = rollout.get("predicted_stage_name", "Benign")
+                    decision = DecisionLayer().decide(p_attack=p_pkt)
+                    return {
+                        "status": "success",
+                        "p_packet": float(round(p_pkt, 4)),
+                        "p_attack": float(round(p_pkt, 4)),
+                        "predicted_stage_name": stg_name,
+                        "decision": decision,
+                        "forecast_timeline": timeline,
+                    }
+                except Exception:
+                    pass
+
+        pkts = parse_pcap_file(str(pcap_input))
         if not pkts:
             return {"status": "error", "message": "Failed to parse packets from PCAP."}
 
@@ -266,3 +373,111 @@ class InferenceEngine:
 
         df = pd.DataFrame(flow_records)
         return self.process_traffic_dataframe(df)
+
+    def process_network_input(
+        self,
+        flow_input: Optional[Union[str, Path, pd.DataFrame]] = None,
+        packet_input: Optional[Union[str, Path, pd.DataFrame]] = None,
+        horizon: int = 10,
+    ) -> Dict[str, Any]:
+        """Runs multi-modal or single-modality inference pipeline on flow/PCAP inputs."""
+        flow_res = None
+        pkt_res = None
+        p_flow = None
+        p_pkt = None
+        top_host_meta = None
+        timeline = []
+
+        if flow_input is not None:
+            if isinstance(flow_input, pd.DataFrame) and len([c for c in FLOW_FEATURE_NAMES if c in flow_input.columns]) >= 8:
+                flow_res = self.process_flow_csv(flow_input, horizon=horizon)
+                p_flow = flow_res.get("p_flow", 0.0)
+                timeline = flow_res.get("forecast_timeline", [])
+            else:
+                if isinstance(flow_input, (str, Path)):
+                    df = pd.read_csv(flow_input)
+                else:
+                    df = flow_input
+                flow_res = self.process_traffic_dataframe(df)
+                hosts = flow_res.get("hosts", [])
+                if hosts:
+                    top = hosts[0]
+                    p_flow = top.get("current_risk_score", 0.0)
+                    top_host_meta = top
+                    timeline = top.get("forecast_timeline", [])
+                else:
+                    p_flow = 0.0
+
+        if packet_input is not None:
+            if isinstance(packet_input, pd.DataFrame):
+                pkt_res = self.process_pcap(packet_input, horizon=min(horizon, 5))
+                p_pkt = pkt_res.get("p_packet", 0.0)
+                if not timeline:
+                    timeline = pkt_res.get("forecast_timeline", [])
+            else:
+                pkt_res = self.process_pcap(str(packet_input))
+                hosts = (pkt_res or {}).get("hosts", [])
+                if hosts:
+                    top = hosts[0]
+                    p_pkt = top.get("current_risk_score", 0.0)
+                    if not top_host_meta:
+                        top_host_meta = top
+                        timeline = top.get("forecast_timeline", [])
+                else:
+                    p_pkt = 0.0
+
+        fusion_layer = FusionLayer()
+        fusion_out = fusion_layer.fuse(p_flow=p_flow, p_packet=p_pkt)
+        p_attack = fusion_out["p_attack"]
+
+        decision_layer = DecisionLayer()
+        decision_out = decision_layer.decide(p_attack=p_attack)
+
+        # If top host has a detected stage, enrich decision
+        if top_host_meta and "current_stage" in top_host_meta:
+            stg = top_host_meta["current_stage"]
+            if stg.get("id", 0) > 0:
+                decision_out["stage"] = {
+                    "id": stg.get("id"),
+                    "name": stg.get("name"),
+                    "soc_action": stg.get("metadata", {}).get("soc_action", decision_out["stage"].get("soc_action", ""))
+                }
+                decision_out["technique"] = stg.get("metadata", {}).get("technique", decision_out.get("technique", ""))
+
+        # Format timeline for CLI display
+        forecast_timeline = []
+        for step in timeline:
+            forecast_timeline.append({
+                "step": step.get("step", 1),
+                "lookahead": step.get("minute", step.get("lookahead", "+1m")),
+                "attack_prob": step.get("infilt_prob", step.get("attack_prob", step.get("risk_prob", 0.0))),
+                "lower_ci": step.get("lower_ci", 0.0),
+                "upper_ci": step.get("upper_ci", 0.0),
+                "stage": step.get("stage_name", step.get("projected_stage", "Benign")),
+            })
+
+        out = {
+            "status": "success",
+            "modality": fusion_out.get("fusion_mode", "unknown"),
+            "p_attack": float(round(p_attack, 4)),
+            "decision": decision_out,
+            "forecast_timeline": forecast_timeline,
+            "total_hosts": (flow_res or pkt_res or {}).get("total_hosts", 0),
+            "flagged_hosts": (flow_res or pkt_res or {}).get("flagged_hosts", 0),
+        }
+
+        if p_flow is not None:
+            out["p_flow"] = float(round(p_flow, 4))
+        if p_pkt is not None:
+            out["p_packet"] = float(round(p_pkt, 4))
+        if p_flow is not None and p_pkt is not None:
+            out["agreement_score"] = float(round(fusion_out.get("agreement_score", 1.0), 4))
+
+        if flow_res:
+            out["flow_hosts"] = flow_res.get("hosts", [])
+        if pkt_res:
+            out["packet_hosts"] = (pkt_res or {}).get("hosts", [])
+
+        return out
+
+

@@ -18,7 +18,9 @@ simulation_bp = Blueprint("simulation", __name__)
 @simulation_bp.route("/api/v1/simulate/actions", methods=["GET"])
 def get_supported_actions():
     """Lists all available counterfactual defensive actions and their descriptions."""
-    sim_engine: WhatIfSimulationEngine = current_app.extensions["simulation_engine"]
+    sim_engine = current_app.extensions.get("simulation_engine")
+    if sim_engine is None:
+        return jsonify({"status": "error", "message": "ML engines are still initializing. Retry in ~30 seconds."}), 503
     actions = [
         {
             "key": k,
@@ -36,8 +38,10 @@ def get_supported_actions():
 @permission_required("can_simulate")
 def simulate_action():
     """Executes a What-If counterfactual simulation on a host or telemetry window."""
-    sim_engine: WhatIfSimulationEngine = current_app.extensions["simulation_engine"]
-    inference_engine = current_app.extensions["inference_engine"]
+    sim_engine = current_app.extensions.get("simulation_engine")
+    inference_engine = current_app.extensions.get("inference_engine")
+    if sim_engine is None or inference_engine is None:
+        return jsonify({"status": "error", "message": "ML engines are still initializing. Retry in ~30 seconds."}), 503
 
     data = request.get_json(silent=True) or {}
     action_key = data.get("action", "BLOCK_MANAGEMENT_PORTS").upper()

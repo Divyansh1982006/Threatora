@@ -126,7 +126,7 @@ def build_host_windows_from_flows(
 
     if ts_col is not None:
         try:
-            df["epoch"] = pd.to_datetime(df[ts_col], errors="coerce").astype(int) / 1e9
+            df["epoch"] = pd.to_datetime(df[ts_col], errors="coerce", utc=True).astype("int64") / 1e9
         except Exception:
             df["epoch"] = pd.to_numeric(df[ts_col], errors="coerce").fillna(0)
     else:

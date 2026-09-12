@@ -4,52 +4,25 @@ This guide details how to deploy **Threatora** to **Render**, cloud providers, o
 
 ---
 
-## 🚀 Option 1: Deploy on Render (Recommended Free Cloud Hosting)
+## 🚀 Option 1: Deploy on Render (Free Tier - Step by Step)
 
-Render provides free hosting for web services with automatic SSL, custom domains, and continuous deployment from GitHub.
+We have already configured the optimal settings for Render's free tier in the `render.yaml` file (handling low memory and startup timeouts). The easiest way to deploy is using Render's Blueprint feature.
 
-### Step 1: Connect your GitHub Repository
+### Step 1: Push your code to GitHub
+Make sure all your latest code, including the `render.yaml` file, is pushed to your GitHub repository (`Divyansh1982006/Threatora`).
+
+### Step 2: Create a Blueprint on Render
 1. Go to [https://dashboard.render.com/](https://dashboard.render.com/) and sign in.
-2. Click **New +** in the top navigation bar and select **Web Service**.
+2. Click **New +** in the top navigation bar and select **Blueprint**.
 3. Under **Connect a repository**, select `Divyansh1982006/Threatora` (or paste `https://github.com/Divyansh1982006/Threatora.git`).
+4. Render will automatically read the `render.yaml` file in your repository.
+5. Provide a **Service Group Name** (e.g., `Threatora-App`) and click **Apply**.
 
----
-
-### Step 2: Configure Service Settings
-
-You can deploy using either **Docker** (Recommended) or **Native Python**:
-
-#### Method A: Docker Deployment (Pre-configured via `render.yaml` / `Dockerfile`)
-- **Name**: `threatora-engine` (or your choice)
-- **Region**: Oregon (US West) or Singapore
-- **Branch**: `main`
-- **Runtime**: `Docker`
-- **Instance Type**: `Free`
-- **Advanced -> Environment Variables**:
-  - `PORT`: `5000`
-  - `FLASK_ENV`: `production`
-  - `PYTHONUNBUFFERED`: `1`
-  - `SECRET_KEY`: *(Generate a secure random string or let Render create one)*
-  - *(Optional)* `DATABASE_URL`: *(Leave empty to use built-in SQLite, or add Render PostgreSQL URL)*
-
-#### Method B: Native Python Environment
-- **Name**: `threatora-web`
-- **Runtime**: `Python 3`
-- **Build Command**:
-  ```bash
-  pip install --upgrade pip && pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt
-  ```
-- **Start Command**:
-  ```bash
-  gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 server.app:app
-  ```
-
----
-
-### Step 3: Click "Create Web Service"
-- Render will pull your repository, build the dependencies, and deploy the service.
-- Once live, you will get your public URL:
-  `https://threatora-engine.onrender.com`
+### Step 3: Wait for Deployment
+- Render will now automatically configure the Web Service with the exact `Free` tier settings, build commands, and start commands required.
+- Wait for the build to finish (it might take 5-10 minutes since PyTorch is heavy).
+- Once live, you will get your public URL (e.g., `https://threatora-xxxx.onrender.com`).
+- **Note:** Because it's the free tier, the very first time you load the page (or upload a file), it might take ~30 seconds as the ML models load into memory. After that, it will be fast.
 
 ---
 
