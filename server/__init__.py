@@ -29,7 +29,7 @@ def create_app(config: dict = None) -> Flask:
         template_folder=str(template_folder),
         static_folder=str(static_folder),
     )
-    app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 MB upload limit
+    app.config["MAX_CONTENT_LENGTH"] = 256 * 1024 * 1024  # 256 MB upload limit
     app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "threatora_zero_trust_super_secret_key_2026")
 

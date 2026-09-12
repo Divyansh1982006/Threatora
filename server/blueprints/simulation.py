@@ -8,7 +8,7 @@ import pandas as pd
 from flask import Blueprint, request, jsonify, current_app
 
 from src.config import SAMPLES_DIR, SEQUENCE_LENGTH
-from src.features.windows import build_host_windows_from_flows
+from src.features.windows import build_host_windows_from_flows, FeatureScaler
 from src.simulation import WhatIfSimulationEngine
 from server.blueprints.auth import login_required, permission_required
 
@@ -61,7 +61,8 @@ def simulate_action():
     if len(X_cells) == 0:
         return jsonify({"status": "error", "message": "No valid 60s state windows constructed."}), 400
 
-    X_scaled = inference_engine.scaler.transform(X_cells)
+    scaler = FeatureScaler.load()
+    X_scaled = scaler.transform(X_cells)
 
     # Filter by target host if specified
     unique_hosts = sorted(list(set(m[0] for m in meta)))
