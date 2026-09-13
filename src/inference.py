@@ -239,7 +239,14 @@ class InferenceEngine:
                     "metadata": current_stage_meta
                 },
                 "forecast_timeline": forecast_timeline,
-                "explainability": explanations
+                "explainability": explanations,
+                "live_stats": {
+                    "n_flows": float(X_cells[cand["host_indices"][-1], ALL_FEATURE_COLS.index("n_flows")]),
+                    "avg_pkt_size": float(X_cells[cand["host_indices"][-1], ALL_FEATURE_COLS.index("avg_pkt_size")]),
+                    "frac_outbound": float(X_cells[cand["host_indices"][-1], ALL_FEATURE_COLS.index("frac_outbound")]),
+                    "frac_tcp": float(X_cells[cand["host_indices"][-1], ALL_FEATURE_COLS.index("frac_tcp")]),
+                    "frac_udp": float(X_cells[cand["host_indices"][-1], ALL_FEATURE_COLS.index("frac_udp")]),
+                }
             })
 
         # Rank hosts by risk score

@@ -268,14 +268,14 @@ function renderTrajectoryCanvas() {
     ctx.closePath();
 
     const ciGrad = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom);
-    ciGrad.addColorStop(0, 'rgba(242, 86, 35, 0.22)');
-    ciGrad.addColorStop(0.5, 'rgba(242, 86, 35, 0.12)');
-    ciGrad.addColorStop(1, 'rgba(242, 86, 35, 0.04)');
+    ciGrad.addColorStop(0, 'rgba(242, 86, 35, 0.08)');
+    ciGrad.addColorStop(0.5, 'rgba(242, 86, 35, 0.04)');
+    ciGrad.addColorStop(1, 'rgba(242, 86, 35, 0.01)');
     ctx.fillStyle = ciGrad;
     ctx.fill();
 
     // Boundary stroke
-    ctx.strokeStyle = 'rgba(242, 86, 35, 0.35)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 5]);
     ctx.stroke();
@@ -292,8 +292,8 @@ function renderTrajectoryCanvas() {
   ctx.closePath();
 
   const areaGrad = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom);
-  areaGrad.addColorStop(0, 'rgba(242, 86, 35, 0.42)');
-  areaGrad.addColorStop(0.6, 'rgba(242, 86, 35, 0.10)');
+  areaGrad.addColorStop(0, 'rgba(242, 86, 35, 0.15)');
+  areaGrad.addColorStop(0.6, 'rgba(242, 86, 35, 0.05)');
   areaGrad.addColorStop(1, 'rgba(18, 18, 18, 0.0)');
   ctx.fillStyle = areaGrad;
   ctx.fill();
@@ -319,12 +319,12 @@ function renderTrajectoryCanvas() {
     // Expanding beacon ring on hovered node
     if (isHovered) {
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(242, 86, 35, 0.25)';
       ctx.fill();
 
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.5;
       ctx.stroke();
@@ -362,17 +362,19 @@ function renderTrajectoryCanvas() {
     ctx.setLineDash([]);
 
     // Glassmorphic HUD Tooltip
-    const tooltipW = 190;
-    const tooltipH = 92;
-    let tooltipX = target.x + 14;
-    let tooltipY = target.y - tooltipH / 2;
+    const tooltipW = 170;
+    const tooltipH = 82;
+    let tooltipX = target.x - (tooltipW / 2);
+    let tooltipY = target.y - tooltipH - 12;
 
     // Clamp inside canvas boundary
-    if (tooltipX + tooltipW > w - 10) {
-      tooltipX = target.x - tooltipW - 14;
+    if (tooltipX < padding.left) tooltipX = padding.left;
+    if (tooltipX + tooltipW > w - padding.right) tooltipX = w - padding.right - tooltipW;
+    
+    // If tooltip goes above chart, flip it below
+    if (tooltipY < 10) {
+      tooltipY = target.y + 12;
     }
-    if (tooltipY < padding.top) tooltipY = padding.top + 4;
-    if (tooltipY + tooltipH > h - padding.bottom) tooltipY = h - padding.bottom - tooltipH - 4;
 
     // Tooltip Box Container
     ctx.save();
@@ -390,34 +392,34 @@ function renderTrajectoryCanvas() {
 
     // Tooltip Header
     ctx.fillStyle = '#F25623';
-    ctx.font = "700 10px 'JetBrains Mono', monospace";
+    ctx.font = "700 9px 'JetBrains Mono', monospace";
     ctx.textAlign = 'left';
-    ctx.fillText(`⏱️ HORIZON: ${pt.minute}`, tooltipX + 10, tooltipY + 18);
+    ctx.fillText(`⏱️ HORIZON: ${pt.minute}`, tooltipX + 8, tooltipY + 16);
 
     // Divider Line
     ctx.strokeStyle = 'rgba(77, 77, 77, 0.5)';
     ctx.beginPath();
-    ctx.moveTo(tooltipX + 10, tooltipY + 24);
-    ctx.lineTo(tooltipX + tooltipW - 10, tooltipY + 24);
+    ctx.moveTo(tooltipX + 8, tooltipY + 22);
+    ctx.lineTo(tooltipX + tooltipW - 8, tooltipY + 22);
     ctx.stroke();
 
     // Risk Value
     const riskPct = (pt.infilt_prob * 100).toFixed(1);
     ctx.fillStyle = pt.infilt_prob >= 0.7 ? '#F25623' : '#DEDEDE';
-    ctx.font = "700 12px Inter, sans-serif";
-    ctx.fillText(`Risk: ${riskPct}% ${pt.infilt_prob >= 0.7 ? '⚠ CRITICAL' : ''}`, tooltipX + 10, tooltipY + 42);
+    ctx.font = "700 11px Inter, sans-serif";
+    ctx.fillText(`Risk: ${riskPct}% ${pt.infilt_prob >= 0.7 ? '⚠ CRITICAL' : ''}`, tooltipX + 8, tooltipY + 38);
 
     // ATT&CK Stage
     ctx.fillStyle = '#DEDEDE';
-    ctx.font = "500 10px Inter, sans-serif";
-    ctx.fillText(`Phase: ${pt.stage_name || 'Lateral Movement'}`, tooltipX + 10, tooltipY + 58);
+    ctx.font = "500 9px Inter, sans-serif";
+    ctx.fillText(`Phase: ${pt.stage_name || 'Lateral Movement'}`, tooltipX + 8, tooltipY + 52);
 
     // 95% CI Range
     const lowerPct = ((pt.lower_ci || pt.infilt_prob - 0.05) * 100).toFixed(1);
     const upperPct = ((pt.upper_ci || pt.infilt_prob + 0.05) * 100).toFixed(1);
     ctx.fillStyle = '#8E8E8E';
-    ctx.font = "10px 'JetBrains Mono', monospace";
-    ctx.fillText(`95% CI: [${lowerPct}% — ${upperPct}%]`, tooltipX + 10, tooltipY + 74);
+    ctx.font = "9px 'JetBrains Mono', monospace";
+    ctx.fillText(`95% CI: [${lowerPct}% — ${upperPct}%]`, tooltipX + 8, tooltipY + 66);
     ctx.restore();
   }
 }
@@ -775,29 +777,44 @@ function renderDashboard(data) {
 
   const host = data.hosts[0]; // Lead flagged host
 
-  // 1. Update KPI Metric Tiles
+  // 1. Update KPI Metric Tiles & Unified Banner
   const riskPct = (host.current_risk_score * 100).toFixed(1);
   const valRisk = document.getElementById('valRisk');
-  valRisk.innerText = riskPct + "%";
-  valRisk.style.color = host.is_anomalous ? "var(--neon-crimson)" : "var(--neon-emerald)";
+  if (valRisk) {
+    valRisk.innerText = riskPct + "%";
+    valRisk.style.color = host.is_anomalous ? "var(--neon-crimson)" : "var(--neon-emerald)";
+  }
 
   const valStage = document.getElementById('valStage');
-  valStage.innerText = host.current_stage.name;
-  valStage.style.color = host.is_anomalous ? "var(--neon-crimson)" : "var(--neon-emerald)";
+  if (valStage) {
+    valStage.innerText = host.current_stage.name;
+    valStage.style.color = host.is_anomalous ? "var(--neon-amber)" : "var(--neon-emerald)";
+  }
+
+  const targetIpVal = document.getElementById('kpiTargetIp');
+  if (targetIpVal) {
+    targetIpVal.innerText = host.host_ip;
+  }
 
   // 2. Redraw Forward Rollout Timeline Chart
   drawTimelineChart(host.forecast_timeline);
 
-  // 3. Update MITRE ATT&CK Radar Strip
-  for (let i = 1; i <= 5; i++) {
-    const stepEl = document.getElementById('stage' + i);
-    if (stepEl) {
-      stepEl.className = 'mitre-step-box';
-      if (host.current_stage.id === i) {
-        stepEl.classList.add('active');
-      } else if (host.current_stage.id > i) {
-        stepEl.classList.add('passed');
-      }
+  // 3. Update Live Network Stats
+  if (host.live_stats) {
+    const elFlows = document.getElementById('statFlows');
+    if (elFlows) elFlows.innerText = host.live_stats.n_flows;
+    
+    const elPktSize = document.getElementById('statPktSize');
+    if (elPktSize) elPktSize.innerText = Math.round(host.live_stats.avg_pkt_size) + " B";
+    
+    const elOutbound = document.getElementById('statOutbound');
+    if (elOutbound) elOutbound.innerText = (host.live_stats.frac_outbound * 100).toFixed(1) + "%";
+    
+    const elProto = document.getElementById('statProto');
+    if (elProto) {
+      const tcp = (host.live_stats.frac_tcp * 100).toFixed(0);
+      const udp = (host.live_stats.frac_udp * 100).toFixed(0);
+      elProto.innerText = `${tcp}% / ${udp}%`;
     }
   }
 
@@ -822,22 +839,19 @@ function renderDashboard(data) {
     socBox.style.display = 'none';
   }
 
-  // 5. Update Feature Saliency Bars
+  // 5. Update Compact Explainability List
   const explainDiv = document.getElementById('explainBars');
-  explainDiv.innerHTML = '';
-  const topFeats = host.explainability.top_features || {};
-  for (const [feat, score] of Object.entries(topFeats)) {
-    explainDiv.innerHTML += `
-      <div class="feat-bar-row">
-        <div class="feat-header">
+  if (explainDiv) {
+    explainDiv.innerHTML = '';
+    const topFeats = host.explainability.top_features || {};
+    for (const [feat, score] of Object.entries(topFeats)) {
+      explainDiv.innerHTML += `
+        <div class="explain-item">
           <span>${feat}</span>
-          <span style="color: var(--neon-cyan);">${score.toFixed(1)}%</span>
+          <span class="mono">${score.toFixed(1)}%</span>
         </div>
-        <div class="feat-track">
-          <div class="feat-fill" style="width: ${Math.min(score * 2.5, 100)}%;"></div>
-        </div>
-      </div>
-    `;
+      `;
+    }
   }
 
   // 6. Update Feature Deltas List
