@@ -509,7 +509,7 @@ function renderInitialPlotlyChart() {
 
   const xVals = defaultMockTimeline.map(t => t.minute);
   const baseRisk = [74.8, 76.5, 78.2, 80.0, 81.5, 82.8, 84.1, 85.0, 86.2, 87.5];
-  const simRisk =  [74.8, 62.0, 56.4, 51.2, 49.0, 48.2, 47.8, 47.5, 47.1, 46.8];
+  const simRisk = [74.8, 62.0, 56.4, 51.2, 49.0, 48.2, 47.8, 47.5, 47.1, 46.8];
 
   const traceBase = {
     x: xVals,
@@ -673,11 +673,11 @@ async function handleFileUpload() {
   const file = fileInput.files[0];
   if (!file) return;
 
-  // Cloud deployments have a 200MB upload limit to prevent OOM on free tier
-  const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB
+  // 1 GB dataset upload limit
+  const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB (1024 MB)
   if (file.size > MAX_FILE_SIZE) {
     const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-    showToast(`File too large (${sizeMB} MB). Max upload is 200 MB on cloud.`, 'error');
+    showToast(`File too large (${sizeMB} MB). Max upload is 1 GB (1024 MB).`, 'error');
     fileInput.value = '';
     return;
   }
@@ -926,7 +926,7 @@ window.triggerDirectIsolation = triggerDirectIsolation;
 function showAccessDenied(perm, actionName) {
   const modal = document.getElementById('accessDeniedModal');
   if (modal) {
-    document.getElementById('deniedDetailMsg').innerText = 
+    document.getElementById('deniedDetailMsg').innerText =
       `The action '${actionName || perm}' was blocked by Zero-Trust policy. Elevated clearance is required.`;
     modal.classList.add('show');
   }
@@ -968,7 +968,7 @@ async function pollHealthStatus() {
         statusPill.innerHTML = `<span class="beacon-dot"></span>ENGINE ONLINE (${data.device.toUpperCase()})`;
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 /* Floating Toast Notifications */

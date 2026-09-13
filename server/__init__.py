@@ -27,8 +27,8 @@ def create_app(config: dict = None) -> Flask:
         template_folder=str(template_folder),
         static_folder=str(static_folder),
     )
-    # Reduce upload limit to 200MB on cloud — prevents OOM on free tier
-    max_upload_mb = int(os.environ.get("MAX_UPLOAD_MB", "200"))
+    # 1 GB upload limit for dataset telemetry captures
+    max_upload_mb = int(os.environ.get("MAX_UPLOAD_MB", "1024"))
     app.config["MAX_CONTENT_LENGTH"] = max_upload_mb * 1024 * 1024
     app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "threatora_zero_trust_super_secret_key_2026")
