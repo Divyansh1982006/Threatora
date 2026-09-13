@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Threatora // Operations HUD // Live Threat Forecasting{% endblock %}
+
+{% block content %}
+
+<!-- Real Dataset Testing & Model Execution Controller -->
+<div class="control-banner">
+  <div class="banner-left" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+        Test Dataset:
+      </span>
+      <select id="datasetSelect" class="cyber-select" style="font-size: 0.82rem; padding: 6px 12px; min-width: 290px;">
+        <option value="host-becomes-infected" selected>CTU-13 Infiltration (host-becomes-infected.csv)</option>
+        <option value="sample_traffic">Multi-Stage Lateral Attack (sample_traffic.csv)</option>
+      </select>
+    </div>
+
+    <button class="btn-cyber btn-cyber-primary" id="btnExecuteInference" onclick="runSelectedDatasetTest()">
+      <span>⚡ Run Model Inference</span>
+    </button>
+  </div>
+
+  <div class="banner-right" style="display: flex; align-items: center; gap: 12px;">
+    <label class="btn-cyber btn-cyber-outline" id="uploadLabel" style="cursor: pointer; padding: 6px 14px; font-size: 0.78rem;">
+      <span>📁 Upload Custom PCAP / CSV</span>
+      <input type="file" id="fileInput" accept=".pcap,.pcapng,.cap,.csv,.binetflow" style="display: none;" onchange="handleFileUpload()">
+    </label>
+    <span class="status-pill status-pill-green" id="inferenceStatusBadge" style="font-size: 0.72rem;">
+      <span class="beacon-dot"></span>
+      <span>MODEL READY</span>
+    </span>
+  </div>
+</div>
+
+<!-- Clean Unified KPI Banner -->
+<div class="kpi-banner">
+  <div class="kpi-group">
+    <div class="kpi-label">TARGET IP</div>
+    <div class="kpi-val mono" id="kpiTargetIp">192.168.1.105</div>
+  </div>
+  <div class="kpi-group">
+    <div class="kpi-label">INFILTRATION RISK</div>
+    <div class="kpi-val" id="valRisk" style="color: var(--neon-crimson);">74.8%</div>
+  </div>
+  <div class="kpi-group" style="flex: 1;">
+    <div class="kpi-label">CURRENT ATT&CK PHASE</div>
+    <div class="kpi-val" id="valStage" style="color: var(--neon-amber);">Lateral Movement</div>
+  </div>
+</div>
+
+<!-- Main Operations Grid -->
+<div class="dashboard-grid clean-grid">
+  <!-- Left Column: Trajectory & Stats -->
+  <div class="cyber-panel corner-hud" style="flex: 2;">
+    <div class="panel-header" style="flex-wrap: wrap; gap: 10px; border-bottom: none; margin-bottom: 0;">
+      <div class="panel-title">
+        <span>📈</span>
+        <span>10-Minute Forecast Trajectory</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn-cyber btn-cyber-outline" style="padding: 4px 10px; font-size: 0.7rem;" id="toggleCiBtn" onclick="toggleTrajectoryCI()">
+          95% CI
+        </button>
+        <span class="status-pill status-pill-crimson" id="peakRiskBadge">PEAK: 81.6% @ +10m</span>
+      </div>
+    </div>
+
+    <!-- Enhanced High-Def Canvas Rollout Chart -->
+    <div class="timeline-container" id="timelineChartContainer" style="height: 220px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px;">
+      <canvas id="timelineChart"></canvas>
+    </div>
+
+    <!-- NEW: Live Network Stats Grid -->
+    <div class="stats-header" style="font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">
+      Live Network Context (Last 60s)
+    </div>
+    <div class="live-stats-grid" id="liveStatsGrid">
+      <div class="stat-box">
+        <div class="stat-lbl">Active Connections</div>
+        <div class="stat-num mono" id="statFlows">--</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Avg Packet Size</div>
+        <div class="stat-num mono" id="statPktSize">--</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Outbound Ratio</div>
+        <div class="stat-num mono" id="statOutbound">--</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">TCP / UDP Split</div>
+        <div class="stat-num mono" id="statProto">-- / --</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Actionable Intelligence & Explainability -->
+  <div class="cyber-panel corner-hud" style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+    
+    <!-- SOC Incident Box (Moved to top right for immediate action) -->
+    <div class="soc-incident-box" id="socIncidentBox" style="margin-top: 0; padding: 16px;">
+      <div class="soc-header-row" style="margin-bottom: 12px;">
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--neon-crimson);">
+          🚨 CRITICAL THREAT DETECTED
+        </div>
+        <span class="soc-playbook-badge" id="playbookBadge">ACTIVE</span>
+      </div>
+      <div class="soc-text" id="damageAssessmentText" style="margin-bottom: 16px; font-size: 0.8rem;">
+        Host exhibiting anomalous lateral scanning. High probability of exfiltration.
+      </div>
+      <div class="soc-text mono" id="socActionText" style="margin-bottom: 16px; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;">
+        Strategy: Sever lateral ingress & block SMB.
+      </div>
+      <button class="btn-cyber btn-cyber-danger" id="btnIsolate" onclick="triggerMitigation()" style="width: 100%;">
+        🛡️ Execute Containment
+      </button>
+    </div>
+
+    <!-- Compact Explainability -->
+    <div>
+      <div class="panel-title" style="font-size: 0.85rem; margin-bottom: 12px;">
+        <span>🧠</span> Threat Drivers
+      </div>
+      <div class="compact-explain-list" id="explainBars">
+        <!-- JS Populates this -->
+        <div class="explain-item"><span>tot_bytes</span> <span class="mono">82.4%</span></div>
+        <div class="explain-item"><span>frac_syn_only</span> <span class="mono">71.1%</span></div>
+      </div>
+    </div>
+
+    <!-- Predicted Feature Deltas -->
+    <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+      <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">
+        Predicted Behavior Shifts:
+      </div>
+      <div id="stateDeltasList" class="mono" style="font-size: 0.7rem; color: var(--text-secondary); line-height: 1.5;">
+        <div>• tot_bytes shift expected (-99.1%)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -6,59 +6,30 @@
   <title>Threatora // Create Operator Identity</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/threatora_logo.png') }}">
   <style>
-    :root {
-      --bg: #f8f8f6;
-      --card-bg: #ffffff;
-      --card-border: #e8e8e3;
-      --accent: #e0523d;
-      --accent-hover: #c94330;
-      --accent-tint: #fef2f0;
-      --accent-border: #fbdad4;
-      --text: #1c1917;
-      --text-muted: #78716c;
-      --text-dim: #a1a1aa;
-      --red-bg: #fee2e2;
-      --red-border: #fecaca;
-      --red-text: #dc2626;
-      --green-bg: #dcfce7;
-      --green-border: #bbf7d0;
-      --green-text: #15803d;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
     body {
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      min-height: 100vh;
       padding: 24px;
-      -webkit-font-smoothing: antialiased;
     }
-
     .register-container {
       width: 100%;
-      max-width: 440px;
+      max-width: 460px;
     }
-
     .register-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
       padding: 32px 28px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 24px var(--neon-cyan-tint);
+      position: relative;
     }
-
     .brand-header {
       display: flex;
       flex-direction: column;
@@ -66,52 +37,26 @@
       text-align: center;
       margin-bottom: 22px;
     }
-
     .brand-icon {
-      width: 44px;
-      height: 44px;
-      background: var(--accent);
-      border-radius: 12px;
+      width: 58px;
+      height: 58px;
+      background: rgba(242, 86, 35, 0.14);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ffffff;
-      font-size: 1.4rem;
-      font-weight: 800;
-      box-shadow: 0 4px 10px rgba(224, 82, 61, 0.25);
-      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(242, 86, 35, 0.35);
+      margin-bottom: 14px;
+      padding: 4px;
     }
-
-    .brand-title {
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: -0.4px;
-    }
-
-    .brand-subtitle {
-      font-size: 0.76rem;
-      font-weight: 600;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 3px;
-    }
-
-    .register-desc {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-align: center;
-      margin-top: 6px;
-      line-height: 1.45;
-    }
-
     .alert-error {
-      background: var(--red-bg);
-      border: 1px solid var(--red-border);
-      color: var(--red-text);
-      font-size: 0.8rem;
-      font-weight: 600;
+      background: var(--neon-crimson-tint);
+      border: 1px solid var(--neon-crimson);
+      color: var(--neon-crimson);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
       padding: 10px 14px;
       border-radius: 8px;
       margin-bottom: 18px;
@@ -119,96 +64,52 @@
       align-items: center;
       gap: 8px;
     }
-
     .form-group {
       margin-bottom: 14px;
     }
-
     .form-label {
       display: block;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 5px;
-    }
-
-    .form-input, .form-select {
-      width: 100%;
-      background: #fafaf8;
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 9px 13px;
-      font-size: 0.85rem;
-      color: var(--text);
-      transition: all 0.2s ease;
-    }
-
-    .form-input:focus, .form-select:focus {
-      outline: none;
-      background: #ffffff;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(224, 82, 61, 0.12);
-    }
-
-    .btn-submit {
-      width: 100%;
-      background: var(--accent);
-      color: #ffffff;
-      border: none;
-      padding: 11px;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(224, 82, 61, 0.2);
-      margin-top: 18px;
-    }
-
-    .btn-submit:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .sign-in-prompt {
-      text-align: center;
-      margin-top: 18px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .sign-in-link {
-      color: var(--accent);
-      font-weight: 700;
-      text-decoration: none;
-      margin-left: 4px;
-    }
-
-    .sign-in-link:hover {
-      text-decoration: underline;
-    }
-
-    .footer-note {
-      text-align: center;
-      margin-top: 20px;
+      font-family: var(--font-mono);
       font-size: 0.74rem;
-      color: var(--text-dim);
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.85rem;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan-tint);
     }
   </style>
 </head>
 <body>
 
   <div class="register-container">
-    <div class="register-card">
+    <div class="register-card corner-hud">
       <div class="brand-header">
-        <div class="brand-icon">T</div>
-        <div class="brand-title">Threatora</div>
-        <div class="brand-subtitle">CREATE OPERATOR IDENTITY</div>
-        <p class="register-desc">Provision an authorized analyst identity for real-time network defense and world model rollouts.</p>
+        <div class="brand-icon">
+          <img src="{{ url_for('static', filename='images/threatora_logo.png') }}" alt="Threatora Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px; transform: scale(1.35);">
+        </div>
+        <div style="font-size: 1.45rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;">THREATORA</div>
+        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px;">
+          OPERATOR REGISTRATION
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 6px;">
+          Register a zero-trust cyber defense operator identity.
+        </p>
       </div>
 
       {% if error %}
@@ -220,48 +121,51 @@
 
       <form action="/register" method="POST">
         <div class="form-group">
-          <label class="form-label" for="full_name">Full Name</label>
-          <input class="form-input" type="text" id="full_name" name="full_name" placeholder="e.g. Rohan Sharma" required autofocus>
+          <label class="form-label" for="full_name">Full Name / Call-Sign</label>
+          <input class="form-input" type="text" id="full_name" name="full_name" placeholder="e.g. Alex Kelly" required autofocus>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="username">Operator Call-Sign / Username</label>
-          <input class="form-input" type="text" id="username" name="username" placeholder="e.g. rohan_soc" required>
+          <label class="form-label" for="username">Operator Username</label>
+          <input class="form-input" type="text" id="username" name="username" placeholder="e.g. akelly" required>
         </div>
 
         <div class="form-group">
           <label class="form-label" for="email">Official Security Email</label>
-          <input class="form-input" type="email" id="email" name="email" placeholder="e.g. rohan@threatora.internal" required>
+          <input class="form-input" type="email" id="email" name="email" placeholder="e.g. akelly@defense.soc" required>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="password">Security Passphrase (min. 6 characters)</label>
-          <input class="form-input" type="password" id="password" name="password" placeholder="••••••••••••" minlength="6" required>
+          <label class="form-label" for="password">Passphrase (min 6 chars)</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="••••••••••••" required>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="role">Assigned Operational Role</label>
-          <select class="form-select" id="role" name="role">
-            <option value="SOC_ANALYST" selected>SOC Analyst (Telemetry & Kill-Chain Radar)</option>
-            <option value="INCIDENT_RESPONDER">Incident Responder (1-Click Quarantine & Playbooks)</option>
-            <option value="SECURITY_ENGINEER">Security Engineer (Model Simulation & Architecture)</option>
-            <option value="CHIEF_CISO_ADMIN">Chief CISO / Administrator (Full Clearance)</option>
+          <label class="form-label" for="role">Requested Operational Clearance</label>
+          <select class="cyber-select" id="role" name="role" style="width: 100%;">
+            <option value="SOC_ANALYST" selected>SOC Tier-2 Analyst (Level 3)</option>
+            <option value="INCIDENT_RESPONDER">Incident Responder (Level 4)</option>
+            <option value="SECURITY_ENGINEER">Security Engineer (Level 4)</option>
+            <option value="SOC_LEAD_ANALYST">SOC Lead Analyst (Level 4)</option>
+            <option value="CHIEF_CISO_ADMIN">Chief CISO / SecOps Director (Level 5)</option>
+            <option value="SECURITY_AUDITOR">Security & Compliance Auditor (Level 2)</option>
+            <option value="GUEST_OBSERVER">Guest Observer (Level 1)</option>
           </select>
         </div>
 
-        <button type="submit" class="btn-submit">
-          Create Account & Sign In &rarr;
+        <button type="submit" class="btn-cyber btn-cyber-primary" style="width: 100%; justify-content: center; padding: 11px; margin-top: 14px; font-size: 0.86rem;">
+          Establish Identity &rarr;
         </button>
       </form>
 
-      <div class="sign-in-prompt">
-        Already have an operator identity?
-        <a class="sign-in-link" href="/login">Sign In &rarr;</a>
+      <div style="text-align: center; margin-top: 16px; font-size: 0.8rem; color: var(--text-muted);">
+        Already registered?
+        <a href="/login" style="color: var(--neon-cyan); font-weight: 700; text-decoration: none; margin-left: 4px;">Sign In &rarr;</a>
       </div>
     </div>
 
-    <div class="footer-note">
-      Threatora Offline World Model &middot; Zero-Trust Cyber Defense System
+    <div style="text-align: center; margin-top: 18px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">
+      Threatora Offline World Model &middot; Zero-Trust Cyber Defense
     </div>
   </div>
 

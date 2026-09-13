@@ -17,14 +17,13 @@ from typing import Dict, Any, List
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.metrics import precision_recall_fscore_support, confusion_matrix, roc_auc_score
 
 from .config import (
     CHECKPOINT_DIR, REPORTS_DIR, PROCESSED_DIR, SAMPLES_DIR,
     SEQUENCE_LENGTH, FORECAST_HORIZON
 )
 from .model.world_model import NetworkWorldModel
-from .model.baseline import LogisticRegressionBaseline, PersistenceBaseline
+from .model.baseline import LogisticRegressionBaseline, PersistenceBaseline, compute_metrics_fallback
 from .features.windows import FeatureScaler
 from .dataset import get_dataloaders
 from .prepare_data import prepare_dataset
@@ -94,22 +93,7 @@ def run_benchmark() -> Dict[str, Any]:
         wm_probs = out["infiltration_prob"][:, -1].cpu().numpy()
         wm_preds = (wm_probs >= 0.5).astype(int)
 
-    prec, rec, f1, _ = precision_recall_fscore_support(last_step_targets, wm_preds, average="binary", zero_division=0)
-    tn, fp, fn, tp = confusion_matrix(last_step_targets, wm_preds, labels=[0, 1]).ravel()
-    wm_fpr = float(fp / max(fp + tn, 1))
-
-    try:
-        wm_auc = float(roc_auc_score(last_step_targets, wm_probs))
-    except Exception:
-        wm_auc = 0.5
-
-    res_world_model = {
-        "precision": float(round(prec, 4)),
-        "recall": float(round(rec, 4)),
-        "f1_score": float(round(f1, 4)),
-        "false_positive_rate": float(round(wm_fpr, 4)),
-        "roc_auc": float(round(wm_auc, 4))
-    }
+    res_world_model = compute_metrics_fallback(last_step_targets, wm_preds, wm_probs)
 
     # 5. Multi-Horizon Forecasting Benchmark (World Model vs Persistence Baseline)
     # Evaluates forward simulation accuracy across horizons

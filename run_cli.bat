@@ -48,6 +48,16 @@ echo [*] Default Operator Credentials: admin / Threatora@2026
 echo [*] Launching Interactive Tactical Console...
 echo.
 
-python cli.py console --api-url %FINAL_URL%
+set PY_BIN=python
+where py >nul 2>&1
+if %errorlevel% equ 0 (
+    py -3.13 -c "import sys; sys.exit(0)" >nul 2>&1
+    if %errorlevel% equ 0 (
+        set PY_BIN=py -3.13
+    )
+)
+
+%PY_BIN% cli.py console --api-url %FINAL_URL%
 
 pause
+

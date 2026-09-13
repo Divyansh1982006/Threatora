@@ -111,7 +111,11 @@ def build_host_windows_from_flows(
     if flows_df.empty:
         return np.empty((0, len(ALL_FEATURE_COLS))), np.empty((0,)), np.empty((0,)), []
 
-    df = flows_df.copy()
+    # If massive dataset (>100k flows), prioritize the most recent 100k rows for responsive analysis
+    if len(flows_df) > 100_000:
+        df = flows_df.tail(100_000).copy()
+    else:
+        df = flows_df.copy()
 
     # Resolve timestamps to epoch seconds
     ts_col = None
@@ -122,7 +126,7 @@ def build_host_windows_from_flows(
 
     if ts_col is not None:
         try:
-            df["epoch"] = pd.to_datetime(df[ts_col], errors="coerce").astype(int) / 1e9
+            df["epoch"] = pd.to_datetime(df[ts_col], errors="coerce", utc=True).astype("int64") / 1e9
         except Exception:
             df["epoch"] = pd.to_numeric(df[ts_col], errors="coerce").fillna(0)
     else:

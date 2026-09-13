@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Threatora // Network Attack Forecasting & MITRE ATT&CK Simulation{% endblock %}</title>
+
+  <!-- Google Fonts: Inter (World-class UI font) & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Plotly.js for Scientific Telemetry & Risk Projections -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <!-- Tactical Cyberpunk Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/threatora_logo.png') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Tactical Cyber Navigation Bar -->
+  <header class="cyber-navbar">
+    <a href="{{ url_for('views.index') }}" class="brand-wrapper">
+      <div class="brand-shield">
+        <img src="{{ url_for('static', filename='images/threatora_logo.png') }}" alt="Threatora Shield Logo" class="brand-logo-img">
+      </div>
+      <div class="brand-title-box">
+        <div class="brand-title">
+          <span>THREATORA</span>
+          <span style="font-size: 0.72rem; color: var(--neon-cyan); font-weight: 700; letter-spacing: 1px;">// WORLD MODEL</span>
+        </div>
+        <div class="brand-subtitle">Threatora // Network Attack Forecasting</div>
+      </div>
+    </a>
+
+    <div class="nav-actions">
+      <!-- Engine Online Status Capsule -->
+      <div class="status-pill status-pill-green" id="engineStatusPill">
+        <span class="beacon-dot"></span>
+        <span>SYSTEM ONLINE</span>
+      </div>
+
+      <!-- Operator Profile & Logout -->
+      {% if user %}
+      <a href="{{ url_for('auth.profile') }}" class="btn-cyber btn-cyber-outline" style="padding: 5px 12px; font-size: 0.75rem;">
+        <span>👤</span>
+        <span>{{ user.full_name }} (@{{ user.username }})</span>
+      </a>
+      <a href="{{ url_for('auth.logout') }}" class="btn-cyber btn-cyber-outline" style="padding: 5px 12px; font-size: 0.75rem; border-color: var(--border-card); color: var(--text-muted);">
+        <span>LOGOUT</span>
+      </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Clean Professional Navigation Bar -->
+  <nav class="tactical-tab-bar">
+    <a href="{{ url_for('views.index') }}" class="tab-btn {% if active_page == 'home' %}active{% endif %}">
+      <span>Overview</span>
+    </a>
+    <a href="{{ url_for('views.dashboard') }}" class="tab-btn {% if active_page == 'dashboard' %}active{% endif %}">
+      <span>Operations HUD</span>
+    </a>
+    <a href="{{ url_for('views.visualizations') }}" class="tab-btn {% if active_page == 'visualizations' %}active{% endif %}">
+      <span>Network Topology</span>
+    </a>
+    <a href="{{ url_for('views.mitigation_view') }}" class="tab-btn {% if active_page == 'mitigation' %}active{% endif %}">
+      <span>Mitigation Center</span>
+    </a>
+  </nav>
+
+  <!-- Main Content Body -->
+  <main class="app-container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- 403 Access Denied Cyber Alert Modal -->
+  <div class="cyber-modal-backdrop" id="accessDeniedModal" onclick="if(event.target===this)closeAccessDeniedModal()">
+    <div class="cyber-modal" style="border-top: 3px solid var(--neon-crimson);">
+      <div class="cyber-modal-header">
+        <div style="font-weight: 700; color: var(--neon-crimson); display: flex; align-items: center; gap: 8px;">
+          <span>⛔</span>
+          <span>403 Access Denied // Elevated Clearance Required</span>
+        </div>
+        <button class="btn-cyber" style="padding: 2px 8px;" onclick="closeAccessDeniedModal()">&times;</button>
+      </div>
+      <div class="cyber-modal-body">
+        <div style="background: var(--neon-crimson-tint); border: 1px solid var(--neon-crimson); border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;">
+          <div style="font-size: 0.85rem; font-weight: 700; color: var(--neon-crimson); margin-bottom: 4px;">
+            Zero-Trust Policy Enforcement
+          </div>
+          <div id="deniedDetailMsg" style="font-size: 0.8rem; color: var(--text-main); line-height: 1.5;">
+            Action requires elevated operational clearance.
+          </div>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
+          Containment operations and raw telemetry ingestion are strictly restricted. Use the role switcher in the top bar to elevate your role to <strong>Chief CISO (Level 5)</strong> or <strong>Incident Responder (Level 4)</strong>.
+        </p>
+      </div>
+      <div class="cyber-modal-footer">
+        <button class="btn-cyber" onclick="closeAccessDeniedModal()">Dismiss</button>
+        <button class="btn-cyber btn-cyber-danger" onclick="handleRoleSwitch('CHIEF_CISO_ADMIN')">
+          ⚡ Elevate to Chief CISO (Level 5)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Global JavaScript Variables -->
+  <script>
+    window.INITIAL_ROLE_INFO = {{ role_info | default({}) | tojson }};
+  </script>
+
+  <!-- Core Scripts -->
+  <script src="{{ url_for('static', filename='js/network_topology.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/cyber_dashboard.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

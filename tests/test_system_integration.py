@@ -77,8 +77,9 @@ def run_integration_audit():
 
     # Execute Mitigation
     print("[*] 4. Testing 1-Click Zero-Trust Containment Dispatch...")
+    headers = {"X-API-Key": "threatora-zero-trust"}
     target_pb_uid = lead_pb["playbook_uid"]
-    mitigate_resp = client.post("/api/v1/mitigate", json={"playbook_uid": target_pb_uid})
+    mitigate_resp = client.post("/api/v1/mitigate", json={"playbook_uid": target_pb_uid}, headers=headers)
     assert mitigate_resp.status_code == 200
     mit_data = mitigate_resp.get_json()
     assert mit_data["status"] == "success"
@@ -112,7 +113,7 @@ def run_integration_audit():
         "action": "BLOCK_MANAGEMENT_PORTS",
         "target_ip": lead_host['host_ip'],
         "horizon": 10
-    })
+    }, headers=headers)
     assert sim_resp.status_code == 200
     sim_data = sim_resp.get_json()
     assert sim_data["status"] == "success"

@@ -8,7 +8,7 @@ import pandas as pd
 from flask import Blueprint, request, jsonify, current_app
 
 from src.config import SAMPLES_DIR, SEQUENCE_LENGTH
-from src.features.windows import build_host_windows_from_flows
+from src.features.windows import build_host_windows_from_flows, FeatureScaler
 from src.simulation import WhatIfSimulationEngine
 from server.blueprints.auth import login_required, permission_required
 
@@ -18,7 +18,9 @@ simulation_bp = Blueprint("simulation", __name__)
 @simulation_bp.route("/api/v1/simulate/actions", methods=["GET"])
 def get_supported_actions():
     """Lists all available counterfactual defensive actions and their descriptions."""
-    sim_engine: WhatIfSimulationEngine = current_app.extensions["simulation_engine"]
+    sim_engine = current_app.extensions.get("simulation_engine")
+    if sim_engine is None:
+        return jsonify({"status": "error", "message": "ML engines are still initializing. Retry in ~30 seconds."}), 503
     actions = [
         {
             "key": k,
@@ -36,8 +38,10 @@ def get_supported_actions():
 @permission_required("can_simulate")
 def simulate_action():
     """Executes a What-If counterfactual simulation on a host or telemetry window."""
-    sim_engine: WhatIfSimulationEngine = current_app.extensions["simulation_engine"]
-    inference_engine = current_app.extensions["inference_engine"]
+    sim_engine = current_app.extensions.get("simulation_engine")
+    inference_engine = current_app.extensions.get("inference_engine")
+    if sim_engine is None or inference_engine is None:
+        return jsonify({"status": "error", "message": "ML engines are still initializing. Retry in ~30 seconds."}), 503
 
     data = request.get_json(silent=True) or {}
     action_key = data.get("action", "BLOCK_MANAGEMENT_PORTS").upper()
@@ -61,7 +65,8 @@ def simulate_action():
     if len(X_cells) == 0:
         return jsonify({"status": "error", "message": "No valid 60s state windows constructed."}), 400
 
-    X_scaled = inference_engine.scaler.transform(X_cells)
+    scaler = FeatureScaler.load()
+    X_scaled = scaler.transform(X_cells)
 
     # Filter by target host if specified
     unique_hosts = sorted(list(set(m[0] for m in meta)))

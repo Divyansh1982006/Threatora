@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: threatora
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: "pip install --upgrade pip && pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && pip install --no-cache-dir -r requirements.txt"
+    startCommand: "gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 --preload server.app:app"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHON_VERSION
+        value: 3.11.9
