@@ -11,7 +11,7 @@
 | Python | 3.10 – 3.14 | Tested on 3.13 / 3.14 |
 | pip | Latest | `python -m pip install --upgrade pip` |
 | Git | Any | For cloning / pushing |
-| RAM | ≥ 4 GB | LSTM model runs on CPU |
+| RAM | ≥ 4 GB | Transformer World Model runs on CPU |
 | OS | Windows / Linux / macOS | Windows tested |
 
 > **No GPU required.** Threatora runs fully on CPU in offline mode.
@@ -50,7 +50,7 @@ pip install -r requirements.txt
 ```
 
 This installs:
-- `torch` — LSTM World Model inference
+- `torch` — Temporal Transformer World Model inference
 - `flask` + `werkzeug` — Web backend
 - `sqlalchemy` — SQLite state ledger
 - `pandas`, `numpy`, `scikit-learn` — Feature pipeline
@@ -197,7 +197,7 @@ Copy files directly into the checkpoints directory:
 ```
 artifacts/
 └── checkpoints/
-    ├── world_model.pt       ← PyTorch LSTM weights
+    ├── world_model.pt       ← PyTorch Transformer weights
     ├── scaler.json          ← FeatureScaler normalization params
     └── run_config.json      ← Architecture config (optional)
 ```
@@ -212,7 +212,7 @@ The server picks up weights **automatically** — no restart needed.
 python cli.py benchmark
 ```
 
-This compares the LSTM World Model against a Logistic Regression baseline
+This compares the Temporal Transformer World Model against a Logistic Regression baseline
 and saves the report to `artifacts/reports/benchmark.json`.
 
 ---

@@ -74,6 +74,14 @@ app.jinja_loader = ChoiceLoader([
 UPLOADS_DIR = root_dir / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
+# Initialize State Store Ledger & Asset Seeding
+try:
+    from src.db.session import init_db
+    init_db()
+    logger.info("[+] Threatora PostgreSQL/SQLite State Ledger initialized.")
+except Exception as e:
+    logger.warning(f"[!] Warning: Database initialization encountered error: {e}")
+
 # Register sub-system blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(views_bp)

@@ -48,15 +48,47 @@ echo [*] Default Operator Credentials: admin / Threatora@2026
 echo [*] Launching Interactive Tactical Console...
 echo.
 
-set PY_BIN=python
+:: Detect Python executable with dependencies installed
+set PY_BIN=
+if exist "venv\Scripts\python.exe" (
+    set PY_BIN=venv\Scripts\python.exe
+    goto :python_ready
+)
+if exist ".venv\Scripts\python.exe" (
+    set PY_BIN=.venv\Scripts\python.exe
+    goto :python_ready
+)
+
+:: Test standard python
+python -c "import cmd2" >nul 2>&1
+if %errorlevel% equ 0 (
+    set PY_BIN=python
+    goto :python_ready
+)
+
+:: Test py launcher variants
 where py >nul 2>&1
 if %errorlevel% equ 0 (
-    py -3.13 -c "import sys; sys.exit(0)" >nul 2>&1
+    py -3.11 -c "import cmd2" >nul 2>&1
+    if %errorlevel% equ 0 (
+        set PY_BIN=py -3.11
+        goto :python_ready
+    )
+    py -3.13 -c "import cmd2" >nul 2>&1
     if %errorlevel% equ 0 (
         set PY_BIN=py -3.13
+        goto :python_ready
+    )
+    py -c "import cmd2" >nul 2>&1
+    if %errorlevel% equ 0 (
+        set PY_BIN=py
+        goto :python_ready
     )
 )
 
+set PY_BIN=python
+
+:python_ready
 %PY_BIN% cli.py console --api-url %FINAL_URL%
 
 pause
