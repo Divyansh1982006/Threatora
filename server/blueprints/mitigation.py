@@ -16,6 +16,14 @@ def get_playbooks():
     target_ip = request.args.get("target")
     status = request.args.get("status")
 
+    if current_app.extensions.get("active_mitigation", {}).get("playbooks"):
+        pbs = current_app.extensions["active_mitigation"]["playbooks"]
+        if target_ip:
+            pbs = [p for p in pbs if p.get("target_ip") == target_ip]
+        if status:
+            pbs = [p for p in pbs if p.get("status") == status.upper()]
+        return jsonify({"status": "success", "count": len(pbs), "playbooks": pbs})
+
     with get_db_context() as db:
         query = db.query(MitigationPlaybook)
         if target_ip:
@@ -39,6 +47,26 @@ def execute_mitigate():
     playbook_uid = data.get("playbook_uid")
     target_ip = data.get("target_ip")
     action = data.get("action", "isolate")
+
+    # Update active in-memory topology and mitigation states
+    if target_ip:
+        if current_app.extensions.get("active_topology"):
+            for n in current_app.extensions["active_topology"].get("nodes", []):
+                if n.get("ip") == target_ip:
+                    n["status"] = "ISOLATED"
+                    n["is_isolated"] = True
+            for l in current_app.extensions["active_topology"].get("links", []):
+                if l.get("source") == target_ip or l.get("target") == target_ip:
+                    l["threat"] = "mitigated"
+
+        if current_app.extensions.get("active_mitigation"):
+            for a in current_app.extensions["active_mitigation"].get("assets", []):
+                if a.get("ip_address") == target_ip:
+                    a["status"] = "ISOLATED"
+                    a["quarantine_status"] = "ISOLATED"
+            for p in current_app.extensions["active_mitigation"].get("playbooks", []):
+                if p.get("target_ip") == target_ip:
+                    p["status"] = "CONTAINMENT_EXECUTED"
 
     if playbook_uid:
         result = mitigation_engine.execute_playbook(playbook_uid)
@@ -75,7 +103,11 @@ def execute_mitigate():
 
 @mitigation_bp.route("/api/v1/assets", methods=["GET"])
 def get_assets():
-    """Retrieves enterprise network asset inventory from PostgreSQL ledger."""
+    """Retrieves enterprise network asset inventory from PostgreSQL ledger or active capture."""
+    if current_app.extensions.get("active_mitigation", {}).get("assets"):
+        assets = current_app.extensions["active_mitigation"]["assets"]
+        return jsonify({"status": "success", "count": len(assets), "assets": assets})
+
     with get_db_context() as db:
         assets = [a.to_dict() for a in db.query(Asset).order_by(Asset.criticality.desc(), Asset.ip_address.asc()).all()]
         return jsonify({"status": "success", "count": len(assets), "assets": assets})
@@ -83,7 +115,11 @@ def get_assets():
 
 @mitigation_bp.route("/api/v1/incidents", methods=["GET"])
 def get_incidents():
-    """Retrieves security incidents and forensics log from PostgreSQL ledger."""
+    """Retrieves security incidents and forensics log from PostgreSQL ledger or active capture."""
+    if current_app.extensions.get("active_mitigation", {}).get("incidents"):
+        incidents = current_app.extensions["active_mitigation"]["incidents"]
+        return jsonify({"status": "success", "count": len(incidents), "incidents": incidents})
+
     with get_db_context() as db:
         incidents = [
             inc.to_dict()
@@ -95,6 +131,9 @@ def get_incidents():
 @mitigation_bp.route("/api/v1/topology", methods=["GET"])
 def get_topology():
     """Returns network graph nodes and communication links for the visual topology map."""
+    if current_app.extensions.get("active_topology"):
+        return jsonify(current_app.extensions["active_topology"])
+
     with get_db_context() as db:
         db_assets = db.query(Asset).all()
         recent_incidents = db.query(Incident).order_by(Incident.created_at.desc()).limit(20).all()

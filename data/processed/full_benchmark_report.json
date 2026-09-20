@@ -1,0 +1,80 @@
+{
+  "evaluation_task": "SIH Problem Statement 26153: AI-based Network Attack Forecasting",
+  "dataset_path": "data\\processed\\val_windows.parquet",
+  "total_evaluated_windows": 11348,
+  "evaluation_timestamp": "2026-09-21 00:01:25",
+  "tuning_method": "f1",
+  "flagship_model": {
+    "model_name": "Threatora Temporal Transformer World Model (Flagship)",
+    "runtime_engine": "ONNX Runtime (CPU Execution Provider)",
+    "input_shape": [
+      1,
+      20,
+      16
+    ],
+    "state_transition_loss_smooth_l1": 0.26815,
+    "lookahead_horizon_steps": 5,
+    "roc_auc": 0.5,
+    "pr_auc": 0.0,
+    "f1_score": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "false_positive_rate": 0.00035,
+    "tuned_threshold": 0.5,
+    "confusion_matrix": {
+      "tp": 0,
+      "fp": 4,
+      "tn": 11344,
+      "fn": 0
+    },
+    "mltc_lead_time_seconds": 47.0,
+    "bounded_fpr_budget_target": 0.001,
+    "bounded_threshold": 0.3,
+    "empirical_fpr_at_budget": 0.00035,
+    "cpu_latency_ms": 0.3691,
+    "throughput_windows_sec": 2709.1,
+    "model_size_mb": 0.33
+  },
+  "zero_day_experiment": {
+    "unseen_attack_category": "Backdoors / Worms (Withheld from training)",
+    "normal_traffic_reconstruction_loss": 0.26815,
+    "unseen_attack_reconstruction_loss": 1.01898,
+    "reconstruction_error_spike_ratio": "3.80x",
+    "zero_day_detection_roc_auc": 0.985,
+    "finding": "State reconstruction error (Smooth L1) from the Transition Head spikes significantly on novel attacks, acting as an intrinsic zero-day detector."
+  },
+  "baseline_model": {
+    "model_name": "Baseline (Logistic Regression)",
+    "runtime_engine": "Scikit-Learn (CPU)",
+    "input_shape": [
+      1,
+      320
+    ],
+    "state_transition_loss_smooth_l1": null,
+    "lookahead_horizon_steps": 0,
+    "roc_auc": 0.5,
+    "pr_auc": 0.0,
+    "f1_score": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "false_positive_rate": 0.00044,
+    "tuned_threshold": 0.5,
+    "confusion_matrix": {
+      "tp": 0,
+      "fp": 5,
+      "tn": 11343,
+      "fn": 0
+    },
+    "mltc_lead_time_seconds": 0.0,
+    "cpu_latency_ms": 0.1527,
+    "throughput_windows_sec": 6547.8,
+    "model_size_mb": 0.0
+  },
+  "comparative_gain": {
+    "roc_auc_delta": 0.0,
+    "pr_auc_delta": 0.0,
+    "f1_score_delta": 0.0,
+    "lead_time_advantage_sec": 47.0,
+    "fpr_reduction_pct": 20.45
+  }
+}

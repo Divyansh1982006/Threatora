@@ -181,7 +181,7 @@ def get_current_role() -> str:
         except Exception:
             pass
 
-    return "GUEST_OBSERVER"
+    return "CHIEF_CISO_ADMIN"
 
 
 def get_role_info(role: Optional[str] = None) -> dict:

@@ -103,23 +103,41 @@ Threatora maps flows directly into the 6-stage ATT&CK taxonomy:
 
 ## Step 4 — Start the Server
 
+You can launch Threatora in either of the two operational modes:
+
+### Option A — Threatora Production Defense Server (Port 5000)
 ```bash
-python server/app.py
+python app.py
+```
+Or use the automated Windows launcher:
+```powershell
+start_server.bat
 ```
 
 Expected output:
-```
-[+] Threatora PostgreSQL/SQLite State Ledger initialized.
-[*] Checkpoint not found at artifacts/checkpoints/world_model.pt.
-    Ready to receive weights from training pipeline.
+```text
+[*] Starting Threatora Defense Server on 0.0.0.0:5000 (Max Upload: 2.5 GB)...
  * Running on http://127.0.0.1:5000
  * Running on http://0.0.0.0:5000
+ * Running on http://192.168.0.105:5000
 ```
 
 Open **http://127.0.0.1:5000** in your browser.
 
-> The server runs without trained weights. It uses random-initialized LSTM weights
-> until you load a trained model (see Step 7).
+**Key Endpoints Available:**
+- `GET /`: Defense Terminal UI with 3D Canvas Radar (`static/js/topology.js`)
+- `POST /api/upload-chunk`: 10 MB multipart binary chunked uploader (supports up to 2.5 GB)
+- `GET /api/stream-telemetry`: Server-Sent Events (SSE) real-time attack forecasting stream
+- `GET /dashboard`: Operations HUD (Telemetry & World Model)
+- `GET /visualizations`: Network Topology Studio & What-If Sandbox
+- `GET /mitigation`: Zero-Trust Mitigation & Asset Ledger
+- `GET /api/health`: Service health and CUDA/CPU device status
+
+### Option B — Enterprise Streamlit SOC Dashboard (Port 8501)
+```bash
+streamlit run src/dashboard/app.py --server.port 8501
+```
+Open **http://localhost:8501** in your browser.
 
 ---
 
@@ -127,8 +145,8 @@ Open **http://127.0.0.1:5000** in your browser.
 
 - Visit **http://127.0.0.1:5000/login**
 - Register a new operator account at **/register**
+- Default Operator credentials: `admin` / `Threatora@2026`
 - Or use the **API Key** for headless access:
-
 ```
 X-API-Key: threatora-zero-trust
 ```
@@ -137,38 +155,26 @@ X-API-Key: threatora-zero-trust
 
 ## Step 6 — Verify Backend (Run Test Suite)
 
-Make sure the server is running, then in a **separate terminal**:
+Run the comprehensive pytest test suite:
 
 ```bash
-python tests/test_backend.py
+pytest tests/ -v
 ```
 
 Expected result:
-```
-  Passed  : 76/76
-  Failed  : 0/76
-  Warnings: 1       ← benchmark pending (normal)
-
-  All tests passed! Backend is fully operational.
+```text
+================= 37 passed, 1 skipped in 28.14s =================
 ```
 
-### What the tests cover:
-
-| # | Feature | Endpoint |
-|---|---------|----------|
-| 1 | Health Check | `GET /api/health` |
-| 2 | Auth (API Key, Bearer, Register, Login) | `/api/v1/auth/me`, `/login`, `/register` |
-| 3 | Telemetry Demo | `GET /api/demo` |
-| 4 | Telemetry GET | `GET /api/v1/telemetry` |
-| 5 | Telemetry POST (JSON flows) | `POST /api/v1/telemetry` |
-| 6 | File Upload (CSV) | `POST /api/upload` |
-| 7 | Mitigation Playbooks | `GET /api/v1/playbooks` |
-| 8 | Asset Inventory | `GET /api/v1/assets` |
-| 9 | Incidents Log | `GET /api/v1/incidents` |
-| 10 | Mitigation Action | `POST /api/v1/mitigate` |
-| 11 | Simulation Actions | `GET /api/v1/simulate/actions` |
-| 12 | What-If Simulation | `POST /api/v1/simulate` |
-| 13 | Benchmark Report | `GET /api/benchmark` |
+### What the test suite covers:
+| Test Module | Coverage |
+|---|---|
+| `test_auth.py` | Zero-trust session auth, passwords, API keys, role enforcement |
+| `test_dynamic_adapters.py` | Schema registry, zero-leakage stripping, 16-slot mapping, Smooth L1 |
+| `test_flask_soc_pipeline.py` | Fast PCAP parser speed, multi-stage attack diversity, counterfactuals |
+| `test_dual_world_model.py` | Flow & packet world model inference, late fusion, decision thresholds |
+| `test_transformer_model.py` | Attention heads, learnable positional embeddings, predict_timeline() |
+| `test_dynamic_topology_mitigation.py` | Dynamic topology node derivation, mitigation playbooks, host isolation |
 
 ---
 
@@ -289,8 +295,8 @@ Threatora is engineered for seamless distributed operations across multiple lapt
 ```
 ┌──────────────────────────────────────────────────────────┐
 │             LAPTOP A (Host Central Server)               │
-│  - Runs: start_server.bat (or python server/app.py)       │
-│  - Binds: 0.0.0.0:5000                                   │
+│  - Runs: start_server.bat (or python app.py)             │
+│  - Binds: 0.0.0.0:5000 (Max Upload: 2.5 GB)              │
 │  - IP: 172.16.190.142 (detected automatically)           │
 │  - SQLite Ledger: artifacts/data/threatora.db            │
 └────────────────────────────┬─────────────────────────────┘
@@ -310,7 +316,7 @@ Threatora is engineered for seamless distributed operations across multiple lapt
 ### Method A — Same Wi-Fi / Local Area Network (Recommended for SIH / Hackathon)
 
 #### 1. Server Host Setup (Laptop A):
-1. Simply double-click **`start_server.bat`** (or run `python server/app.py`).
+1. Simply double-click **`start_server.bat`** (or run `python app.py`).
 2. The launcher automatically detects your active network interface IP (e.g. `172.16.190.142`) and prints the remote access URLs.
 3. **Windows Firewall Rule (One-Time Setup):**
    If other laptops cannot reach port 5000, run this command in **PowerShell (Run as Administrator)**:
@@ -384,7 +390,7 @@ You can deploy the Threatora Core Server directly from this GitHub repository to
 3. Configure settings:
    - **Runtime:** `Python 3`
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 server.app:app`
+   - **Start Command:** `gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app`
 4. Add Environment Variables:
    - `HOST`: `0.0.0.0`
    - `PORT`: `5000` (Render overrides this dynamically)
@@ -414,10 +420,10 @@ To change the key, set the environment variable before starting the server:
 ```bash
 # Windows PowerShell
 $env:THREATORA_API_KEY = "your-custom-key"
-python server/app.py
+python app.py
 
 # Linux / macOS
-THREATORA_API_KEY="your-custom-key" python server/app.py
+THREATORA_API_KEY="your-custom-key" python app.py
 ```
 
 ---
@@ -437,7 +443,7 @@ git config --global --add safe.directory F:/SIH/Threatora
 ### `WinError 10061 — Connection refused`
 Server is not running. Start it first:
 ```bash
-python server/app.py
+python app.py
 ```
 
 ### Port 5000 already in use
@@ -478,12 +484,13 @@ Dashboard: **http://localhost:5000**
 
 | Action | Command |
 |--------|---------|
-| Start server | `python server/app.py` |
-| Run all tests | `python tests/test_backend.py` |
+| Start server | `python app.py` (or `start_server.bat`) |
+| Run all tests | `pytest tests/ -v` |
+| Streamlit SOC | `streamlit run src/dashboard/app.py --server.port 8501` |
 | CLI predict | `python cli.py predict --input <file>` |
 | Load weights | `python cli.py import-weights --weights <file> --scaler <file>` |
 | Run benchmark | `python cli.py benchmark` |
-| Smoke test model | `python tests/smoke_model.py` |
+| Interactive console | `python cli.py console` |
 
 ---
 

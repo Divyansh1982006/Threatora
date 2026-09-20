@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetForecast | Network Threat Forecasting & MITRE ATT&CK</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-yellow: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; padding: 24px; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px; }
+    .logo { font-size: 1.5rem; font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px; }
+    .status-badge { background: #064e3b; color: var(--accent-green); padding: 4px 12px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .status-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+    .card h2 { font-size: 1.15rem; margin-bottom: 16px; color: var(--accent-cyan); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+    input, select { width: 100%; background: #0b1120; border: 1px solid var(--border-color); color: var(--text-main); padding: 10px; border-radius: 6px; font-size: 0.95rem; }
+    input:focus, select:focus { outline: 1px solid var(--accent-cyan); }
+    .btn { background: var(--accent-cyan); color: #021a24; font-weight: 600; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .prob-box { text-align: center; padding: 24px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .prob-val { font-size: 3rem; font-weight: 800; }
+    .safe { color: var(--accent-green); background: rgba(16, 185, 129, 0.08); }
+    .threat { color: var(--accent-red); background: rgba(239, 68, 68, 0.08); }
+    .mitre-pill { display: inline-block; background: #3b0764; color: #d8b4fe; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; }
+    .mitre-details { background: #0b1120; border-radius: 6px; padding: 12px; font-size: 0.9rem; line-height: 1.5; }
+    .attr-bar { margin-bottom: 10px; }
+    .attr-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; }
+    .attr-track { height: 8px; background: #0b1120; border-radius: 4px; overflow: hidden; }
+    .attr-fill { height: 100%; background: var(--accent-cyan); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">⚡ NetForecast // Cyber Console</div>
+    <div class="status-badge" id="status">Engine Active</div>
+  </header>
+
+  <div class="grid">
+    <!-- Telemetry Injection Form -->
+    <div class="card">
+      <h2>Simulate Network Flow Telemetry</h2>
+      <div class="form-group">
+        <label>Scenario Preset</label>
+        <select id="preset" onchange="applyPreset()">
+          <option value="normal">Normal Web Traffic (Port 443)</option>
+          <option value="portscan">Aggressive Port Scan (T1046)</option>
+          <option value="dos">Volumetric DoS Flood (T1498)</option>
+          <option value="smb">Lateral SMB Movement (T1021)</option>
+        </select>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>Destination Port</label>
+          <input type="number" id="dport" value="443">
+        </div>
+        <div class="form-group">
+          <label>Duration (seconds)</label>
+          <input type="number" step="0.001" id="dur" value="0.045">
+        </div>
+        <div class="form-group">
+          <label>Total Packets</label>
+          <input type="number" id="tot_pkts" value="12">
+        </div>
+        <div class="form-group">
+          <label>Total Bytes</label>
+          <input type="number" id="tot_bytes" value="1450">
+        </div>
+      </div>
+      <button class="btn" onclick="sendInference()">Forecast & Inspect</button>
+    </div>
+
+    <!-- Threat Analysis & MITRE ATT&CK Display -->
+    <div class="card">
+      <h2>Threat Assessment & Forecasting</h2>
+      <div class="prob-box safe" id="probContainer">
+        <div class="prob-val" id="probVal">0.05</div>
+        <div id="probLabel" style="font-size: 0.9rem; margin-top: 4px;">BENIGN TRAFFIC</div>
+      </div>
+
+      <div id="mitreContainer" style="display: none;">
+        <span class="mitre-pill" id="mitreId">T1046</span>
+        <div class="mitre-details">
+          <strong id="mitreName">Technique</strong>
+          <p id="mitreDesc" style="color: var(--text-muted); margin-top: 4px;"></p>
+          <p style="margin-top: 8px;"><strong style="color: var(--accent-cyan);">Mitigation:</strong> <span id="mitreMit"></span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Explainability Card -->
+  <div class="card">
+    <h2>Feature Attribution (Explainability Drivers)</h2>
+    <div id="attributionBars">
+      <div style="color: var(--text-muted); font-size: 0.9rem;">Run inference to visualize feature influence weights.</div>
+    </div>
+  </div>
+
+  <script>
+    const presets = {
+      normal: { dport: 443, dur: 0.045, tot_pkts: 12, tot_bytes: 1450 },
+      portscan: { dport: 80, dur: 0.001, tot_pkts: 350, tot_bytes: 18000 },
+      dos: { dport: 80, dur: 2.1, tot_pkts: 950, tot_bytes: 850000 },
+      smb: { dport: 445, dur: 0.8, tot_pkts: 45, tot_bytes: 28000 }
+    };
+
+    function applyPreset() {
+      const p = presets[document.getElementById('preset').value];
+      document.getElementById('dport').value = p.dport;
+      document.getElementById('dur').value = p.dur;
+      document.getElementById('tot_pkts').value = p.tot_pkts;
+      document.getElementById('tot_bytes').value = p.tot_bytes;
+    }
+
+    async function sendInference() {
+      const dport = parseInt(document.getElementById('dport').value);
+      const dur = parseFloat(document.getElementById('dur').value);
+      const tot_pkts = parseInt(document.getElementById('tot_pkts').value);
+      const tot_bytes = parseInt(document.getElementById('tot_bytes').value);
+
+      const payload = {
+        metadata: { dport, dur, tot_pkts, tot_bytes, sport: 50000, src_bytes: Math.floor(tot_bytes * 0.4) }
+      };
+
+      try {
+        const res = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        updateUI(data);
+      } catch (err) {
+        console.error("API error:", err);
+      }
+    }
+
+    function updateUI(data) {
+      const container = document.getElementById('probContainer');
+      const val = document.getElementById('probVal');
+      const lbl = document.getElementById('probLabel');
+
+      val.innerText = data.anomaly_probability;
+      if (data.is_anomalous) {
+        container.className = 'prob-box threat';
+        lbl.innerText = 'MALICIOUS / ANOMALY DETECTED';
+      } else {
+        container.className = 'prob-box safe';
+        lbl.innerText = 'NORMAL TRAFFIC PATTERN';
+      }
+
+      const mitreCard = document.getElementById('mitreContainer');
+      if (data.mitre_attack && data.mitre_attack.detected) {
+        const m = data.mitre_attack.mapping;
+        mitreCard.style.display = 'block';
+        document.getElementById('mitreId').innerText = m.technique_id + " - " + m.tactic;
+        document.getElementById('mitreName').innerText = m.technique_name;
+        document.getElementById('mitreDesc').innerText = m.description;
+        document.getElementById('mitreMit').innerText = m.mitigation;
+      } else {
+        mitreCard.style.display = 'none';
+      }
+
+      if (data.explanation && data.explanation.feature_attributions) {
+        const bars = document.getElementById('attributionBars');
+        bars.innerHTML = '';
+        for (const [feat, score] of Object.entries(data.explanation.feature_attributions)) {
+          const pct = (score * 100).toFixed(1);
+          bars.innerHTML += `
+            <div class="attr-bar">
+              <div class="attr-header">
+                <span>${feat}</span>
+                <span>${pct}%</span>
+              </div>
+              <div class="attr-track"><div class="attr-fill" style="width: ${pct}%"></div></div>
+            </div>
+          `;
+        }
+      }
+    }
+  </script>
+</body>
+</html>

@@ -35,20 +35,27 @@
       </div>
     </a>
 
-    <div class="nav-actions">
+    <div class="nav-actions" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <!-- Engine Online Status Capsule -->
-      <div class="status-pill status-pill-green" id="engineStatusPill">
+      <div class="status-pill status-pill-green" id="engineStatusPill" style="font-size: 0.72rem;">
         <span class="beacon-dot"></span>
-        <span>SYSTEM ONLINE</span>
+        <span>ENGINE ONLINE (CUDA)</span>
       </div>
 
-      <!-- Operator Profile & Logout -->
+      <!-- User Badge & Multi-Tier Role Switcher -->
       {% if user %}
-      <a href="{{ url_for('auth.profile') }}" class="btn-cyber btn-cyber-outline" style="padding: 5px 12px; font-size: 0.75rem;">
-        <span>👤</span>
-        <span>{{ user.full_name }} (@{{ user.username }})</span>
-      </a>
-      <a href="{{ url_for('auth.logout') }}" class="btn-cyber btn-cyber-outline" style="padding: 5px 12px; font-size: 0.75rem; border-color: var(--border-card); color: var(--text-muted);">
+      <div class="user-role-badge-box" style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 6px; padding: 4px 10px;">
+        <span style="font-size: 0.8rem;">👤</span>
+        <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-main);">{{ user.full_name }} (@{{ user.username }})</span>
+        <span style="color: var(--text-muted); font-size: 0.72rem;">|</span>
+        <select id="topbarRoleSelect" onchange="handleRoleSwitch(this.value)" class="cyber-select" style="font-size: 0.72rem; padding: 3px 8px; background: var(--bg-surface); color: var(--neon-cyan); border: 1px solid var(--border-card); border-radius: 4px; font-family: var(--font-mono); font-weight: 600;">
+          <option value="GUEST_OBSERVER" {% if current_role == 'GUEST_OBSERVER' %}selected{% endif %}>Viewer (Level 1)</option>
+          <option value="SOC_ANALYST" {% if current_role == 'SOC_ANALYST' %}selected{% endif %}>Analyst (Level 3)</option>
+          <option value="INCIDENT_RESPONDER" {% if current_role == 'INCIDENT_RESPONDER' %}selected{% endif %}>Incident Responder (Level 4)</option>
+          <option value="CHIEF_CISO_ADMIN" {% if current_role == 'CHIEF_CISO_ADMIN' or not current_role %}selected{% endif %}>Chief CISO (Level 5)</option>
+        </select>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="btn-cyber btn-cyber-outline" style="padding: 5px 12px; font-size: 0.72rem; border-color: var(--border-card); color: var(--text-muted);">
         <span>LOGOUT</span>
       </a>
       {% endif %}

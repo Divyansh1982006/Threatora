@@ -128,5 +128,9 @@ def run_integration_audit():
     print("=" * 70)
 
 
+def test_system_integration():
+    run_integration_audit()
+
+
 if __name__ == "__main__":
     run_integration_audit()

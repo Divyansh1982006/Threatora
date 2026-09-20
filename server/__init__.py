@@ -27,8 +27,8 @@ def create_app(config: dict = None) -> Flask:
         template_folder=str(template_folder),
         static_folder=str(static_folder),
     )
-    # 1 GB upload limit for dataset telemetry captures
-    max_upload_mb = int(os.environ.get("MAX_UPLOAD_MB", "1024"))
+    # 2 GB upload limit for large dataset telemetry captures and PCAPs
+    max_upload_mb = int(os.environ.get("MAX_UPLOAD_MB", "2048"))
     app.config["MAX_CONTENT_LENGTH"] = max_upload_mb * 1024 * 1024
     app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "threatora_zero_trust_super_secret_key_2026")
@@ -63,6 +63,7 @@ def create_app(config: dict = None) -> Flask:
                 from src.inference import InferenceEngine
                 from src.mitigation import MitigationEngine
                 from src.simulation import WhatIfSimulationEngine
+                from src.dashboard.telemetry import SOCTelemetryPipeline
 
                 inference_engine = InferenceEngine()
                 mitigation_engine = MitigationEngine(anomaly_threshold=0.5)
@@ -70,11 +71,13 @@ def create_app(config: dict = None) -> Flask:
                     model=inference_engine.model,
                     device=inference_engine.device
                 )
+                telemetry_pipeline = SOCTelemetryPipeline()
 
                 app.extensions["inference_engine"] = inference_engine
                 app.extensions["mitigation_engine"] = mitigation_engine
                 app.extensions["simulation_engine"] = simulation_engine
-                print("[+] Threatora ML engines loaded and ready.")
+                app.extensions["telemetry_pipeline"] = telemetry_pipeline
+                print("[+] Threatora ML engines & SOC Telemetry Pipeline loaded and ready.")
                 _engine_error.clear()
             except Exception as exc:
                 err_msg = f"Engine initialization failed: {exc}"

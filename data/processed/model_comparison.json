@@ -1,0 +1,38 @@
+{
+  "task": "SIH Problem Statement 26153: AI-based Network Attack Forecasting",
+  "dataset": "UNSW-NB15 (22-1-2015 capture slice)",
+  "total_training_samples": 45505,
+  "baseline_model": {
+    "model_name": "Baseline (Logistic Regression)",
+    "input_paradigm": "Static 1D vector (240 features)",
+    "temporal_dynamics": "None (point-in-time slice)",
+    "lead_time": "0s (reactive)",
+    "prediction_horizon": "Instantaneous (t=0)",
+    "train_roc_auc": 0.92791,
+    "train_pr_auc": 0.89231,
+    "false_positive_rate": 0.06535,
+    "cpu_latency_ms": 0.1062,
+    "state_forecasting_support": false,
+    "disk_footprint_mb": 0.01
+  },
+  "flagship_model": {
+    "model_name": "Flagship (Threatora Temporal Transformer World Model)",
+    "input_paradigm": "Temporal Sequence (20 bins x 12 features)",
+    "temporal_dynamics": "Multi-head Temporal Self-Attention",
+    "lead_time": "47s (proactive forward dynamics)",
+    "prediction_horizon": "5-step direct horizon + State P(S_{t+1}|S_t)",
+    "train_roc_auc": 0.99137,
+    "train_pr_auc": 0.98454,
+    "false_positive_rate": 0.00731,
+    "cpu_latency_ms": 0.3082,
+    "state_forecasting_support": true,
+    "disk_footprint_mb": 0.35
+  },
+  "comparative_summary": {
+    "roc_auc_delta": 0.06346,
+    "pr_auc_delta": 0.09223,
+    "fpr_reduction_pct": 88.81,
+    "lead_time_advantage": "47s proactive lead time vs 0s reactive baseline",
+    "state_dynamics_capable": true
+  }
+}

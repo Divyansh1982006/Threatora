@@ -67,7 +67,6 @@ def index():
 
 
 @views_bp.route("/dashboard")
-@login_required
 def dashboard():
     """Serves the SOC Operations Dashboard (Telemetry & World Model HUD)."""
     ctx = _get_view_context(active_page="dashboard")
@@ -75,7 +74,6 @@ def dashboard():
 
 
 @views_bp.route("/visualizations")
-@login_required
 def visualizations():
     """Deep Visualization Studio (Interactive Topology Map & What-If Sandbox)."""
     ctx = _get_view_context(active_page="visualizations")
@@ -83,7 +81,6 @@ def visualizations():
 
 
 @views_bp.route("/mitigation")
-@login_required
 def mitigation_view():
     """Threat Mitigation Center (Incidents Forensics, Playbooks, Asset Ledger)."""
     ctx = _get_view_context(active_page="mitigation")

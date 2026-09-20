@@ -260,9 +260,12 @@ class MitigationEngine:
                 }
 
             # Update asset status
-            if playbook.asset:
-                playbook.asset.status = "ISOLATED"
-                playbook.asset.updated_at = datetime.now(timezone.utc)
+            asset = playbook.asset
+            if not asset and playbook.target_ip:
+                asset = db.query(Asset).filter(Asset.ip_address == playbook.target_ip).first()
+            if asset:
+                asset.status = "ISOLATED"
+                asset.updated_at = datetime.now(timezone.utc)
 
             # Update incident status
             if playbook.incident:

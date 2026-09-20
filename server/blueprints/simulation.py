@@ -7,8 +7,7 @@ import numpy as np
 import pandas as pd
 from flask import Blueprint, request, jsonify, current_app
 
-from src.config import SAMPLES_DIR, SEQUENCE_LENGTH
-from src.features.windows import build_host_windows_from_flows, FeatureScaler
+from src.config import SAMPLES_DIR
 from src.simulation import WhatIfSimulationEngine
 from server.blueprints.auth import login_required, permission_required
 
@@ -54,38 +53,49 @@ def simulate_action():
             "message": f"Invalid action '{action_key}'. Supported: {list(sim_engine.SUPPORTED_ACTIONS.keys())}"
         }), 400
 
-    # Obtain flow context: from request payload or fallback to sample attack traffic
-    if "flows" in data and isinstance(data["flows"], list):
-        df = pd.DataFrame(data["flows"])
-    else:
+    # Obtain canonical (20, 12) context window from request, active telemetry, or sample data
+    context_cells = None
+    if "window" in data or "active_window" in data:
+        context_cells = np.array(data.get("window") or data.get("active_window"), dtype=np.float32)
+    elif current_app.extensions.get("latest_results") and "s_t_windows" in current_app.extensions["latest_results"]:
+        windows = current_app.extensions["latest_results"]["s_t_windows"]
+        if len(windows) > 0:
+            context_cells = np.array(windows[-1], dtype=np.float32)
+
+    if context_cells is None:
+        pipeline = current_app.extensions.get("telemetry_pipeline")
         sample_path = SAMPLES_DIR / "sample_traffic.csv"
-        df = pd.read_csv(sample_path)
+        if pipeline and sample_path.exists():
+            raw_features, timestamps, _, _ = pipeline.parse_csv_stream(sample_path)
+            res = pipeline.run_inference_on_features(raw_features, timestamps)
+            if res.get("s_t_windows"):
+                context_cells = np.array(res["s_t_windows"][-1], dtype=np.float32)
 
-    X_cells, _, _, meta = build_host_windows_from_flows(df)
-    if len(X_cells) == 0:
-        return jsonify({"status": "error", "message": "No valid 60s state windows constructed."}), 400
+    if context_cells is None:
+        # Fallback default baseline window of shape (20, 16)
+        context_cells = np.zeros((20, 16), dtype=np.float32)
+        context_cells[:, 2] = 1200.0  # packet_rate
+        context_cells[:, 7] = 0.25    # syn_ratio
+        context_cells[:, 10] = 1.0   # is_privileged_port
 
-    scaler = FeatureScaler.load()
-    X_scaled = scaler.transform(X_cells)
+    # Ensure shape has 20 timesteps and 16 canonical features
+    if context_cells.ndim == 3:
+        context_cells = context_cells[0]
+    if context_cells.shape[0] < 20:
+        pad = np.repeat(context_cells[:1], 20 - context_cells.shape[0], axis=0)
+        context_cells = np.vstack([pad, context_cells])
+    elif context_cells.shape[0] > 20:
+        context_cells = context_cells[-20:]
 
-    # Filter by target host if specified
-    unique_hosts = sorted(list(set(m[0] for m in meta)))
-    if target_ip and target_ip in unique_hosts:
-        selected_ip = target_ip
-    else:
-        selected_ip = unique_hosts[0]
+    if context_cells.shape[1] < 16:
+        pad_w = 16 - context_cells.shape[1]
+        context_cells = np.pad(context_cells, ((0, 0), (0, pad_w)), mode="constant", constant_values=0.0)
+    elif context_cells.shape[1] > 16:
+        context_cells = context_cells[:, :16]
 
-    host_indices = [idx for idx, m in enumerate(meta) if m[0] == selected_ip]
-    host_cells = X_scaled[host_indices]
+    selected_ip = target_ip or "192.168.1.105"
 
-    if len(host_cells) < SEQUENCE_LENGTH:
-        pad_len = SEQUENCE_LENGTH - len(host_cells)
-        pad_head = np.repeat(host_cells[:1], pad_len, axis=0)
-        context_cells = np.vstack([pad_head, host_cells])
-    else:
-        context_cells = host_cells[-SEQUENCE_LENGTH:]
-
-    # Run counterfactual simulation
+    # Run counterfactual simulation via ONNX Runtime CPU execution
     result = sim_engine.simulate_action(
         context_cells=context_cells,
         action_key=action_key,

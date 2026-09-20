@@ -94,11 +94,23 @@ class LSTMRecurrentCell(nn.Module):
         return self.ln_h(h), self.ln_c(c)
 
 
+import warnings
+
+
 class NetworkWorldModel(nn.Module):
-    """LSTM-based Deterministic Model for Network Attack Forecasting."""
+    """[DEPRECATED] Legacy LSTM-based Model for Network Attack Forecasting.
+    
+    Deprecated in favor of ThreatoraTemporalTransformerWorldModel.
+    """
 
     def __init__(self, cfg: Optional[ModelConfig] = None):
         super().__init__()
+        warnings.warn(
+            "NetworkWorldModel is deprecated and scheduled for removal. "
+            "Use ThreatoraTemporalTransformerWorldModel from src.model.transformer instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.cfg = cfg or default_model_config
         o, e, h = self.cfg.obs_dim, self.cfg.embed_dim, self.cfg.hidden_dim
 

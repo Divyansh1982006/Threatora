@@ -87,3 +87,82 @@ Where:
 - $\mathcal{L}_{\text{KL}} = \text{KL}(q(z_t \mid h_t, e_t) \parallel p(z_t \mid h_t))$
 - $\mathcal{L}_{\text{infilt}} = -\left[ y_t \log \hat{y}_t + (1 - y_t) \log (1 - \hat{y}_t) \right]$
 - $\mathcal{L}_{\text{stage}} = -\sum_{s=0}^5 \mathbb{I}(y_{\text{stage}}=s) \log P(s)$
+
+For the Temporal Transformer World Model, the composite loss is:
+$$\mathcal{L}_{\text{total}} = 0.5 \cdot \mathcal{L}_{\text{SmoothL1}}(\hat{S}_{t+1}, S_{t+1}) + 1.0 \cdot \mathcal{L}_{\text{BCE}}(\hat{Y}_t, Y_t) + 0.5 \cdot \mathcal{L}_{\text{CE}}(\hat{M}_t, M_t)$$
+
+---
+
+## 5. 16-Slot Zero-Leakage Canonical Representation
+
+To guarantee mathematical independence from host network topology and prevent identity shortcut learning, all packet and flow data are mapped into a 16-dimensional continuous state vector:
+
+| Slot | Feature Name | Description | Physical Source |
+| :---: | :--- | :--- | :--- |
+| `0` | `duration_norm` | Flow / bin temporal duration | $\text{dur} \in [0, \infty)$ |
+| `1` | `byte_ratio` | Backward to forward byte ratio | $\text{dbytes} / (\text{sbytes} + 1\mu)$ |
+| `2` | `packet_rate` | Aggregate packets per second | $(\text{spkts} + \text{dpkts}) / (\text{dur} + 1\mu)$ |
+| `3` | `iat_mean` | Mean packet inter-arrival time (ms) | $(\text{sintpkt} + \text{dintpkt}) / 2.0$ |
+| `4` | `iat_std` | Inter-arrival time jitter / variance | $(\text{sjit} + \text{djit}) / 2.0$ |
+| `5` | `ttl_mean` | Mean IP Time-to-Live (hops) | $(\text{sttl} + \text{dttl}) / 2.0$ |
+| `6` | `ttl_variance` | TTL asymmetric hop variance | $(\text{sttl} - \text{dttl})^2 / 4.0$ |
+| `7` | `tcp_syn_ratio` | TCP SYN flag density in window | $\mathbb{I}(\text{SYN}) / N_{\text{pkts}}$ |
+| `8` | `tcp_ack_ratio` | TCP ACK flag density in window | $\mathbb{I}(\text{ACK}) / N_{\text{pkts}}$ |
+| `9` | `tcp_window_norm` | Normalized TCP advertising window | $(\text{swin} + \text{dwin}) / 131,070$ |
+| `10` | `is_privileged_port` | Ingress privileged port indicator | $\mathbb{I}(0 < \text{dsport} < 1024) \in \{0.0, 1.0\}$ |
+| `11` | `payload_entropy` | Normalized payload volume / entropy | $\text{res\_bdy\_len} / (\text{res\_bdy\_len} + 1500)$ |
+| `12` | `tcp_rst_ratio` | TCP RST connection termination ratio | $\mathbb{I}(\text{RST}) / N_{\text{pkts}}$ |
+| `13` | `fwd_bwd_packet_ratio`| Forward to backward packet imbalance | $\text{clip}(\text{spkts} / (\text{dpkts} + 1\mu), 0, 1000)$ |
+| `14` | `payload_bytes_mean` | Mean payload bytes per packet | $\text{clip}((\text{sbytes} + \text{dbytes}) / (\text{spkts} + \text{dpkts} + 1\mu), 0, 65535)$ |
+| `15` | `iat_max_norm` | Normalized maximum inter-arrival burst | $\ln(1 + \max(\text{sintpkt}, \text{dintpkt}))$ |
+
+---
+
+## 6. Full-Stack Ingestion & Dashboard Architecture
+
+### 1. 2.5 GB Chunked Ingestion Pipeline (`/api/upload-chunk`)
+```
+[Client Browser] 
+      │
+      ▼ (10 MB Multipart Slices: file, filename, chunk_index, total_chunks)
+[POST /api/upload-chunk]
+      │
+      ├── Append slice to uploads/{filename}.part
+      │
+      └── If chunk_index == total_chunks - 1:
+            ├── Atomic rename: uploads/{filename}.part ➔ uploads/{filename}
+            └── Trigger Low-Memory Parser & World Model Ingestion
+```
+
+### 2. Low-Memory Streaming Parser
+- **PCAP / PCAPNG**: `FastPCAPParser` uses 4 MB chunk buffers and zero-copy `struct.unpack_from` unpacking (or `scapy.PcapReader`) to extract flow fields (`timestamp`, `src_ip`, `dst_ip`, `src_port`, `dst_port`, `protocol`, `packet_size`, `flags`) without loading 2.5 GB payloads into RAM.
+- **NetFlow CSV / TSV**: Polars lazy frame evaluation (`pl.scan_csv`) streams and aggregates temporal 0.5s bins with zero data leakage.
+
+### 3. Server-Sent Events (SSE) Engine (`/api/stream-telemetry`)
+Broadcasts real-time attack forecasting horizons directly to client listeners:
+- `risk_score`: Lookahead horizon risk projection
+- `entropy`: Payload and port distribution entropy
+- `target_node`: Active compromised or targeted endpoint
+- `mitre_stage`: Active kill-chain phase (0..5)
+- `packet_velocity`: Live ingestion throughput (pkts/sec)
+- `timestamp`: Event timestamp (ISO 8601)
+
+### 4. Interactive 3D Canvas Radar & Defense Terminal UI
+- **Radar Canvas (`static/js/topology.js`)**: Real-time rendering of concentric range rings, rotating sweep arms, orbiting nodes with threat halos, dynamic packet pulses along communication edges, and full mouse drag-to-rotate 3D perspective controls.
+- **Cyberpunk Dark Theme (`static/css/cyberpunk.css`, `static/css/style.css`)**: Dark terminal palette (`#0a0b0e` canvas, `#14171d` card containers, `#1e232d` borders) with Glowing Amber (`#f59e0b`), Breach Red (`#ef4444`), Terminal Cyan (`#06b6d4`), and Online Emerald (`#10b981`) accents.
+- **Zero-Trust Role Elevation Modal (`static/js/app.js`)**: Intercepts unauthorized or elevated operations with an interactive 403 modal, allowing operators to authenticate up to Chief CISO (Level 5).
+
+### 5. Prescriptive Defense Sandbox ("What-If")
+Enables security operators to evaluate simulated interventions before applying them on production networks:
+- **Actions**: "Isolate Source Subnet", "Throttle Privileged Ports", "Rate-Limit SYN Probing", "Block C2 Outbound IP".
+- **Mechanism**: Modulates active continuous state window $S_t$ with action dampener vectors and re-evaluates forward trajectory $P(S_{t+k} \mid S_t, a_t)$ via the World Model to calculate projected risk reduction percentage.
+
+### 6. Zero-Trust RBAC & State Store Ledger
+- **Clearance Levels**:
+  - `Level 1`: Guest / Observer
+  - `Level 2`: SOC Analyst
+  - `Level 3`: Senior SOC
+  - `Level 4`: SecOps Lead
+  - `Level 5`: Chief CISO
+- **Persistence Ledger**: SQLAlchemy models backed by PostgreSQL (production) or SQLite (air-gapped local) tracking security incidents, asset status, and mitigation playbooks in `artifacts/data/threatora.db`.
+

@@ -1,0 +1,492 @@
+{
+  "evaluation_target": "Threatora Temporal Transformer World Model (ONNX CPU Runtime)",
+  "pcap_metadata": {
+    "pcap_file": "2.pcap",
+    "pcap_size_mb": 953.67,
+    "total_packets": 1614980,
+    "first_timestamp": 1421928304.502286,
+    "last_timestamp": 1421928994.866924,
+    "duration_seconds": 690.36,
+    "num_temporal_bins": 1381,
+    "parse_duration_seconds": 22.4
+  },
+  "inference_benchmark": {
+    "total_evaluated_windows": 1362,
+    "total_inference_time_sec": 0.224,
+    "cpu_latency_per_sample_ms": 0.164,
+    "throughput_windows_per_sec": 6084.9,
+    "mean_state_reconstruction_loss": 2.09427,
+    "onnx_model_footprint_mb": 0.35
+  },
+  "threat_forecasting_summary": {
+    "threat_windows_count": 0,
+    "benign_windows_count": 1362,
+    "threat_ratio_pct": 0.0,
+    "mean_lead_time_to_compromise_sec": 0.5,
+    "horizon_lookahead_steps": 5,
+    "effective_lead_time_runway": "0.5s proactive warning runway"
+  },
+  "mitre_attack_progression": {
+    "stage_distribution": {
+      "Benign": 0,
+      "Reconnaissance": 0,
+      "Initial Access": 38,
+      "Lateral Movement": 0,
+      "Command & Control": 0,
+      "Exfiltration": 1324
+    },
+    "dominant_threat_stage": "Exfiltration"
+  },
+  "sample_timeline_forecasts": [
+    {
+      "window_idx": 0,
+      "timestamp": 1421928304.502286,
+      "threat_probability": 0.0016,
+      "horizon_5_probabilities": [
+        0.0016,
+        0.7171,
+        0.6635,
+        0.2343,
+        0.6181
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1,
+      "timestamp": 1421928305.002286,
+      "threat_probability": 0.0016,
+      "horizon_5_probabilities": [
+        0.0016,
+        0.7173,
+        0.6636,
+        0.2341,
+        0.6187
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 2,
+      "timestamp": 1421928305.502286,
+      "threat_probability": 0.0016,
+      "horizon_5_probabilities": [
+        0.0016,
+        0.7174,
+        0.6637,
+        0.2347,
+        0.6186
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 3,
+      "timestamp": 1421928306.002286,
+      "threat_probability": 0.0017,
+      "horizon_5_probabilities": [
+        0.0017,
+        0.717,
+        0.6632,
+        0.2358,
+        0.6188
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 4,
+      "timestamp": 1421928306.502286,
+      "threat_probability": 0.0017,
+      "horizon_5_probabilities": [
+        0.0017,
+        0.7173,
+        0.6636,
+        0.236,
+        0.6192
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 5,
+      "timestamp": 1421928307.002286,
+      "threat_probability": 0.0017,
+      "horizon_5_probabilities": [
+        0.0017,
+        0.7173,
+        0.6638,
+        0.2364,
+        0.6197
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 6,
+      "timestamp": 1421928307.502286,
+      "threat_probability": 0.0018,
+      "horizon_5_probabilities": [
+        0.0018,
+        0.7165,
+        0.6627,
+        0.2382,
+        0.6191
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 7,
+      "timestamp": 1421928308.002286,
+      "threat_probability": 0.0019,
+      "horizon_5_probabilities": [
+        0.0019,
+        0.7153,
+        0.661,
+        0.2401,
+        0.6186
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 8,
+      "timestamp": 1421928308.502286,
+      "threat_probability": 0.0019,
+      "horizon_5_probabilities": [
+        0.0019,
+        0.7145,
+        0.6603,
+        0.2418,
+        0.618
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 9,
+      "timestamp": 1421928309.002286,
+      "threat_probability": 0.002,
+      "horizon_5_probabilities": [
+        0.002,
+        0.7142,
+        0.66,
+        0.2426,
+        0.6179
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 10,
+      "timestamp": 1421928309.502286,
+      "threat_probability": 0.0021,
+      "horizon_5_probabilities": [
+        0.0021,
+        0.7132,
+        0.6589,
+        0.2448,
+        0.6169
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 11,
+      "timestamp": 1421928310.002286,
+      "threat_probability": 0.0022,
+      "horizon_5_probabilities": [
+        0.0022,
+        0.7119,
+        0.6574,
+        0.248,
+        0.6165
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 12,
+      "timestamp": 1421928310.502286,
+      "threat_probability": 0.0026,
+      "horizon_5_probabilities": [
+        0.0026,
+        0.7086,
+        0.6536,
+        0.2544,
+        0.6145
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 13,
+      "timestamp": 1421928311.002286,
+      "threat_probability": 0.0027,
+      "horizon_5_probabilities": [
+        0.0027,
+        0.7079,
+        0.6529,
+        0.2562,
+        0.6142
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 14,
+      "timestamp": 1421928311.502286,
+      "threat_probability": 0.0028,
+      "horizon_5_probabilities": [
+        0.0028,
+        0.7075,
+        0.6526,
+        0.2575,
+        0.614
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1347,
+      "timestamp": 1421928978.002286,
+      "threat_probability": 0.0158,
+      "horizon_5_probabilities": [
+        0.0158,
+        0.667,
+        0.6133,
+        0.342,
+        0.5922
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1348,
+      "timestamp": 1421928978.502286,
+      "threat_probability": 0.0171,
+      "horizon_5_probabilities": [
+        0.0171,
+        0.665,
+        0.6121,
+        0.3455,
+        0.5913
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1349,
+      "timestamp": 1421928979.002286,
+      "threat_probability": 0.0142,
+      "horizon_5_probabilities": [
+        0.0142,
+        0.6692,
+        0.6162,
+        0.3362,
+        0.5942
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1350,
+      "timestamp": 1421928979.502286,
+      "threat_probability": 0.0148,
+      "horizon_5_probabilities": [
+        0.0148,
+        0.6683,
+        0.6157,
+        0.3379,
+        0.5937
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1351,
+      "timestamp": 1421928980.002286,
+      "threat_probability": 0.0176,
+      "horizon_5_probabilities": [
+        0.0176,
+        0.6642,
+        0.6126,
+        0.3459,
+        0.5912
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1352,
+      "timestamp": 1421928980.502286,
+      "threat_probability": 0.0191,
+      "horizon_5_probabilities": [
+        0.0191,
+        0.6626,
+        0.6113,
+        0.3495,
+        0.5902
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1353,
+      "timestamp": 1421928981.002286,
+      "threat_probability": 0.0215,
+      "horizon_5_probabilities": [
+        0.0215,
+        0.6598,
+        0.6093,
+        0.3553,
+        0.5882
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1354,
+      "timestamp": 1421928981.502286,
+      "threat_probability": 0.0259,
+      "horizon_5_probabilities": [
+        0.0259,
+        0.6554,
+        0.606,
+        0.365,
+        0.5851
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1355,
+      "timestamp": 1421928982.002286,
+      "threat_probability": 0.029,
+      "horizon_5_probabilities": [
+        0.029,
+        0.6525,
+        0.604,
+        0.3706,
+        0.5833
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1356,
+      "timestamp": 1421928982.502286,
+      "threat_probability": 0.032,
+      "horizon_5_probabilities": [
+        0.032,
+        0.65,
+        0.6023,
+        0.376,
+        0.5814
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1357,
+      "timestamp": 1421928983.002286,
+      "threat_probability": 0.0338,
+      "horizon_5_probabilities": [
+        0.0338,
+        0.6489,
+        0.6018,
+        0.379,
+        0.5801
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1358,
+      "timestamp": 1421928983.502286,
+      "threat_probability": 0.0386,
+      "horizon_5_probabilities": [
+        0.0386,
+        0.6447,
+        0.5996,
+        0.3854,
+        0.5786
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1359,
+      "timestamp": 1421928984.002286,
+      "threat_probability": 0.0396,
+      "horizon_5_probabilities": [
+        0.0396,
+        0.6441,
+        0.5993,
+        0.3868,
+        0.578
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1360,
+      "timestamp": 1421928984.502286,
+      "threat_probability": 0.049,
+      "horizon_5_probabilities": [
+        0.049,
+        0.6371,
+        0.5963,
+        0.3975,
+        0.5759
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    },
+    {
+      "window_idx": 1361,
+      "timestamp": 1421928985.002286,
+      "threat_probability": 0.0485,
+      "horizon_5_probabilities": [
+        0.0485,
+        0.6373,
+        0.5965,
+        0.397,
+        0.5761
+      ],
+      "mitre_stage_id": 5,
+      "mitre_stage_name": "Exfiltration",
+      "technique": "T1041: Exfiltration Over C2 Channel / High Volume Egress"
+    }
+  ]
+}

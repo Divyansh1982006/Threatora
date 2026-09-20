@@ -1,149 +1,193 @@
 {% extends "base.html" %}
 
-{% block title %}Threatora // Threat Mitigation & Containment Center{% endblock %}
+{% block title %}Threatora // Zero-Trust Mitigation & Containment Center{% endblock %}
 
 {% block content %}
 
 <!-- Header & Quick Actions -->
-<div class="control-banner">
-  <div class="banner-left">
-    <div style="font-size: 1.1rem; font-weight: 800; color: #ffffff;">
-      ZERO-TRUST MITIGATION & ASSET LEDGER
+<div class="control-banner" style="margin-bottom: 20px; padding: 14px 20px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+  <div class="banner-left" style="display: flex; align-items: center; gap: 14px;">
+    <div style="font-size: 1.05rem; font-weight: 800; color: #ffffff;">
+      🛡️ ZERO-TRUST MITIGATION & ASSET LEDGER
     </div>
-    <span class="status-pill status-pill-green">AIR-GAPPED DEFENSE ACTIVE</span>
+    <span class="status-pill status-pill-green" id="mitigationStatusBadge">
+      <span class="beacon-dot"></span>
+      <span id="mitigationStatusText">AIR-GAPPED DEFENSE ACTIVE</span>
+    </span>
   </div>
 
-  <div class="banner-right">
-    <a href="{{ url_for('views.dashboard') }}" class="btn-cyber btn-cyber-outline">
-      <span>← Operations HUD</span>
+  <div class="banner-right" style="display: flex; align-items: center; gap: 10px;">
+    <button class="btn-cyber" onclick="loadMitigationCenterData()" style="padding: 6px 14px; font-size: 0.80rem;">
+      <span>🔄 Refresh State</span>
+    </button>
+    <a href="{{ url_for('views.dashboard') }}" class="btn-cyber btn-cyber-outline" style="padding: 6px 14px; font-size: 0.80rem;">
+      <span>← Back to HUD</span>
     </a>
   </div>
 </div>
 
+<!-- Active Incidents & Synthesized Zero-Trust Playbooks -->
+<div class="cyber-panel corner-hud" style="margin-bottom: 24px; padding: 20px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.90rem;">
+      <span>🚨</span>
+      <span>Active Security Incidents & Synthesized Zero-Trust Playbooks</span>
+    </div>
+    <div class="panel-tag" id="incidentCountBadge" style="font-size: 0.72rem;">0 ACTIVE PLAYBOOKS</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px;" id="playbooksContainer">
+    <!-- Populated dynamically via loadMitigationCenterData() -->
+    <div id="noPlaybooksMsg" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.82rem; background: var(--bg-card); border: 1px dashed var(--border-card); border-radius: 8px;">
+      <div>🛡️ No active high-risk incidents detected. Ingest an anomalous PCAP / CSV capture on the <a href="{{ url_for('views.dashboard') }}" style="color: var(--neon-cyan); font-weight: 600;">Operations HUD</a> to synthesize automated containment playbooks.</div>
+    </div>
+  </div>
+</div>
+
 <!-- Monitored Endpoints & Asset Inventory -->
-<div class="cyber-panel corner-hud" style="margin-bottom: 24px;">
-  <div class="panel-header">
-    <div class="panel-title">
+<div class="cyber-panel corner-hud" style="margin-bottom: 24px; padding: 20px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.90rem;">
       <span>🛡️</span>
       <span>Enterprise Network Asset Inventory & Monitored Endpoints</span>
     </div>
-    <div class="panel-tag">PostgreSQL / SQLite State Ledger</div>
+    <div class="panel-tag" id="assetCountBadge" style="font-size: 0.72rem;">0 ENDPOINTS</div>
   </div>
 
-  <div class="cyber-table-wrapper">
-    <table class="cyber-table">
+  <div class="cyber-table-wrapper" style="overflow-x: auto;">
+    <table class="cyber-table" style="width: 100%; border-collapse: collapse; font-size: 0.78rem; text-align: left;">
       <thead>
-        <tr>
-          <th>Host IP Address</th>
-          <th>Hostname / Asset</th>
-          <th>Subnet</th>
-          <th>Criticality</th>
-          <th>Quarantine Status</th>
-          <th>Tactical Action</th>
+        <tr style="background: var(--bg-card); border-bottom: 1px solid var(--border-card); color: var(--text-muted); text-transform: uppercase;">
+          <th style="padding: 10px 14px;">Host IP Address</th>
+          <th style="padding: 10px 14px;">Hostname / Role</th>
+          <th style="padding: 10px 14px;">Subnet</th>
+          <th style="padding: 10px 14px;">Criticality</th>
+          <th style="padding: 10px 14px;">Quarantine Status</th>
+          <th style="padding: 10px 14px;">Tactical Action</th>
         </tr>
       </thead>
       <tbody id="assetsTableBody">
-        <tr>
-          <td><strong class="mono" style="color: var(--neon-cyan);">192.168.1.105</strong></td>
-          <td>DEV-WORKSTATION-05</td>
-          <td>192.168.1.0/24</td>
-          <td><span class="status-pill status-pill-cyan" style="font-size: 0.65rem;">MEDIUM</span></td>
-          <td><span class="badge-threat" id="statusBadge_192_168_1_105">COMPROMISED</span></td>
-          <td>
-            <button class="btn-cyber btn-cyber-danger" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('192.168.1.105')">
-              Isolate Host
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td><strong class="mono" style="color: var(--neon-cyan);">192.168.1.10</strong></td>
-          <td>DC-CORP-AD01</td>
-          <td>192.168.1.0/24</td>
-          <td><span class="status-pill status-pill-crimson" style="font-size: 0.65rem;">MISSION_CRITICAL</span></td>
-          <td><span class="badge-benign">HEALTHY</span></td>
-          <td>
-            <button class="btn-cyber btn-cyber-outline" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('192.168.1.10')">
-              Isolate Host
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td><strong class="mono" style="color: var(--neon-cyan);">192.168.1.5</strong></td>
-          <td>SRV-DATABASE-01</td>
-          <td>192.168.1.0/24</td>
-          <td><span class="status-pill status-pill-crimson" style="font-size: 0.65rem;">HIGH</span></td>
-          <td><span class="badge-benign">HEALTHY</span></td>
-          <td>
-            <button class="btn-cyber btn-cyber-outline" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('192.168.1.5')">
-              Isolate Host
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td><strong class="mono" style="color: var(--neon-cyan);">147.32.84.165</strong></td>
-          <td>EDGE-GATEWAY-01</td>
-          <td>147.32.84.0/24</td>
-          <td><span class="status-pill status-pill-crimson" style="font-size: 0.65rem;">MISSION_CRITICAL</span></td>
-          <td><span class="badge-benign">HEALTHY</span></td>
-          <td>
-            <button class="btn-cyber btn-cyber-outline" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('147.32.84.165')">
-              Isolate Gateway
-            </button>
-          </td>
-        </tr>
+        <!-- Populated dynamically via loadMitigationCenterData() -->
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- Active Security Incidents & Containment Playbooks -->
-<div class="cyber-panel corner-hud">
-  <div class="panel-header">
-    <div class="panel-title">
-      <span>🚨</span>
-      <span>Active Incidents & Synthesized Zero-Trust Playbooks</span>
-    </div>
-    <div class="panel-tag">Containment Automation</div>
-  </div>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  loadMitigationCenterData();
+});
 
-  <div style="display: flex; flex-direction: column; gap: 16px;" id="playbooksContainer">
-    <!-- Default Synthesized Playbook Card -->
-    <div class="soc-incident-box" style="margin-top: 0;">
-      <div class="soc-header-row">
-        <div style="font-size: 0.88rem; font-weight: 800; color: var(--neon-crimson); display: flex; align-items: center; gap: 8px;">
-          <span>PB-E7EB29E8</span>
-          <span style="color: var(--text-main); font-weight: 600;">// TARGET: 192.168.1.105 (DEV-WORKSTATION-05)</span>
-        </div>
-        <span class="soc-playbook-badge" id="playbookBadge">AUTOMATED PLAYBOOK READY</span>
-      </div>
+async function loadMitigationCenterData() {
+  const badgeText = document.getElementById('mitigationStatusText');
+  if (badgeText) badgeText.innerText = 'SYNCING TELEMETRY STATE...';
 
-      <div class="soc-body-grid">
-        <div class="soc-info-block">
-          <div class="soc-label">Forensic Threat Assessment:</div>
-          <div class="soc-text">
-            Adversary actively executing <strong>Lateral Movement (T1021.002 SMB Shares)</strong>. High anomalous outbound byte velocity to external destination <code>198.51.100.42</code>. Estimated time to exfiltration burst: &lt; 4 minutes.
-          </div>
-        </div>
+  try {
+    // 1. Fetch Assets
+    const assetsRes = await fetch('/api/v1/assets');
+    const assetsData = await assetsRes.json();
 
-        <div class="soc-info-block">
-          <div class="soc-label">Zero-Trust Executable Rule Commands:</div>
-          <div class="code-box"># Sever Lateral SMB and RDP Probing
-iptables -A INPUT -s 192.168.1.105 -p tcp -m multiport --dports 445,3389,22 -j DROP
-iptables -A FORWARD -s 192.168.1.105 -j DROP
+    const tbody = document.getElementById('assetsTableBody');
+    const assetBadge = document.getElementById('assetCountBadge');
 
-# Isolate host ARP boundary
-arp -s 192.168.1.105 00:00:00:00:00:00</div>
-        </div>
-      </div>
+    if (assetsData.status === 'success' && assetsData.assets && assetsData.assets.length > 0) {
+      if (assetBadge) assetBadge.innerText = `${assetsData.assets.length} ENDPOINTS MONITORED`;
+      if (tbody) {
+        tbody.innerHTML = '';
+        assetsData.assets.forEach(a => {
+          const isCompromised = (a.status === 'COMPROMISED' || a.status === 'THREAT_ACTOR');
+          const isIsolated = (a.status === 'ISOLATED');
+          const statusBadge = isIsolated ? '<span class="status-pill" style="background: rgba(77,77,77,0.3); color: #8E8E8E; border: 1px solid #4D4D4D;">ISOLATED</span>' :
+                              (isCompromised ? '<span class="badge-threat">COMPROMISED</span>' : '<span class="badge-benign">HEALTHY</span>');
 
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <button class="btn-cyber btn-cyber-danger" id="btnIsolate" onclick="triggerDirectIsolation('192.168.1.105')">
-          🛡️ Execute 1-Click Zero-Trust Containment
-        </button>
-        <span class="mono" id="mitigateStatusMsg" style="font-size: 0.74rem; color: var(--neon-emerald);"></span>
-      </div>
-    </div>
-  </div>
-</div>
+          const critCol = (a.criticality === 'MISSION_CRITICAL' || a.criticality === 'ADVERSARY') ? 'status-pill-crimson' :
+                          (a.criticality === 'HIGH' ? 'status-pill-cyan' : 'status-pill-green');
+
+          const actionBtn = isIsolated ?
+            `<button class="btn-cyber" style="padding: 4px 12px; font-size: 0.72rem; opacity: 0.6;" disabled>✔ Isolated</button>` :
+            `<button class="btn-cyber btn-cyber-danger" style="padding: 4px 12px; font-size: 0.72rem;" onclick="triggerDirectIsolation('${a.ip_address}')">Isolate Host</button>`;
+
+          tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding: 10px 14px;"><strong class="mono" style="color: var(--neon-cyan);">${a.ip_address}</strong></td>
+              <td style="padding: 10px 14px; font-weight: 600;">${a.hostname || 'ENDPOINT'}</td>
+              <td style="padding: 10px 14px;" class="mono">${a.subnet || '192.168.1.0/24'}</td>
+              <td style="padding: 10px 14px;"><span class="status-pill ${critCol}" style="font-size: 0.65rem;">${a.criticality || 'MEDIUM'}</span></td>
+              <td style="padding: 10px 14px;" id="statusBadge_${a.ip_address.replace(/\\./g, '_')}">${statusBadge}</td>
+              <td style="padding: 10px 14px;">${actionBtn}</td>
+            </tr>
+          `;
+        });
+      }
+    } else {
+      if (assetBadge) assetBadge.innerText = '0 ENDPOINTS';
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding: 24px; text-align: center; color: var(--text-muted);">No endpoint telemetry available. Upload a capture to inspect assets.</td></tr>`;
+      }
+    }
+
+    // 2. Fetch Playbooks & Incidents
+    const pbRes = await fetch('/api/v1/playbooks');
+    const pbData = await pbRes.json();
+
+    const pbContainer = document.getElementById('playbooksContainer');
+    const pbBadge = document.getElementById('incidentCountBadge');
+
+    if (pbData.status === 'success' && pbData.playbooks && pbData.playbooks.length > 0) {
+      if (pbBadge) pbBadge.innerText = `${pbData.playbooks.length} ACTIVE PLAYBOOKS`;
+      if (pbContainer) {
+        pbContainer.innerHTML = '';
+        pbData.playbooks.forEach(pb => {
+          const cmds = Array.isArray(pb.containment_commands) ? pb.containment_commands.join('\n') : (pb.containment_commands || '');
+          const isExecuted = (pb.status === 'CONTAINMENT_EXECUTED');
+
+          pbContainer.innerHTML += `
+            <div class="soc-incident-box" style="margin-top: 0; padding: 18px; background: rgba(242, 86, 35, 0.04); border: 1px solid rgba(242, 86, 35, 0.3); border-radius: 8px;">
+              <div class="soc-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 0.88rem; font-weight: 800; color: var(--neon-crimson); display: flex; align-items: center; gap: 8px;">
+                  <span>${pb.playbook_uid}</span>
+                  <span style="color: var(--text-main); font-weight: 600;">// TARGET: ${pb.target_ip} (${pb.hostname || 'ENDPOINT'})</span>
+                </div>
+                <span class="soc-playbook-badge" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 4px; background: rgba(242,86,35,0.2); color: var(--neon-cyan); border: 1px solid var(--neon-cyan);">${pb.status || 'PLAYBOOK ACTIVE'}</span>
+              </div>
+
+              <div class="soc-body-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                <div class="soc-info-block" style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-card);">
+                  <div class="soc-label" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Forensic Threat Assessment:</div>
+                  <div class="soc-text" style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.5;">
+                    ${pb.damage_assessment || 'Anomalous adversary signature detected in forward horizon simulation.'}
+                  </div>
+                </div>
+
+                <div class="soc-info-block" style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-card);">
+                  <div class="soc-label" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Zero-Trust Executable Commands:</div>
+                  <div class="code-box" style="font-size: 0.74rem; color: #00E5FF; font-family: var(--font-mono); white-space: pre-wrap;">${cmds}</div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <button class="btn-cyber btn-cyber-danger" ${isExecuted ? 'disabled' : ''} onclick="triggerDirectIsolation('${pb.target_ip}', '${pb.playbook_uid}')" style="padding: 7px 18px; font-size: 0.80rem;">
+                  ${isExecuted ? '✔ Containment Executed' : '🛡️ Execute 1-Click Zero-Trust Containment'}
+                </button>
+                <span class="mono" style="font-size: 0.74rem; color: var(--neon-emerald);">${isExecuted ? 'Host isolated & perimeter rules applied' : 'Strategy: ' + (pb.containment_strategy || 'Isolate host')}</span>
+              </div>
+            </div>
+          `;
+        });
+      }
+    } else {
+      if (pbBadge) pbBadge.innerText = '0 PLAYBOOKS';
+      if (pbContainer) {
+        pbContainer.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.82rem; background: var(--bg-card); border: 1px dashed var(--border-card); border-radius: 8px;">🛡️ No active high-risk incidents detected. Ingest an anomalous PCAP / CSV capture on the <a href="/dashboard" style="color: var(--neon-cyan); font-weight: 600;">Operations HUD</a> to synthesize automated containment playbooks.</div>`;
+      }
+    }
+
+    if (badgeText) badgeText.innerText = 'AIR-GAPPED DEFENSE ACTIVE';
+  } catch (err) {
+    if (badgeText) badgeText.innerText = 'OFFLINE / SYNC ERROR';
+    console.error("Failed to load mitigation data:", err);
+  }
+}
+</script>
 
 {% endblock %}

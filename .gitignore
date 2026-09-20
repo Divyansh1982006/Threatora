@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -37,3 +37,13 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+
+# Large datasets, raw captures, and telemetry uploads
+data/UNSW-NB15 Dataset/
+data/uploads/
+uploads/
+*.pcap
+*.pcapng
+*.binetflow
+*.part
+data/processed/*_windows.parquet

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threatora // Attack Forecasting World Model (NTRO PS 26153)</title>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Retro Cyber Defense Design System -->
+  <link rel="stylesheet" href="/static/css/cyberpunk.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" type="image/png" href="/static/images/threatora_logo.png">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <a href="/" class="brand-wrapper">
+      <div class="brand-shield">
+        <img src="/static/images/threatora_logo.png" alt="Threatora Shield Logo" onerror="this.src='/server/static/images/threatora_logo.png'">
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">
+          <span>THREATORA</span>
+          <span class="accent-cyan">// WORLD MODEL</span>
+        </div>
+        <div class="brand-subtitle">Threatora // Network Attack Forecasting</div>
+      </div>
+    </a>
+
+    <div class="topbar-right">
+      <!-- Engine Online Status Badge -->
+      <div class="status-badge" id="engineStatusBadge">
+        <span class="led-pulse"></span>
+        <span>ENGINE ONLINE (CUDA)</span>
+      </div>
+
+      <!-- User Chip -->
+      <div class="user-chip" id="userChip">
+        <span class="user-chip-icon">👤</span>
+        <span id="userChipText">Alex Kelly (@admin - Analyst L3)</span>
+      </div>
+
+      <!-- Logout Button -->
+      <a href="/logout" class="btn-logout">LOGOUT</a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+
+    <!-- Sub-Header & Hero Section -->
+    <section class="hero-section">
+      <!-- Hero Left: Title, Badges, and Action Bar -->
+      <div class="hero-left">
+        <div class="category-pill">
+          <span>●</span>
+          <span>NTRO DEFENSE PROBLEM STATEMENT 26153</span>
+        </div>
+
+        <h1 class="main-heading">
+          Next-Gen Network<br>
+          <span class="accent-gradient">Attack Forecasting</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Threatora uses an air-gapped Recurrent World Model to predict multi-step attack trajectories up to <strong>10 minutes prior to breach</strong>, generating autonomous Zero-Trust containment playbooks.
+        </p>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+          <a href="/dashboard" class="btn-cyber btn-primary">
+            <span>Launch Operations HUD</span>
+            <span>&rarr;</span>
+          </a>
+          <a href="/visualizations" class="btn-cyber btn-secondary">
+            <span>Interactive Topology</span>
+            <span>&rarr;</span>
+          </a>
+          <button type="button" class="btn-cyber btn-ingest" id="btnIngestDataset">
+            <span>📁 Ingest Dataset (Up to 2GB)</span>
+          </button>
+          <!-- Hidden Chunk File Input -->
+          <input type="file" id="chunkFileInput" accept=".pcap,.pcapng,.cap,.csv,.tsv,.txt,.binetflow" style="display: none;">
+        </div>
+
+        <!-- 10MB Chunked Upload Progress Bar -->
+        <div class="upload-progress-container" id="uploadProgressContainer">
+          <div class="upload-progress-info">
+            <span id="uploadProgressChunks">Chunk 0/0</span>
+            <span id="uploadProgressBytes">0 MB / 0 MB</span>
+            <span id="uploadProgressPct" style="color: var(--neon-cyan); font-weight: 700;">0%</span>
+          </div>
+          <div class="upload-progress-track">
+            <div class="upload-progress-fill" id="uploadProgressFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Right: 3D Topology Radar -->
+      <div class="hero-right">
+        <div class="radar-card">
+          <div class="radar-header">
+            <div class="radar-header-left">
+              <span>●</span>
+              <span>3D LIVE NETWORK TOPOLOGY</span>
+            </div>
+            <div class="radar-header-right">INTERACTIVE 3D &bull; DRAG TO ROTATE</div>
+          </div>
+
+          <div class="radar-canvas-wrap">
+            <canvas id="radarCanvas"></canvas>
+          </div>
+
+          <div class="radar-footer">
+            <div class="radar-readout">
+              <span class="radar-readout-node">DEV-WORKSTATION-05 (192.168.1.105)</span>
+              <span class="radar-readout-risk" id="targetNodeRisk">CTU-13 CAPTURE STREAM &bull; 74.8% INFILTRATION RISK</span>
+            </div>
+            <button type="button" class="btn-cyber btn-primary" id="btnDatasetBurst" style="padding: 0.45rem 1rem; font-size: 0.74rem;">
+              <span>⚡ Test Dataset Burst</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Three Module Cards Grid -->
+    <section class="modules-grid">
+      <!-- Card 1: Operations HUD -->
+      <a href="/dashboard" class="module-card">
+        <div>
+          <div class="module-icon">📊</div>
+          <h2 class="module-title">OPERATIONS HUD</h2>
+          <div class="module-tag">REAL-TIME THREAT FORECASTING</div>
+          <p class="module-desc">
+            10-minute simulation rollouts with 95% Monte Carlo confidence intervals and MITRE kill-chain progression.
+          </p>
+        </div>
+        <div class="module-link">
+          <span>Launch Dashboard</span>
+          <span>&rarr;</span>
+        </div>
+      </a>
+
+      <!-- Card 2: Topology & What-If -->
+      <a href="/visualizations" class="module-card">
+        <div>
+          <div class="module-icon">🌐</div>
+          <h2 class="module-title">TOPOLOGY & WHAT-IF</h2>
+          <div class="module-tag">TELEMETRY & SANDBOX</div>
+          <p class="module-desc">
+            Live packet pulses, endpoint node inspector, and defensive What-If network isolation simulator.
+          </p>
+        </div>
+        <div class="module-link">
+          <span>Open Topology</span>
+          <span>&rarr;</span>
+        </div>
+      </a>
+
+      <!-- Card 3: Mitigation Center -->
+      <a href="/mitigation" class="module-card">
+        <div>
+          <div class="module-icon">🛡️</div>
+          <h2 class="module-title">MITIGATION CENTER</h2>
+          <div class="module-tag">CONTAINMENT & LEDGER</div>
+          <p class="module-desc">
+            Endpoint inventory, security incident forensics, auto-generated zero-trust iptables, and 1-click host quarantine.
+          </p>
+        </div>
+        <div class="module-link">
+          <span>View Containment</span>
+          <span>&rarr;</span>
+        </div>
+      </a>
+    </section>
+
+  </main>
+
+  <!-- Zero-Trust 403 Access Denied Role Elevation Modal -->
+  <div class="modal-backdrop" id="accessDeniedModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>⛔</span>
+          <span>403 Access Denied // Elevated Clearance Required</span>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-alert-box">
+          <div class="modal-alert-heading">Zero-Trust Policy Enforcement</div>
+          <div class="modal-alert-desc" id="modalDeniedReason">
+            Action requires elevated operational clearance.
+          </div>
+        </div>
+        <p class="modal-text">
+          Containment operations, raw packet burst injection, and host isolation are strictly restricted to Level 5 operational personnel under defense directive NTRO PS 26153.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cyber btn-secondary" onclick="closeModal()">Dismiss</button>
+        <button type="button" class="btn-cyber btn-elevate" id="btnElevateRole">
+          <span>⚡ Elevate to Chief CISO (Level 5)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- JavaScript Scripts -->
+  <script src="/static/js/topology.js"></script>
+  <script src="/static/js/app.js"></script>
+
+</body>
+</html>

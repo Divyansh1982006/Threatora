@@ -35,6 +35,6 @@ if %errorlevel% equ 0 (
     )
 )
 
-%PY_BIN% server/app.py
+%PY_BIN% app.py
 pause
 
