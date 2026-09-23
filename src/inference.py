@@ -61,9 +61,23 @@ class InferenceEngine:
                     self.model.load_state_dict(state_dict)
                 print(f"[+] Loaded trained Threatora Transformer weights from {ckpt}")
             except Exception as e:
-                print(f"[!] Warning loading weights: {e}. Running with initialized weights.")
+                raise RuntimeError(
+                    f"[FATAL] Failed to load model weights from {ckpt}: {e}\n"
+                    f"The model cannot run inference without valid trained weights.\n"
+                    f"Please retrain: python -m src.train"
+                )
         else:
-            print(f"[*] Checkpoint not found at {ckpt}. Running initialized Threatora Temporal Transformer.")
+            raise RuntimeError(
+                f"[FATAL] No trained model checkpoint found!\n"
+                f"Searched locations:\n"
+                f"  1. {Path(checkpoint_path) if checkpoint_path else 'N/A (no custom path)'}\n"
+                f"  2. {repo_root / 'models' / 'threatora_transformer.pt'}\n"
+                f"  3. {CHECKPOINT_DIR / 'world_model.pt'}\n\n"
+                f"Without trained weights, ALL predictions will be 'Benign' (random weights).\n"
+                f"Fix: Run training first:\n"
+                f"  python -m src.train --train-parquet data/processed/train_windows.parquet "
+                f"--val-parquet data/processed/val_windows.parquet"
+            )
 
         self.model.eval()
 

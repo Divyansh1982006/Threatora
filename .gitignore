@@ -63,11 +63,14 @@ data/processed/val_windows_full.parquet
 data/UNSW-NB15*/
 data/**/*.csv
 
-# Model weights (too large — provide download link in README instead)
-models/*.pt
-models/*.onnx
-models/*.joblib
-data/processed/scaler.joblib
+# Model weights — KEEP tracked for deployment!
+# Only ignore extremely large weights (>100 MB) by name if needed.
+# models/*.pt        # DO NOT IGNORE — required for inference
+# models/*.onnx      # DO NOT IGNORE — required for deployment
+# models/*.joblib    # DO NOT IGNORE — required for inference
 
-# Artifacts / checkpoints
-artifacts/
+# Scaler files — KEEP tracked (tiny files critical for feature normalization)
+# data/processed/scaler.joblib   # DO NOT IGNORE
+
+# Artifacts / checkpoints — keep model checkpoints tracked
+# artifacts/          # DO NOT IGNORE — contains trained model checkpoints
