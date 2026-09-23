@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Threatora // Attack Forecasting World Model{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ascii-art {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.15;
+    display: inline-block;
+    letter-spacing: -0.5px;
+    font-weight: 700;
+  }
+  @media (max-width: 800px) {
+    .ascii-art {
+      font-size: 0.52rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .ascii-art {
+      font-size: 0.36rem;
+      letter-spacing: -0.8px;
+    }
+  }
+  .badges-banner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .hero-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 24px 0 36px;
+  }
+  .hero-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 12px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: var(--text-main);
+  }
+  .hero-card:hover {
+    border-color: var(--neon-cyan);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ======================================================================= -->
+<!-- HERO SECTION: REFINED, AIRY & CONCISE                                  -->
+<!-- ======================================================================= -->
+<section class="hero-cinema">
+  <!-- Left Column -->
+  <div>
+    <div class="hero-tag-pill">
+      <span class="hero-tag-dot"></span>
+      <span>NTRO DEFENSE PROBLEM STATEMENT 26153</span>
+    </div>
+
+    <h1 class="hero-display-title">
+      Next-Gen Network<br>
+      <span class="gradient-text-hero">Attack Forecasting</span>
+    </h1>
+
+    <p class="hero-lead-desc">
+      Threatora uses an air-gapped Temporal Transformer World Model to predict multi-step attack trajectories across a <strong>5-step forward horizon before breach</strong>.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="{{ url_for('views.dashboard') }}" class="btn-hero-primary" id="heroBtnDashboard">
+        <span>Launch Operations HUD</span>
+        <span>&rarr;</span>
+      </a>
+      <a href="{{ url_for('views.visualizations') }}" class="btn-hero-secondary" id="heroBtnVisualizations">
+        <span>Interactive Topology</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Right Column: Interactive 3D Cyber Network Hologram -->
+  <div class="hero-visual-wrapper">
+    <div class="globe-3d-card corner-hud">
+      <!-- HUD Top Bar -->
+      <div class="globe-hud-top">
+        <span class="globe-hud-title">
+          <span class="beacon-dot"></span>
+          <span>3D LIVE NETWORK TOPOLOGY</span>
+        </span>
+        <span class="globe-hud-hint">INTERACTIVE 3D &bull; DRAG TO ROTATE</span>
+      </div>
+
+      <!-- 3D Canvas -->
+      <canvas id="cyberGlobe3d" class="cyber-globe-canvas"></canvas>
+
+      <!-- HUD Bottom Bar with Node Readout & Surge Trigger -->
+      <div class="globe-hud-bottom">
+        <div id="globeReadout" class="globe-readout">
+          <span style="color: var(--neon-cyan); font-weight: 700;">DEV-WORKSTATION-05 (192.168.1.105)</span><br>
+          <span style="color: var(--text-secondary); font-size: 0.70rem;">CTU-13 CAPTURE STREAM &bull; 74.8% INFILTRATION RISK</span>
+        </div>
+        <button class="btn-cyber btn-cyber-primary" style="padding: 6px 14px; font-size: 0.74rem;" onclick="window.triggerGlobeSurge && window.triggerGlobeSurge()">
+          <span>⚡ Test Dataset Burst</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================= -->
+<!-- CYBER TERMINAL WINDOW (ASCII ART BANNER)                                -->
+<!-- ======================================================================= -->
+<div class="terminal-window corner-hud">
+  <div class="terminal-header">
+    <div class="terminal-dots">
+      <span class="terminal-dot dot-red"></span>
+      <span class="terminal-dot dot-yellow"></span>
+      <span class="terminal-dot dot-green"></span>
+    </div>
+    <div class="terminal-title">threatora-core // world-model // PID 26153</div>
+    <div class="panel-tag">DEFENSE ONLINE</div>
+  </div>
+  <div class="terminal-body">
+    <pre class="ascii-art">
+<font color="#FF3333">████████╗██╗  ██╗██████╗ ███████╗ █████╗ ████████╗ ██████╗ ██████╗  █████╗ </font>
+<font color="#FF5555">╚══██╔══╝██║  ██║██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗</font>
+<font color="#FFBE0B">   ██║   ███████║██████╔╝█████╗  ███████║   ██║   ██║   ██║██████╔╝███████║</font>
+<font color="#00F5D4">   ██║   ██╔══██║██╔══██╗██╔══╝  ██╔══██║   ██║   ██║   ██║██╔══██╗██╔══██║</font>
+<font color="#3B82F6">   ██║   ██║  ██║██║  ██║███████╗██║  ██║   ██║   ╚██████╔╝██║  ██║██║  ██║</font>
+<font color="#8ECAE6">   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝</font>
+    </pre>
+
+    <div class="badges-banner">
+      <span class="status-pill status-pill-crimson">SIH 2026 // PS 26153</span>
+      <span class="status-pill status-pill-cyan">NTRO CYBERSECURITY</span>
+      <span class="status-pill status-pill-green">PYTORCH 2.X</span>
+      <span class="status-pill status-pill-cyan">AIR-GAPPED SOVEREIGN</span>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- QUICK LAUNCH PLATFORM MODULES                                           -->
+<!-- ======================================================================= -->
+<div class="hero-card-grid">
+  <a href="{{ url_for('views.dashboard') }}" class="hero-card corner-hud">
+    <div>
+      <div style="font-size: 1.8rem; margin-bottom: 8px;">📊</div>
+      <div style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 4px;">OPERATIONS HUD</div>
+      <div class="mono" style="font-size: 0.72rem; color: var(--neon-cyan); margin-bottom: 8px;">REAL-TIME THREAT FORECASTING</div>
+      <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
+        Real-time telemetry, 5-step forward simulation rollouts with 95% confidence intervals, and MITRE kill-chain progression.
+      </p>
+    </div>
+    <div class="mono" style="font-size: 0.74rem; color: var(--neon-cyan); font-weight: 700; margin-top: 14px;">
+      Launch Dashboard &rarr;
+    </div>
+  </a>
+
+  <a href="{{ url_for('views.visualizations') }}" class="hero-card corner-hud">
+    <div>
+      <div style="font-size: 1.8rem; margin-bottom: 8px;">🌐</div>
+      <div style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 4px;">TOPOLOGY & WHAT-IF</div>
+      <div class="mono" style="font-size: 0.72rem; color: var(--neon-purple); margin-bottom: 8px;">TELEMETRY & SANDBOX</div>
+      <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
+        Interactive network graph with live packet pulses, endpoint node inspector, and defensive What-If simulations.
+      </p>
+    </div>
+    <div class="mono" style="font-size: 0.74rem; color: var(--neon-purple); font-weight: 700; margin-top: 14px;">
+      Open Topology &rarr;
+    </div>
+  </a>
+
+  <a href="{{ url_for('views.mitigation_view') }}" class="hero-card corner-hud">
+    <div>
+      <div style="font-size: 1.8rem; margin-bottom: 8px;">🛡️</div>
+      <div style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 4px;">MITIGATION CENTER</div>
+      <div class="mono" style="font-size: 0.72rem; color: var(--neon-crimson); margin-bottom: 8px;">CONTAINMENT & LEDGER</div>
+      <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
+        Endpoint inventory, security incident forensics, synthesized zero-trust iptables, and 1-click host quarantine.
+      </p>
+    </div>
+    <div class="mono" style="font-size: 0.74rem; color: var(--neon-crimson); font-weight: 700; margin-top: 14px;">
+      View Containment &rarr;
+    </div>
+  </a>
+</div>
+
+<!-- ======================================================================= -->
+<!-- THE PARADIGM SHIFT: COMPACT COMPARISON                                  -->
+<!-- ======================================================================= -->
+<div style="margin: 28px 0 16px;">
+  <h2 style="font-size: 1.5rem; font-weight: 800; color: #ffffff; margin-bottom: 4px;">
+    The Paradigm Shift: Reactive vs. Predictive
+  </h2>
+  <p style="color: var(--text-muted); font-size: 0.88rem;">
+    Why autoregressive state-space modeling outperforms traditional signature-based detection.
+  </p>
+</div>
+
+<div class="paradigm-grid">
+  <!-- Legacy IDS -->
+  <div class="paradigm-card paradigm-card-legacy">
+    <div class="paradigm-header">
+      <span class="paradigm-badge badge-legacy">LEGACY IDS / SIEM</span>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #ffffff;">Traditional Defense</h3>
+    </div>
+    <ul class="paradigm-list">
+      <li class="paradigm-list-item">
+        <span class="paradigm-icon-bad">✕</span>
+        <span><strong>0s Horizon:</strong> Alerts fire only after signatures or rules match an active breach.</span>
+      </li>
+      <li class="paradigm-list-item">
+        <span class="paradigm-icon-bad">✕</span>
+        <span><strong>Stateless:</strong> Memory is lost between flows, missing slow-and-low dormant attacks.</span>
+      </li>
+      <li class="paradigm-list-item">
+        <span class="paradigm-icon-bad">✕</span>
+        <span><strong>Cloud Egress:</strong> Often offloads sensitive internal traffic to external cloud SIEMs.</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Threatora World Model -->
+  <div class="paradigm-card paradigm-card-worldmodel">
+    <div class="paradigm-header">
+      <span class="paradigm-badge badge-future">THREATORA WORLD MODEL</span>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #ffffff;">Predictive Defense</h3>
+    </div>
+    <ul class="paradigm-list">
+      <li class="paradigm-list-item">
+        <span class="paradigm-icon-good">✔</span>
+        <span><strong>5-Step Horizon:</strong> Latent rollouts project attack paths up to 5 steps ahead.</span>
+      </li>
+      <li class="paradigm-list-item">
+        <span class="paradigm-icon-good">✔</span>
+        <span><strong>Temporal Self-Attention:</strong> Retains context across historical intervals without recurrent drift.</span>
+      </li>
+      <li class="paradigm-list-item">
+        <span class="paradigm-icon-good">✔</span>
+        <span><strong>100% Air-Gapped:</strong> Zero cloud egress, runs completely locally on enterprise infrastructure.</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- 3D Interactive Cyber Network Globe Controller -->
+<script src="{{ url_for('static', filename='js/cyber_globe_3d.js') }}"></script>
+{% endblock %}

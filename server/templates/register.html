@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threatora // Create Operator Identity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/threatora_logo.png') }}">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .register-container {
+      width: 100%;
+      max-width: 460px;
+    }
+    .register-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
+      padding: 32px 28px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 24px var(--neon-cyan-tint);
+      position: relative;
+    }
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .brand-icon {
+      width: 58px;
+      height: 58px;
+      background: rgba(242, 86, 35, 0.14);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(242, 86, 35, 0.35);
+      margin-bottom: 14px;
+      padding: 4px;
+    }
+    .alert-error {
+      background: var(--neon-crimson-tint);
+      border: 1px solid var(--neon-crimson);
+      color: var(--neon-crimson);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.85rem;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan-tint);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <div class="register-card corner-hud">
+      <div class="brand-header">
+        <div class="brand-icon">
+          <img src="{{ url_for('static', filename='images/threatora_logo.png') }}" alt="Threatora Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px; transform: scale(1.35);">
+        </div>
+        <div style="font-size: 1.45rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;">THREATORA</div>
+        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px;">
+          OPERATOR REGISTRATION
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 6px;">
+          Register a zero-trust cyber defense operator identity.
+        </p>
+      </div>
+
+      {% if error %}
+      <div class="alert-error">
+        <span>⚠️</span>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      <form action="/register" method="POST">
+        <div class="form-group">
+          <label class="form-label" for="full_name">Full Name / Call-Sign</label>
+          <input class="form-input" type="text" id="full_name" name="full_name" placeholder="e.g. Alex Kelly" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="username">Operator Username</label>
+          <input class="form-input" type="text" id="username" name="username" placeholder="e.g. akelly" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Official Security Email</label>
+          <input class="form-input" type="email" id="email" name="email" placeholder="e.g. akelly@defense.soc" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Passphrase (min 6 chars)</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="••••••••••••" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="role">Requested Operational Clearance</label>
+          <select class="cyber-select" id="role" name="role" style="width: 100%;">
+            <option value="SOC_ANALYST" selected>SOC Tier-2 Analyst (Level 3)</option>
+            <option value="INCIDENT_RESPONDER">Incident Responder (Level 4)</option>
+            <option value="SECURITY_ENGINEER">Security Engineer (Level 4)</option>
+            <option value="SOC_LEAD_ANALYST">SOC Lead Analyst (Level 4)</option>
+            <option value="CHIEF_CISO_ADMIN">Chief CISO / SecOps Director (Level 5)</option>
+            <option value="SECURITY_AUDITOR">Security & Compliance Auditor (Level 2)</option>
+            <option value="GUEST_OBSERVER">Guest Observer (Level 1)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-cyber btn-cyber-primary" style="width: 100%; justify-content: center; padding: 11px; margin-top: 14px; font-size: 0.86rem;">
+          Establish Identity &rarr;
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 16px; font-size: 0.8rem; color: var(--text-muted);">
+        Already registered?
+        <a href="/login" style="color: var(--neon-cyan); font-weight: 700; text-decoration: none; margin-left: 4px;">Sign In &rarr;</a>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 18px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">
+      Threatora Offline World Model &middot; Zero-Trust Cyber Defense
+    </div>
+  </div>
+
+</body>
+</html>

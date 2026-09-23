@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Threatora // Deep Visualizations & Network Topology Studio{% endblock %}
+
+{% block content %}
+
+<!-- Header Information -->
+<div class="cyber-panel corner-hud" style="margin-bottom: 20px; padding: 20px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+    <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem;">
+      <span>🌐</span>
+      <span>Enterprise Network Topology // Visual Threat Radar</span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn-cyber" onclick="topologyInstance && topologyInstance.loadTopology()" style="padding: 6px 14px; font-size: 0.80rem;">
+        <span>🔄 Refresh Graph</span>
+      </button>
+      <a href="{{ url_for('views.dashboard') }}" class="btn-cyber btn-cyber-outline" style="padding: 6px 14px; font-size: 0.80rem;">
+        <span>← Back to HUD</span>
+      </a>
+    </div>
+  </div>
+
+  <p id="topoSubnetDesc" style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+    Real-time force-directed topology visualizer dynamically constructed from active telemetry. Models endpoint subnets, perimeter edge gateways, and detected adversary communication channels. Live animated particles reflect packet streams. Click any endpoint node to inspect security telemetry and dispatch containment actions.
+  </p>
+
+  <!-- Interactive Topology Canvas -->
+  <div class="topology-container" style="height: 580px; position: relative; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; overflow: hidden;">
+    <canvas id="topologyCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+
+    <!-- Topology HUD Status Overlay -->
+    <div class="topology-hud-overlay" style="position: absolute; top: 14px; left: 14px; background: rgba(23, 23, 23, 0.88); backdrop-filter: blur(8px); border: 1px solid var(--border-card); border-radius: 6px; padding: 10px 14px; font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.6; pointer-events: none;">
+      <div id="hudSubnet"><strong>SUBNET:</strong> Ingested Network LAN</div>
+      <div id="hudGateway"><strong>PERIMETER GATEWAY:</strong> Automatic Boundary Router</div>
+      <div id="hudNodesCount"><strong>ACTIVE NODES:</strong> Initializing endpoints...</div>
+      <div><strong>STATUS:</strong> DRAG NODES TO REORGANIZE // CLICK TO INSPECT</div>
+    </div>
+
+    <!-- Node Inspector Panel (Opens on node click) -->
+    <div class="node-inspector" id="nodeInspector">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+        <strong id="inspHostName" style="color: var(--neon-cyan); font-size: 0.9rem;">ENDPOINT</strong>
+        <button class="btn-cyber" id="closeNodeInspector" style="padding: 2px 6px;">&times;</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 9px; font-size: 0.78rem;" class="mono">
+        <div><span style="color: var(--text-muted);">IP Address:</span> <strong id="inspIp">--</strong></div>
+        <div><span style="color: var(--text-muted);">Subnet:</span> <span id="inspSubnet">--</span></div>
+        <div><span style="color: var(--text-muted);">Criticality:</span> <span id="inspCrit">MEDIUM</span></div>
+        <div><span style="color: var(--text-muted);">Infiltration Risk:</span> <strong id="inspRisk" style="color: var(--neon-crimson);">--%</strong></div>
+        <div><span style="color: var(--text-muted);">ATT&CK Phase:</span> <span id="inspStage">--</span></div>
+        <div><span style="color: var(--text-muted);">Quarantine Status:</span> <span id="inspStatus" class="badge-benign">HEALTHY</span></div>
+      </div>
+
+      <div style="margin-top: 16px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+        <button class="btn-cyber btn-cyber-danger" id="inspBtnIsolate" style="width: 100%; justify-content: center; padding: 6px 14px; font-size: 0.78rem;">
+          Quarantine Host
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- What-If Counterfactual Action Simulation Studio -->
+<div class="cyber-panel corner-hud" style="margin-bottom: 24px; padding: 20px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+    <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.90rem;">
+      <span>🔮</span>
+      <span>What-If Action Simulator // Counterfactual World Model Engine</span>
+    </div>
+    <div class="panel-tag" style="font-size: 0.72rem;">Transformer World Model Dynamic Rollout</div>
+  </div>
+
+  <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 18px;">
+    Simulates defensive interventions on the active latent network state (S_t) without modifying production infrastructure. The Threatora Temporal Transformer World Model evaluates simulated counterfactual trajectories to quantify predicted risk reduction: Risk Delta = Unmitigated Risk - Mitigated Risk up to 5 minutes ahead.
+  </p>
+
+  <!-- Simulation Controls -->
+  <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px;">
+    <label style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+      Defensive Action to Simulate:
+    </label>
+    <select id="simActionSelect" class="cyber-select" style="min-width: 340px; background: var(--bg-card); border: 1px solid var(--border-card); color: var(--text-main); font-size: 0.80rem; padding: 6px 12px; border-radius: 6px;">
+      <option value="BLOCK_MANAGEMENT_PORTS" selected>Block Ingress Management Ports (SSH 22 / RDP 3389 / SMB 445)</option>
+      <option value="ISOLATE_HOST">Host Isolation (Full Air-gap Quarantine)</option>
+      <option value="RATE_LIMIT_SYN">Rate-Limit TCP SYN Probing Bursts</option>
+      <option value="SINKHOLE_C2_DNS">DNS Sinkhole & Terminate Periodic C2 Beacons</option>
+      <option value="THROTTLE_EGRESS">Throttle High-Volume Outbound Bandwidth</option>
+    </select>
+    <button class="btn-cyber btn-cyber-primary" id="btnRunWhatIf" onclick="runWhatIfSimulation()" style="padding: 6px 16px; font-size: 0.80rem;">
+      <span>🔮</span>
+      <span>Run What-If Simulation</span>
+    </button>
+    <span id="simSummaryBadge" class="mono" style="font-size: 0.82rem; font-weight: 700; color: var(--neon-emerald);">
+      Select an action to simulate
+    </span>
+  </div>
+
+  <!-- AI Tactical Assessment Box -->
+  <div id="simVerdictBox" style="background: rgba(242, 86, 35, 0.08); border: 1px solid var(--neon-cyan); border-radius: 8px; padding: 12px 16px; font-size: 0.80rem; color: var(--text-main); margin-bottom: 18px;">
+    <strong>AI Tactical Assessment:</strong> Select an intervention above to model expected risk reduction.
+  </div>
+
+  <!-- Plotly Comparative Simulation Chart -->
+  <div id="plotlySimChart" style="width: 100%; height: 320px;"></div>
+</div>
+
+{% endblock %}

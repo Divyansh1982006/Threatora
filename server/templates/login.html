@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threatora // Operator Access Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cyberpunk.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/threatora_logo.png') }}">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .login-container {
+      width: 100%;
+      max-width: 440px;
+    }
+    .login-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
+      padding: 34px 28px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 24px var(--neon-cyan-tint);
+      position: relative;
+    }
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .brand-icon {
+      width: 58px;
+      height: 58px;
+      background: rgba(242, 86, 35, 0.14);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(242, 86, 35, 0.35);
+      margin-bottom: 14px;
+      padding: 4px;
+    }
+    .alert-error {
+      background: var(--neon-crimson-tint);
+      border: 1px solid var(--neon-crimson);
+      color: var(--neon-crimson);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan-tint);
+    }
+    .demo-credentials {
+      margin-top: 20px;
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card corner-hud">
+      <div class="brand-header">
+        <div class="brand-icon">
+          <img src="{{ url_for('static', filename='images/threatora_logo.png') }}" alt="Threatora Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px; transform: scale(1.35);">
+        </div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;">THREATORA</div>
+        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px;">
+          ZERO-TRUST DEFENSE GATEWAY
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; line-height: 1.45;">
+          Sign in with authorized Security Operations Center (SOC) credentials to access real-time forecasting.
+        </p>
+      </div>
+
+      {% if error %}
+      <div class="alert-error">
+        <span>⚠️</span>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      <form action="/login{% if request.args.get('next') %}?next={{ request.args.get('next') }}{% endif %}" method="POST">
+        <div class="form-group">
+          <label class="form-label" for="username">Operator Username / Email</label>
+          <input class="form-input" type="text" id="username" name="username" placeholder="e.g. admin" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Security Passphrase</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="••••••••••••" required>
+        </div>
+
+        <button type="submit" class="btn-cyber btn-cyber-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 18px; font-size: 0.86rem;">
+          Sign In to Operations Center &rarr;
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 16px; font-size: 0.8rem; color: var(--text-muted);">
+        Need an operator identity?
+        <a href="/register" style="color: var(--neon-cyan); font-weight: 700; text-decoration: none; margin-left: 4px;">Create Account &rarr;</a>
+      </div>
+
+      <!-- Quick Fill Box for testing -->
+      <div class="demo-credentials">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <strong style="color: var(--neon-cyan);">DEFAULT CREDENTIALS</strong>
+          <button type="button" class="btn-cyber" style="padding: 2px 8px; font-size: 0.7rem;" onclick="quickFill()">Quick Fill</button>
+        </div>
+        <div>Username: <code>admin</code></div>
+        <div>Password: <code>Threatora@2026</code></div>
+        <div style="color: var(--text-muted); font-size: 0.68rem; margin-top: 4px;">Role: CHIEF_CISO_ADMIN (Alex Kelly)</div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">
+      Threatora Offline World Model &middot; Zero-Trust Cyber Defense
+    </div>
+  </div>
+
+  <script>
+    function quickFill() {
+      document.getElementById('username').value = 'admin';
+      document.getElementById('password').value = 'Threatora@2026';
+    }
+  </script>
+</body>
+</html>

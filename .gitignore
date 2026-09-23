@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual Environments
+venv/
+env/
+.env/
+.venv/
+
+# Database files
+*.db
+*.sqlite3
+
+# Logs & temp files
+*.log
+server_startup.log
+
+# IDE / OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# ─── Large Binary / Data Files (exceeds GitHub 100 MB limit) ──────────────────
+
+# Raw network captures & flows
+*.pcap
+*.pcapng
+*.pcap.gz
+*.binetflow
+*.part
+*.cap
+
+# Uploaded user files
+data/uploads/
+uploads/
+
+# Full UNSW-NB15 dataset (multi-GB)
+data/UNSW-NB15 Dataset/
+
+# Processed Parquet windows (large training sets)
+data/processed/*_windows*.parquet
+data/processed/test_windows.parquet
+data/processed/train_windows.parquet
+data/processed/val_windows.parquet
+data/processed/train_windows_finetune.parquet
+data/processed/train_windows_full.parquet
+data/processed/val_windows_full.parquet
+
+# Large CSV datasets
+data/UNSW-NB15*/
+data/**/*.csv
+
+# Model weights (too large — provide download link in README instead)
+models/*.pt
+models/*.onnx
+models/*.joblib
+data/processed/scaler.joblib
+
+# Artifacts / checkpoints
+artifacts/

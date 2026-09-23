@@ -1,0 +1,16 @@
+[Unit]
+Description=Threatora Network Attack Forecasting Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=threatora
+WorkingDirectory=/opt/threatora
+ExecStart=/opt/threatora/venv/bin/python app.py
+Restart=always
+RestartSec=5
+Environment="PATH=/opt/threatora/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+EnvironmentFile=-/etc/threatora/threatora.env
+
+[Install]
+WantedBy=multi-user.target

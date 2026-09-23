@@ -1,0 +1,169 @@
+# Dynamic Canonical Feature Adapter - Schema Registry
+# Maps heterogeneous flow schemas to 16 canonical continuous slots:
+# [duration_norm, byte_ratio, packet_rate, iat_mean, iat_std, ttl_mean, ttl_variance, tcp_syn_ratio, tcp_ack_ratio, tcp_window_norm, is_privileged_port, payload_entropy, tcp_rst_ratio, fwd_bwd_packet_ratio, payload_bytes_mean, iat_max_norm]
+
+canonical_slots:
+  - duration_norm
+  - byte_ratio
+  - packet_rate
+  - iat_mean
+  - iat_std
+  - ttl_mean
+  - ttl_variance
+  - tcp_syn_ratio
+  - tcp_ack_ratio
+  - tcp_window_norm
+  - is_privileged_port
+  - payload_entropy
+  - tcp_rst_ratio
+  - fwd_bwd_packet_ratio
+  - payload_bytes_mean
+  - iat_max_norm
+
+datasets:
+  unsw_nb15:
+    name: "UNSW-NB15"
+    aliases:
+      - "unsw"
+      - "unsw_nb15"
+      - "unsw-nb15"
+    signatures:
+      - "sbytes"
+      - "dbytes"
+      - "sttl"
+      - "dttl"
+      - "swin"
+      - "dwin"
+      - "sintpkt"
+    identity_columns:
+      - "srcip"
+      - "dstip"
+      - "sport"
+      - "dsport"
+      - "flow_id"
+      - "id"
+      - "timestamp"
+      - "stime"
+      - "ltime"
+    timestamp_candidates:
+      - "stime"
+      - "timestamp"
+      - "ltime"
+      - "starttime"
+    label_candidates:
+      - "label"
+      - "attack_cat"
+    dst_port_candidates:
+      - "dsport"
+      - "dst_port"
+      - "dport"
+    field_mappings:
+      duration_col: "dur"
+      src_bytes_col: "sbytes"
+      dst_bytes_col: "dbytes"
+      src_pkts_col: "spkts"
+      dst_pkts_col: "dpkts"
+      src_iat_col: "sintpkt"
+      dst_iat_col: "dintpkt"
+      src_jitter_col: "sjit"
+      dst_jitter_col: "djit"
+      src_ttl_col: "sttl"
+      dst_ttl_col: "dttl"
+      src_win_col: "swin"
+      dst_win_col: "dwin"
+      state_col: "state"
+      synack_col: "synack"
+      ackdat_col: "ackdat"
+      payload_len_col: "res_bdy_len"
+      depth_col: "trans_depth"
+
+  cic_ids2018:
+    name: "CSE-CIC-IDS2018"
+    aliases:
+      - "cic_ids2018"
+      - "cse-cic-ids2018"
+      - "cic-ids2018"
+      - "cicids2018"
+      - "ids2018"
+    signatures:
+      - "flow duration"
+      - "tot fwd pkts"
+      - "tot bwd pkts"
+      - "flow byts/s"
+      - "flow pkts/s"
+      - "init fwd win byts"
+    identity_columns:
+      - "src ip"
+      - "dst ip"
+      - "src port"
+      - "dst port"
+      - "destination port"
+      - "timestamp"
+      - "flow id"
+    timestamp_candidates:
+      - "timestamp"
+      - "flow timestamp"
+    label_candidates:
+      - "label"
+    dst_port_candidates:
+      - "dst port"
+      - "destination port"
+      - "dport"
+    field_mappings:
+      duration_col: "flow duration"
+      src_bytes_col: "totlen fwd pkts"
+      dst_bytes_col: "totlen bwd pkts"
+      src_pkts_col: "tot fwd pkts"
+      dst_pkts_col: "tot bwd pkts"
+      iat_mean_col: "flow iat mean"
+      iat_std_col: "flow iat std"
+      packet_rate_col: "flow pkts/s"
+      syn_flag_col: "syn flag cnt"
+      ack_flag_col: "ack flag cnt"
+      fwd_win_col: "init fwd win byts"
+      bwd_win_col: "init bwd win byts"
+      pkt_len_std_col: "pkt len std"
+      pkt_len_var_col: "pkt len var"
+
+  ctu_13:
+    name: "CTU-13"
+    aliases:
+      - "ctu_13"
+      - "ctu-13"
+      - "ctu13"
+      - "binetflow"
+    signatures:
+      - "srcaddr"
+      - "dstaddr"
+      - "totpkts"
+      - "totbytes"
+      - "srcbytes"
+    identity_columns:
+      - "srcaddr"
+      - "dstaddr"
+      - "saddr"
+      - "daddr"
+      - "sport"
+      - "dport"
+      - "starttime"
+      - "lasttime"
+      - "timestamp"
+      - "flow_id"
+    timestamp_candidates:
+      - "starttime"
+      - "timestamp"
+      - "time"
+    label_candidates:
+      - "label"
+      - "is_malicious"
+    dst_port_candidates:
+      - "dport"
+      - "daddr"
+    field_mappings:
+      duration_col: "dur"
+      tot_bytes_col: "totbytes"
+      src_bytes_col: "srcbytes"
+      tot_pkts_col: "totpkts"
+      state_col: "state"
+      flags_col: "flags"
+      tos_col: "stos"

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: threatora_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: threatora_user
+      POSTGRES_PASSWORD: threatora_secure_password_zero_trust
+      POSTGRES_DB: threatora_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U threatora_user -d threatora_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  threatora-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: threatora:latest
+    container_name: threatora_engine
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount checkpoints and artifacts so externally trained weights drop right in
+      - ./artifacts/checkpoints:/app/artifacts/checkpoints
+      - ./artifacts/reports:/app/artifacts/reports
+      - ./artifacts/data:/app/artifacts/data
+      - ./data/raw:/app/data/raw
+      - ./data/samples:/app/data/samples
+    environment:
+      - PYTHONUNBUFFERED=1
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://threatora_user:threatora_secure_password_zero_trust@postgres:5432/threatora_db
+
+volumes:
+  postgres_data:

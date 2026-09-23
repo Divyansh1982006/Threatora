@@ -1,0 +1,498 @@
+{
+  "evaluation_target": "Threatora Temporal Transformer World Model (ONNX CPU Runtime)",
+  "pcap_metadata": {
+    "pcap_file": "live_capture_23_09_26.pcapng",
+    "pcap_size_mb": 1.32,
+    "total_packets": 4003,
+    "first_timestamp": 0.0,
+    "last_timestamp": 0.0,
+    "duration_seconds": 301.3,
+    "num_temporal_bins": 603,
+    "parse_duration_seconds": 0.0
+  },
+  "inference_benchmark": {
+    "total_evaluated_windows": 584,
+    "total_inference_time_sec": 0.131,
+    "cpu_latency_per_sample_ms": 0.224,
+    "throughput_windows_per_sec": 4470.8,
+    "mean_state_reconstruction_loss": 0.82975,
+    "max_window_smooth_l1": 1.18342,
+    "onnx_model_footprint_mb": 0.33
+  },
+  "threat_forecasting_summary": {
+    "peak_threat_score": 0.22,
+    "peak_threat_pct": 22.0,
+    "defcon_level": 5,
+    "defcon_status": "DEFCON 5 // LOW RISK",
+    "dual_key_attack": false,
+    "threat_windows_count": 0,
+    "benign_windows_count": 584,
+    "threat_ratio_pct": 0.0,
+    "mean_lead_time_to_compromise_sec": 47.0,
+    "horizon_lookahead_steps": 5,
+    "effective_lead_time_runway": "47.0s proactive warning runway"
+  },
+  "mitre_attack_progression": {
+    "stage_distribution": {
+      "Benign": 584,
+      "Reconnaissance": 0,
+      "Initial Access": 0,
+      "Lateral Movement": 0,
+      "Command & Control": 0,
+      "Exfiltration": 0
+    },
+    "dominant_threat_stage": "Benign / Normal Baseline (TA0000)"
+  },
+  "sample_timeline_forecasts": [
+    {
+      "window_idx": 0,
+      "timestamp": 1790181861.8124444,
+      "threat_probability": 0.087,
+      "horizon_5_probabilities": [
+        0.9977,
+        0.9975,
+        0.9948,
+        0.9934,
+        0.9905
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 1,
+      "timestamp": 1790181862.3124444,
+      "threat_probability": 0.1148,
+      "horizon_5_probabilities": [
+        0.9963,
+        0.996,
+        0.9917,
+        0.9901,
+        0.9859
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 2,
+      "timestamp": 1790181862.8124444,
+      "threat_probability": 0.1102,
+      "horizon_5_probabilities": [
+        0.9962,
+        0.9959,
+        0.9915,
+        0.9899,
+        0.9856
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 3,
+      "timestamp": 1790181863.3124444,
+      "threat_probability": 0.1251,
+      "horizon_5_probabilities": [
+        0.989,
+        0.9882,
+        0.9781,
+        0.9754,
+        0.9674
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 4,
+      "timestamp": 1790181863.8124444,
+      "threat_probability": 0.1588,
+      "horizon_5_probabilities": [
+        0.9912,
+        0.9904,
+        0.9817,
+        0.9797,
+        0.9721
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 5,
+      "timestamp": 1790181864.3124444,
+      "threat_probability": 0.1874,
+      "horizon_5_probabilities": [
+        0.9812,
+        0.9797,
+        0.9648,
+        0.9618,
+        0.9505
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 6,
+      "timestamp": 1790181864.8124444,
+      "threat_probability": 0.1892,
+      "horizon_5_probabilities": [
+        0.9809,
+        0.9794,
+        0.9645,
+        0.9613,
+        0.95
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 7,
+      "timestamp": 1790181865.3124444,
+      "threat_probability": 0.2129,
+      "horizon_5_probabilities": [
+        0.9855,
+        0.9844,
+        0.9717,
+        0.9697,
+        0.9593
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 8,
+      "timestamp": 1790181865.8124444,
+      "threat_probability": 0.2511,
+      "horizon_5_probabilities": [
+        0.9914,
+        0.9906,
+        0.982,
+        0.9807,
+        0.9726
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 9,
+      "timestamp": 1790181866.3124444,
+      "threat_probability": 0.2728,
+      "horizon_5_probabilities": [
+        0.9926,
+        0.9919,
+        0.9841,
+        0.9832,
+        0.9755
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 10,
+      "timestamp": 1790181866.8124444,
+      "threat_probability": 0.3007,
+      "horizon_5_probabilities": [
+        0.993,
+        0.9924,
+        0.9849,
+        0.9844,
+        0.9767
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 11,
+      "timestamp": 1790181867.3124444,
+      "threat_probability": 0.2995,
+      "horizon_5_probabilities": [
+        0.9942,
+        0.9936,
+        0.9872,
+        0.9867,
+        0.9797
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 12,
+      "timestamp": 1790181867.8124444,
+      "threat_probability": 0.3354,
+      "horizon_5_probabilities": [
+        0.9929,
+        0.9923,
+        0.9848,
+        0.9848,
+        0.9768
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 13,
+      "timestamp": 1790181868.3124444,
+      "threat_probability": 0.3266,
+      "horizon_5_probabilities": [
+        0.9938,
+        0.9932,
+        0.9865,
+        0.9864,
+        0.979
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 14,
+      "timestamp": 1790181868.8124444,
+      "threat_probability": 0.34,
+      "horizon_5_probabilities": [
+        0.9971,
+        0.9968,
+        0.9934,
+        0.9929,
+        0.9885
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 569,
+      "timestamp": 1790182146.3124444,
+      "threat_probability": 0.2194,
+      "horizon_5_probabilities": [
+        0.9966,
+        0.9962,
+        0.9916,
+        0.9909,
+        0.986
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 570,
+      "timestamp": 1790182146.8124444,
+      "threat_probability": 0.2284,
+      "horizon_5_probabilities": [
+        0.9933,
+        0.9925,
+        0.9846,
+        0.9839,
+        0.9765
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 571,
+      "timestamp": 1790182147.3124444,
+      "threat_probability": 0.1944,
+      "horizon_5_probabilities": [
+        0.9908,
+        0.9898,
+        0.9799,
+        0.9787,
+        0.9703
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 572,
+      "timestamp": 1790182147.8124444,
+      "threat_probability": 0.1923,
+      "horizon_5_probabilities": [
+        0.9903,
+        0.9893,
+        0.9789,
+        0.9778,
+        0.9691
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 573,
+      "timestamp": 1790182148.3124444,
+      "threat_probability": 0.1891,
+      "horizon_5_probabilities": [
+        0.9901,
+        0.989,
+        0.9787,
+        0.9776,
+        0.9687
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 574,
+      "timestamp": 1790182148.8124444,
+      "threat_probability": 0.1896,
+      "horizon_5_probabilities": [
+        0.9915,
+        0.9905,
+        0.9815,
+        0.9804,
+        0.9722
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 575,
+      "timestamp": 1790182149.3124444,
+      "threat_probability": 0.1855,
+      "horizon_5_probabilities": [
+        0.9916,
+        0.9906,
+        0.9818,
+        0.9806,
+        0.9725
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 576,
+      "timestamp": 1790182149.8124444,
+      "threat_probability": 0.1614,
+      "horizon_5_probabilities": [
+        0.9888,
+        0.9877,
+        0.9771,
+        0.9752,
+        0.9663
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 577,
+      "timestamp": 1790182150.3124444,
+      "threat_probability": 0.1657,
+      "horizon_5_probabilities": [
+        0.9922,
+        0.9914,
+        0.9833,
+        0.9817,
+        0.9742
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 578,
+      "timestamp": 1790182150.8124444,
+      "threat_probability": 0.1597,
+      "horizon_5_probabilities": [
+        0.9904,
+        0.9893,
+        0.9795,
+        0.9781,
+        0.9694
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 579,
+      "timestamp": 1790182151.3124444,
+      "threat_probability": 0.1436,
+      "horizon_5_probabilities": [
+        0.9883,
+        0.9872,
+        0.9761,
+        0.9745,
+        0.9648
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 580,
+      "timestamp": 1790182151.8124444,
+      "threat_probability": 0.1513,
+      "horizon_5_probabilities": [
+        0.991,
+        0.99,
+        0.9809,
+        0.9792,
+        0.9709
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 581,
+      "timestamp": 1790182152.3124444,
+      "threat_probability": 0.1534,
+      "horizon_5_probabilities": [
+        0.9917,
+        0.9908,
+        0.9824,
+        0.9807,
+        0.9728
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 582,
+      "timestamp": 1790182152.8124444,
+      "threat_probability": 0.207,
+      "horizon_5_probabilities": [
+        0.9977,
+        0.9974,
+        0.9945,
+        0.9935,
+        0.99
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    },
+    {
+      "window_idx": 583,
+      "timestamp": 1790182153.3124444,
+      "threat_probability": 0.1953,
+      "horizon_5_probabilities": [
+        0.9974,
+        0.9971,
+        0.9938,
+        0.9927,
+        0.9888
+      ],
+      "mitre_stage_id": 0,
+      "mitre_stage_name": "Benign",
+      "technique": "No malicious activity detected"
+    }
+  ]
+}

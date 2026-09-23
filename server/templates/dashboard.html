@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Threatora // SOC Operations HUD // AI Network Attack Forecaster{% endblock %}
+
+{% block content %}
+
+<!-- DEFCON & Operational Status Ribbon -->
+<div class="control-banner" style="margin-bottom: 18px; padding: 14px 20px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+  <!-- Left: Threat Posture & DEFCON Alert -->
+  <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <div class="defcon-badge defcon-3" id="defconBadge" style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; letter-spacing: 1px; border: 1px solid var(--border-card); background: rgba(0,0,0,0.4);">
+      <span class="beacon-dot" id="defconDot" style="width: 10px; height: 10px; border-radius: 50%; background: #FFB300; display: inline-block;"></span>
+      <span id="defconVal">DEFCON 3</span>
+      <span style="color: var(--text-muted); font-weight: 400;">//</span>
+      <span id="defconStatus" style="color: #FFB300;">ELEVATED READINESS</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span id="benchmarkLabel" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+        Curated Benchmark:
+      </span>
+      <select id="datasetSelect" class="cyber-select" style="font-size: 0.80rem; padding: 6px 12px; min-width: 260px; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-card); border-radius: 6px;">
+        <option value="host-becomes-infected" selected>CTU-13 Botnet (host-becomes-infected.csv)</option>
+        <option value="unsw_nb15">UNSW-NB15 Infiltration (UNSW-NB15_1.csv)</option>
+        <option value="sample_traffic">Multi-Stage Lateral Probing (sample_traffic.csv)</option>
+      </select>
+      <button class="btn-cyber btn-cyber-primary" id="btnExecuteInference" onclick="runSelectedDatasetTest()" style="padding: 6px 14px; font-size: 0.80rem;">
+        <span>⚡ Run Benchmark</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Right: Ingestion & Custom File Upload (Up to 2GB) -->
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <label class="btn-cyber btn-cyber-outline" id="uploadLabel" style="cursor: pointer; padding: 7px 16px; font-size: 0.80rem; border-color: var(--neon-cyan); color: var(--neon-cyan); display: inline-flex; align-items: center; gap: 6px; border-radius: 6px;">
+      <span>📁 Upload PCAP / CSV (up to 2GB)</span>
+      <input type="file" id="fileInput" accept=".pcap,.pcapng,.cap,.csv,.txt,.binetflow" style="display: none;" onchange="handleFileUpload()">
+    </label>
+    <span class="status-pill status-pill-green" id="inferenceStatusBadge" style="font-size: 0.72rem;">
+      <span class="beacon-dot"></span>
+      <span id="badgeText">SYSTEM READY</span>
+    </span>
+  </div>
+</div>
+
+<!-- Upload Progress Bar (hidden by default) -->
+<div id="uploadProgressContainer" style="display: none; margin-bottom: 18px;">
+  <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">
+    <span id="uploadProgressLabel">Streaming Telemetry Buffer...</span>
+    <span id="uploadProgressPct">0%</span>
+  </div>
+  <div style="height: 4px; background: var(--bg-card); border-radius: 2px; overflow: hidden;">
+    <div id="uploadProgressBar" style="width: 0%; height: 100%; background: var(--neon-cyan); transition: width 0.3s ease;"></div>
+  </div>
+</div>
+
+<!-- Executive Telemetry Grid (6 High-Density KPI Cards) -->
+<div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+  <!-- Card 1: Infiltration Risk Score -->
+  <div class="metric-card danger" style="padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px;">
+    <div class="metric-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-title" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Peak Threat Score</span>
+      <span class="metric-icon" style="font-size: 1rem;">⚠️</span>
+    </div>
+    <div class="metric-value" id="valRisk" style="font-size: 1.75rem; font-weight: 800; color: var(--neon-crimson); font-family: var(--font-mono);">--</div>
+    <div class="metric-subtitle" id="valRiskSub" style="font-size: 0.70rem; color: var(--text-muted); margin-top: 4px;">Horizon Risk (k=5)</div>
+  </div>
+
+  <!-- Card 2: Active ATT&CK Stage -->
+  <div class="metric-card warning" style="padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px;">
+    <div class="metric-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-title" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Active Attack Stage</span>
+      <span class="metric-icon" style="font-size: 1rem;">🎯</span>
+    </div>
+    <div class="metric-value" id="valStage" style="font-size: 1.15rem; font-weight: 800; color: var(--neon-amber); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Awaiting Input</div>
+    <div class="metric-subtitle" id="valTechnique" style="font-size: 0.70rem; color: var(--text-muted); margin-top: 4px;">T1046 / T1190 / T1071</div>
+  </div>
+
+  <!-- Card 3: Transition Loss (Smooth L1) -->
+  <div class="metric-card" style="padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px;">
+    <div class="metric-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-title" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Dynamics Error (L1)</span>
+      <span class="metric-icon" style="font-size: 1rem;">📉</span>
+    </div>
+    <div class="metric-value" id="valSmoothL1" style="font-size: 1.75rem; font-weight: 800; color: var(--neon-emerald); font-family: var(--font-mono);">--</div>
+    <div class="metric-subtitle" style="font-size: 0.70rem; color: var(--text-muted); margin-top: 4px;">World Model Fidelity</div>
+  </div>
+
+  <!-- Card 4: Mean Lead Time to Compromise (MLTC) -->
+  <div class="metric-card" style="padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px;">
+    <div class="metric-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-title" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Lead Time (MLTC)</span>
+      <span class="metric-icon" style="font-size: 1rem;">⏱️</span>
+    </div>
+    <div class="metric-value" id="valMltc" style="font-size: 1.75rem; font-weight: 800; color: #00E5FF; font-family: var(--font-mono);">--</div>
+    <div class="metric-subtitle" style="font-size: 0.70rem; color: var(--text-muted); margin-top: 4px;">Early Warning Buffer</div>
+  </div>
+
+  <!-- Card 5: Ingestion Throughput -->
+  <div class="metric-card" style="padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px;">
+    <div class="metric-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-title" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Ingested Telemetry</span>
+      <span class="metric-icon" style="font-size: 1rem;">⚡</span>
+    </div>
+    <div class="metric-value" id="valPackets" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); font-family: var(--font-mono);">--</div>
+    <div class="metric-subtitle" id="valThroughput" style="font-size: 0.70rem; color: var(--text-muted); margin-top: 4px;">-- MB/s throughput</div>
+  </div>
+
+  <!-- Card 6: Protocol & Ports Surface -->
+  <div class="metric-card" style="padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px;">
+    <div class="metric-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <span class="metric-title" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Traffic Surface</span>
+      <span class="metric-icon" style="font-size: 1rem;">🌐</span>
+    </div>
+    <div class="metric-value" id="valProtocols" style="font-size: 1.15rem; font-weight: 700; color: var(--text-secondary); font-family: var(--font-mono);">TCP / UDP</div>
+    <div class="metric-subtitle" id="valTopPorts" style="font-size: 0.70rem; color: var(--text-muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ports: --</div>
+  </div>
+</div>
+
+<!-- Zero-Mock Awaiting Ingestion State Banner -->
+<div id="awaitingTelemetryBanner" style="padding: 40px 20px; text-align: center; background: var(--bg-surface); border: 1px dashed var(--border-card); border-radius: 10px; margin-bottom: 22px;">
+  <div style="font-size: 2.2rem; margin-bottom: 10px;">🛡️</div>
+  <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Awaiting Network Telemetry Stream</h3>
+  <p style="font-size: 0.82rem; color: var(--text-muted); max-width: 580px; margin: 0 auto 18px; line-height: 1.5;">
+    Upload a network packet capture (.pcap, .pcapng up to 2GB) or NetFlow log (.csv), or click <strong>Run Benchmark</strong> above to execute dynamic forward inference with zero data leakage.
+  </p>
+  <button class="btn-cyber btn-cyber-primary" onclick="document.getElementById('fileInput').click()">
+    <span>📂 Select Capture File</span>
+  </button>
+</div>
+
+<!-- Main Telemetry & Forecast Operations Grid (Active upon ingestion) -->
+<div id="activeDashboardContainer" style="display: none;">
+
+  <!-- Visualizations Row 1: 5-Step Horizon Risk Forecaster + Attack Distribution Donut -->
+  <div style="display: grid; grid-template-columns: 62% 38%; gap: 18px; margin-bottom: 22px;">
+    <!-- Left: 5-Step Horizon Risk Fan-Chart -->
+    <div class="cyber-panel corner-hud" style="padding: 18px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px;">
+      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.88rem;">
+          <span>📈</span>
+          <span>5-Step Infiltration Forecaster // World Model Horizon (k=1..5)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="trajectory-toggle-btn active" id="toggleCiBtn" onclick="togglePlotlyCI()" title="Toggle Conformal Confidence Cloud" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 4px;">
+            <span>95% CI Cloud</span>
+          </button>
+          <button type="button" class="trajectory-toggle-btn active" id="toggleBreachBtn" onclick="togglePlotlyBreach()" title="Toggle 70% Breach Threshold Boundary" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 4px;">
+            <span>70% Breach Line</span>
+          </button>
+          <span class="panel-tag" id="peakRiskBadge" style="font-size: 0.72rem; padding: 4px 8px; background: rgba(242, 86, 35, 0.15); color: var(--neon-cyan); border-radius: 4px; border: 1px solid var(--neon-cyan);">PEAK: --%</span>
+        </div>
+      </div>
+      <div id="plotlyTimelineChart" style="width: 100%; height: 320px;"></div>
+    </div>
+
+    <!-- Right: Attack Taxonomy Distribution Donut (Shows full attack spectrum!) -->
+    <div class="cyber-panel corner-hud" style="padding: 18px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px;">
+      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.88rem;">
+          <span>🎯</span>
+          <span>Attack Taxonomy Distribution</span>
+        </div>
+        <span class="panel-tag" style="font-size: 0.72rem;">Multi-Class Spectrum</span>
+      </div>
+      <div id="plotlyTaxonomyDonut" style="width: 100%; height: 300px;"></div>
+      <div id="donutCategoryLegend" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; font-family: var(--font-mono); font-size: 0.72rem;"></div>
+    </div>
+  </div>
+
+  <!-- Visualizations Row 2: MITRE Kill-Chain Radar + Feature Attribution Waterfall -->
+  <div style="display: grid; grid-template-columns: 50% 50%; gap: 18px; margin-bottom: 22px;">
+    <!-- Left: MITRE ATT&CK Kill-Chain Matrix -->
+    <div class="cyber-panel corner-hud" style="padding: 18px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px;">
+      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.88rem;">
+          <span>🎯</span>
+          <span>Adversary Kill-Chain Migration Radar</span>
+        </div>
+        <span class="panel-tag" style="font-size: 0.72rem;">NTRO PS 26153</span>
+      </div>
+
+      <!-- 5-Stage Progress Strip -->
+      <div class="mitre-radar-strip" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 16px;">
+        <div class="mitre-step-box" id="stageBox1">
+          <div class="step-num" style="font-size: 0.68rem; color: var(--text-muted);">Step 1</div>
+          <div class="step-name" style="font-size: 0.74rem; font-weight: 700;">Recon</div>
+        </div>
+        <div class="mitre-step-box" id="stageBox2">
+          <div class="step-num" style="font-size: 0.68rem; color: var(--text-muted);">Step 2</div>
+          <div class="step-name" style="font-size: 0.74rem; font-weight: 700;">Access</div>
+        </div>
+        <div class="mitre-step-box" id="stageBox3">
+          <div class="step-num" style="font-size: 0.68rem; color: var(--text-muted);">Step 3</div>
+          <div class="step-name" style="font-size: 0.74rem; font-weight: 700;">Lateral</div>
+        </div>
+        <div class="mitre-step-box" id="stageBox4">
+          <div class="step-num" style="font-size: 0.68rem; color: var(--text-muted);">Step 4</div>
+          <div class="step-name" style="font-size: 0.74rem; font-weight: 700;">C2</div>
+        </div>
+        <div class="mitre-step-box" id="stageBox5">
+          <div class="step-num" style="font-size: 0.68rem; color: var(--text-muted);">Step 5</div>
+          <div class="step-name" style="font-size: 0.74rem; font-weight: 700;">Exfil</div>
+        </div>
+      </div>
+
+      <!-- Active Stage Details Box -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 8px; padding: 14px;">
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+          <span id="killChainDetailTitle">Detected Kill-Chain Signature</span>
+          <span class="mono" id="killChainTechId" style="color: #00E676; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0, 230, 118, 0.4); background: rgba(0, 230, 118, 0.08);">STATUS: NORMAL BASELINE (TA0000)</span>
+        </div>
+        <div id="killChainDetailDesc" style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
+          Host normal baseline telemetry. No anomalous kill-chain progression detected.
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Canonical Feature Attribution Waterfall -->
+    <div class="cyber-panel corner-hud" style="padding: 18px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px;">
+      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.88rem;">
+          <span>🧠</span>
+          <span>Threat Explainability // Canonical Saliency</span>
+        </div>
+        <span class="panel-tag" style="font-size: 0.72rem;">12 Continuous Slots</span>
+      </div>
+      <div id="plotlyWaterfallChart" style="width: 100%; height: 260px;"></div>
+    </div>
+  </div>
+
+  <!-- Visualizations Row 3: Prescriptive Counterfactual "What-If" Sandbox -->
+  <div class="cyber-panel corner-hud" style="padding: 18px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px; margin-bottom: 22px;">
+    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+      <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.88rem;">
+        <span>🔬</span>
+        <span>Prescriptive Counterfactual "What-If" Mitigation Sandbox</span>
+      </div>
+      <div id="sandboxStatusBadge" style="font-size: 0.74rem; font-weight: 700; color: var(--neon-emerald);">
+        SIMULATION READY
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px;">
+      <label class="cyber-checkbox-label" style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; cursor: pointer;">
+        <input type="checkbox" id="chkRateLimitTraffic" style="accent-color: var(--neon-cyan);">
+        <span>Throttle Packet Rate (75%)</span>
+      </label>
+      <label class="cyber-checkbox-label" style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; cursor: pointer;">
+        <input type="checkbox" id="chkRateLimitSyn" style="accent-color: var(--neon-cyan);">
+        <span>Filter SYN Probes / Floods</span>
+      </label>
+      <label class="cyber-checkbox-label" style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; cursor: pointer;">
+        <input type="checkbox" id="chkBlockPrivileged" style="accent-color: var(--neon-cyan);">
+        <span>Drop Privileged Ingress (80/443/22)</span>
+      </label>
+      <label class="cyber-checkbox-label" style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; cursor: pointer;">
+        <input type="checkbox" id="chkIsolateSubnet" style="accent-color: var(--neon-cyan);">
+        <span>Quarantine Host / Subnet Cut</span>
+      </label>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+      <button class="btn-cyber btn-cyber-primary" id="btnSimulateSandbox" onclick="runCounterfactualSimulation()">
+        <span>⚡ Re-Simulate Mitigated Trajectory</span>
+      </button>
+      <div id="sandboxResults" style="font-size: 0.78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 16px;">
+        <span>Mitigated Horizon Risk: <strong id="valMitigatedRisk" style="color: var(--neon-emerald);">--%</strong></span>
+        <span>Expected Reduction: <strong id="valRiskReduction" style="color: var(--neon-emerald);">--%</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visualizations Row 4: SOC Incident Feed & Zero-Trust Containment Playbook -->
+  <div class="soc-incident-box" id="socIncidentBox" style="margin-bottom: 22px; padding: 18px; background: rgba(242, 86, 35, 0.04); border: 1px solid rgba(242, 86, 35, 0.3); border-radius: 10px;">
+    <div class="soc-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div style="font-size: 0.88rem; font-weight: 800; color: var(--neon-crimson); display: flex; align-items: center; gap: 8px;">
+        <span>🚨</span>
+        <span id="incidentHeaderTitle">ACTIVE INCIDENT ALERT // AUTONOMOUS MITIGATION PLAYBOOK</span>
+      </div>
+      <span class="soc-playbook-badge" id="playbookBadge" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 4px; background: rgba(242,86,35,0.2); color: var(--neon-cyan); border: 1px solid var(--neon-cyan);">PLAYBOOK ACTIVE</span>
+    </div>
+
+    <div class="soc-body-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+      <div class="soc-info-block" style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-card);">
+        <div class="soc-label" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">AI Damage & Infiltration Assessment:</div>
+        <div class="soc-text" id="damageAssessmentText" style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.5;">
+          Awaiting telemetry assessment...
+        </div>
+      </div>
+      <div class="soc-info-block" style="background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-card);">
+        <div class="soc-label" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Zero-Trust Containment Rules:</div>
+        <div class="soc-text mono" id="socActionText" style="font-size: 0.74rem; color: #00E5FF; line-height: 1.4; white-space: pre-wrap;">
+          iptables -A INPUT -s 192.168.1.105 -j DROP
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <button class="btn-cyber btn-cyber-danger" id="btnIsolate" onclick="triggerMitigation()" style="padding: 7px 18px; font-size: 0.80rem;">
+        🛡️ Execute 1-Click Zero-Trust Containment
+      </button>
+      <span class="mono" id="mitigateStatusMsg" style="font-size: 0.74rem; color: var(--neon-emerald);"></span>
+    </div>
+  </div>
+
+  <!-- Visualizations Row 5: Deep Packet & Flow Telemetry Inspector -->
+  <div class="cyber-panel corner-hud" style="padding: 18px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 10px; margin-bottom: 22px;">
+    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+      <div class="panel-title" style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.88rem;">
+        <span>🔍</span>
+        <span>Deep Telemetry Flow & Packet Inspector</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <input type="text" id="inspectorSearch" placeholder="Search stage, technique, or flags..." oninput="filterInspectorTable()" style="background: var(--bg-card); border: 1px solid var(--border-card); color: var(--text-main); font-size: 0.75rem; padding: 5px 10px; border-radius: 4px; min-width: 220px;">
+        <select id="inspectorFilter" onchange="filterInspectorTable()" style="background: var(--bg-card); border: 1px solid var(--border-card); color: var(--text-main); font-size: 0.75rem; padding: 5px 10px; border-radius: 4px;">
+          <option value="all">All Windows</option>
+          <option value="high_risk">High Risk (&gt; 50%)</option>
+          <option value="benign">Benign Only</option>
+        </select>
+        <button class="btn-cyber btn-cyber-outline" onclick="exportInspectorCSV()" style="padding: 5px 12px; font-size: 0.75rem;">
+          <span>📥 Export CSV</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Inspector Data Table -->
+    <div style="overflow-x: auto; max-height: 380px;">
+      <table id="inspectorTable" style="width: 100%; border-collapse: collapse; font-size: 0.74rem; font-family: var(--font-mono); text-align: left;">
+        <thead>
+          <tr style="background: var(--bg-card); border-bottom: 1px solid var(--border-card); color: var(--text-muted); text-transform: uppercase;">
+            <th style="padding: 10px;">Window #</th>
+            <th style="padding: 10px;">Time (s)</th>
+            <th style="padding: 10px;">Rate (pkts/s)</th>
+            <th style="padding: 10px;">SYN %</th>
+            <th style="padding: 10px;">ACK %</th>
+            <th style="padding: 10px;">Bwd/Fwd</th>
+            <th style="padding: 10px;">Priv Port</th>
+            <th style="padding: 10px;">Risk %</th>
+            <th style="padding: 10px;">Predicted ATT&CK Stage</th>
+          </tr>
+        </thead>
+        <tbody id="inspectorTableBody">
+          <!-- Populated dynamically via JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
