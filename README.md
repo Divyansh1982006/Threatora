@@ -202,8 +202,7 @@ Threatora offers two complementary, production-grade interface options:
 - **Cyberpunk Defense Design System**: Custom dark-mode terminal aesthetics (`static/css/cyberpunk.css`, `static/css/style.css`), JetBrains Mono / Orbitron typography, neon status chips, and glassmorphism containers.
 - **Deep Modular Navigation**: Direct access to Operations HUD (`/dashboard`), Network Topology Studio (`/visualizations`), and Mitigation Center (`/mitigation`).
 
-### 2. Enterprise Streamlit SOC Dashboard (`src/dashboard/app.py`)
-- **Dual Dark / Light Mode Toggle**: Instant switching between **Dark Mode (SOC Obsidian `#0e1117`)** and **Light Mode (Slate Executive `#f8fafc`)** with synchronized Plotly chart palettes.
+### 2. Enterprise SOC Dashboard (`src/dashboard/app.py`)
 - **`@st.cache_data` Performance Acceleration**: File parsing and ONNX model forward passes are cached, allowing operators to scrub along the temporal window slider with **zero latency** and zero redundant computation.
 - **Infiltration Risk Fan-Chart**: Interactive lookahead curve from $t=0$ to $t+50\text{s}$ with $90\%$ conformal uncertainty confidence bands and 70% breach threshold boundary.
 - **Self-Attention Attribution & Dynamic State Saliency**:
