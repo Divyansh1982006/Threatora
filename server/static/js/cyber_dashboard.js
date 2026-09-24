@@ -1,3 +1,4 @@
+
 /**
  * Threatora SOC Operations Dashboard Client Controller
  * 100% Dynamic Telemetry & World Model Inference (NTRO PS 26153)
@@ -8,6 +9,10 @@ let currentActiveHostIp = "192.168.1.105";
 let currentPlaybookUid = null;
 let currentRoleInfo = window.INITIAL_ROLE_INFO || {};
 let topologyInstance = null;
+
+// Global in-memory cache for full unconstrained telemetry payload (Zero Browser Quota Limit)
+window.threatoraTelemetry = window.threatoraTelemetry || null;
+window.threatoraTelemetrySourceLabel = window.threatoraTelemetrySourceLabel || null;
 
 // Telemetry & Plotly Cache
 let currentTimelineData = null;
@@ -61,13 +66,134 @@ function updateTelemetrySourceLabel(label) {
   }
 }
 
+/**
+ * Safely caches high-level telemetry metadata to browser storage without throwing QuotaExceededError.
+ * Full unconstrained telemetry data is preserved in-memory on window.threatoraTelemetry.
+ * Caches ONLY compact metadata (< 50 KB) across page refreshes.
+ */
+function cacheActiveTelemetry(data) {
+  if (!data) return;
+
+  // 1. In-memory storage on global window object (Zero Quota Limit)
+  window.threatoraTelemetry = data;
+
+  // 2. Safe persistent caching of downsampled / compact metadata (< 50 KB)
+  try {
+    const compactPayload = {
+      status: data.status || 'success',
+      file_label: data.file_label || 'Active Capture',
+      is_attack: Boolean(data.is_attack),
+      flagged_hosts: data.flagged_hosts || [],
+      adversary_ips: data.adversary_ips || [],
+      isolated_hosts: data.isolated_hosts || [],
+      kpis: {
+        current_risk_pct: data.kpis?.current_risk_pct,
+        peak_risk_pct: data.kpis?.peak_risk_pct,
+        stage_id: data.kpis?.stage_id,
+        stage_name: data.kpis?.stage_name,
+        stage_color: data.kpis?.stage_color,
+        technique: data.kpis?.technique,
+        technique_id: data.kpis?.technique_id,
+        smooth_l1_loss: data.kpis?.smooth_l1_loss,
+        dynamics_error_l1: data.kpis?.dynamics_error_l1,
+        mltc_lead_seconds: data.kpis?.mltc_lead_seconds,
+        latency_ms: data.kpis?.latency_ms,
+        throughput_wps: data.kpis?.throughput_wps,
+        threat_level: data.kpis?.threat_level,
+        defcon: data.kpis?.defcon,
+        protocols: data.kpis?.protocols,
+      },
+      meta: {
+        file_name: data.meta?.file_name || data.file_label,
+        file_type: data.meta?.file_type,
+        file_size_mb: data.meta?.file_size_mb,
+        total_packets: data.meta?.total_packets,
+        total_bytes_mb: data.meta?.total_bytes_mb,
+        duration_seconds: data.meta?.duration_seconds,
+        num_temporal_bins: data.meta?.num_temporal_bins,
+        throughput_mb_s: data.meta?.throughput_mb_s,
+        parse_elapsed_sec: data.meta?.parse_elapsed_sec,
+        top_ports: data.meta?.top_ports,
+      },
+      forecast_timeline: data.forecast_timeline || [],
+      historical_trajectory: (data.historical_trajectory || []).slice(-20),
+      attack_distribution: data.attack_distribution || [],
+      feature_attributions: (data.feature_attributions || []).slice(0, 10),
+      topology_graph: data.topology_graph ? {
+        nodes: (data.topology_graph.nodes || []).map(n => ({
+          id: n.id,
+          ip: n.ip,
+          hostname: n.hostname,
+          status: n.status,
+          risk_score: n.risk_score,
+          is_compromised: Boolean(n.is_compromised),
+          is_adversary: Boolean(n.is_adversary),
+          is_isolated: Boolean(n.is_isolated),
+          stage_name: n.stage_name,
+          technique: n.technique,
+          criticality: n.criticality,
+          subnet: n.subnet,
+        })),
+        edges: (data.topology_graph.edges || data.topology_graph.links || []).map(e => ({
+          source: e.source,
+          target: e.target,
+          threat: e.threat,
+          is_attack_route: Boolean(e.is_attack_route),
+          proto: e.proto || e.protocol,
+          port: e.port,
+        }))
+      } : null,
+      playbooks: data.playbooks || [],
+      // Downsampled inspector rows (at most 25 rows) - NEVER thousands of raw rows
+      inspector_rows: (data.inspector_rows || []).slice(0, 25),
+      sample_packets: (data.sample_packets || []).slice(0, 10),
+    };
+
+    const serialized = JSON.stringify(compactPayload);
+
+    try {
+      sessionStorage.setItem('threatora_active_telemetry', serialized);
+    } catch (sessionErr) {
+      console.warn("sessionStorage setItem bypassed (quota or security policy):", sessionErr);
+    }
+
+    try {
+      localStorage.setItem('threatora_active_telemetry', serialized);
+    } catch (localErr) {
+      console.warn("localStorage setItem bypassed (quota or security policy):", localErr);
+    }
+  } catch (err) {
+    console.warn("Error creating compact cache:", err);
+  }
+}
+window.cacheActiveTelemetry = cacheActiveTelemetry;
+
 async function restoreActiveTelemetrySession() {
-  const saved = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
-  const savedLabel = sessionStorage.getItem('threatora_telemetry_source_label') || localStorage.getItem('threatora_telemetry_source_label');
+  // 1. In-memory global state check first (instantaneous, zero storage limit)
+  if (window.threatoraTelemetry) {
+    const savedLabel = window.threatoraTelemetrySourceLabel ||
+      sessionStorage.getItem('threatora_telemetry_source_label') ||
+      localStorage.getItem('threatora_telemetry_source_label');
+    if (savedLabel) updateTelemetrySourceLabel(savedLabel);
+    renderDashboard(window.threatoraTelemetry);
+    return;
+  }
+
+  // 2. Safe read from storage cache
+  let saved = null;
+  try {
+    saved = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
+  } catch (e) {}
+
+  let savedLabel = null;
+  try {
+    savedLabel = sessionStorage.getItem('threatora_telemetry_source_label') || localStorage.getItem('threatora_telemetry_source_label');
+  } catch (e) {}
 
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
+      window.threatoraTelemetry = parsed;
       if (savedLabel) {
         updateTelemetrySourceLabel(savedLabel);
       }
@@ -78,19 +204,21 @@ async function restoreActiveTelemetrySession() {
     }
   }
 
-  // Fallback: Check if backend server has an active analyzed telemetry session
+  // 3. Fallback: Check if backend server has an active analyzed telemetry session
   try {
     const res = await fetch('/api/telemetry/active');
     if (res.ok) {
       const data = await res.json();
       if (data && data.status === 'success') {
-        localStorage.setItem('threatora_active_telemetry', JSON.stringify(data));
-        sessionStorage.setItem('threatora_active_telemetry', JSON.stringify(data));
         const lbl = (data.file_label && (data.file_label.toLowerCase().includes('demo') || data.file_label.toLowerCase().includes('benchmark')))
           ? `CURATED BENCHMARK: ${data.file_label}`
           : `UPLOADED TELEMETRY: ${data.file_label || 'Active Capture'}`;
-        localStorage.setItem('threatora_telemetry_source_label', lbl);
-        sessionStorage.setItem('threatora_telemetry_source_label', lbl);
+        window.threatoraTelemetrySourceLabel = lbl;
+        cacheActiveTelemetry(data);
+        try {
+          localStorage.setItem('threatora_telemetry_source_label', lbl);
+          sessionStorage.setItem('threatora_telemetry_source_label', lbl);
+        } catch (e) {}
         updateTelemetrySourceLabel(lbl);
         renderDashboard(data);
       }
@@ -100,31 +228,12 @@ async function restoreActiveTelemetrySession() {
   }
 }
 
-/* =========================================================================
-   1. Dynamic SOC Dashboard Renderer
-   ========================================================================= */
-function renderDashboard(data) {
-  if (!data || data.status !== 'success') {
-    showToast(data.message || "Failed to parse telemetry stream.", 'error');
-    return;
-  }
-
-  // Show active dashboard, hide empty state
-  const emptyBanner = document.getElementById('awaitingTelemetryBanner');
-  if (emptyBanner) emptyBanner.style.display = 'none';
-
-  const activeContainer = document.getElementById('activeDashboardContainer');
-  if (activeContainer) activeContainer.style.display = 'block';
-
-  // Cache data for What-If sandbox and inspector
-  currentTimelineData = data.forecast_timeline || [];
-  currentHistoricalData = data.historical_trajectory || [];
-  currentActiveWindow = data.active_window_raw || null;
-  currentInspectorRows = data.inspector_rows || [];
-  currentMitigatedTimeline = null;
-
-  const kpis = data.kpis || {};
-  const meta = data.meta || {};
+/**
+ * Renders the DEFCON Ribbon and 6 Executive KPI Metric Cards from in-memory telemetry state.
+ */
+function renderHUD(kpis, meta) {
+  kpis = kpis || {};
+  meta = meta || {};
 
   // 1. Update DEFCON Ribbon
   const defconVal = document.getElementById('defconVal');
@@ -134,7 +243,9 @@ function renderDashboard(data) {
 
   if (defconVal) defconVal.innerText = `DEFCON ${kpis.defcon || 3}`;
   if (defconStatus) {
-    defconStatus.innerText = kpis.threat_level || "ELEVATED READINESS";
+    let statusText = kpis.threat_level || "ELEVATED READINESS";
+    statusText = statusText.replace(/^DEFCON\s*\d+\s*\/\/\s*/i, '');
+    defconStatus.innerText = statusText;
     const colorMap = { 1: "#FF5252", 2: "#FF7043", 3: "#FFB300", 4: "#29B6F6", 5: "#00E676" };
     const alertCol = colorMap[kpis.defcon] || "#FFB300";
     defconStatus.style.color = alertCol;
@@ -200,13 +311,81 @@ function renderDashboard(data) {
 
   const peakRiskBadge = document.getElementById('peakRiskBadge');
   if (peakRiskBadge) {
-    peakRiskBadge.innerText = `PEAK: ${kpis.peak_risk_pct || 0}% @ +${data.forecast_timeline ? data.forecast_timeline.length : 5}m`;
+    peakRiskBadge.innerText = `PEAK: ${kpis.peak_risk_pct || 0}% @ +${meta.num_temporal_bins || 5}m`;
+  }
+}
+window.renderHUD = renderHUD;
+
+/**
+ * Renders the Deep Telemetry Flow Inspector Table from in-memory rows.
+ */
+function renderInspectorTable(rows) {
+  populateInspectorTable(rows || currentInspectorRows || []);
+}
+window.renderInspectorTable = renderInspectorTable;
+
+/**
+ * Renders the 5-step risk horizon forecasting curve fan-chart from in-memory arrays.
+ */
+function renderForecastingCurve(historical, forecast, mitigated) {
+  drawPlotlyForecaster(
+    historical !== undefined ? historical : currentHistoricalData,
+    forecast !== undefined ? forecast : currentTimelineData,
+    mitigated !== undefined ? mitigated : currentMitigatedTimeline
+  );
+}
+window.renderForecastingCurve = renderForecastingCurve;
+
+/**
+ * Renders the network topology graph directly from in-memory topology state.
+ */
+function renderTopology(topologyGraph) {
+  if (typeof topologyInstance !== 'undefined' && topologyInstance) {
+    if (topologyGraph && typeof topologyInstance.setData === 'function') {
+      topologyInstance.setData({ topology_graph: topologyGraph });
+    } else if (typeof topologyInstance.loadTopology === 'function') {
+      topologyInstance.loadTopology();
+    }
+  }
+}
+window.renderTopology = renderTopology;
+
+/* =========================================================================
+   1. Dynamic SOC Dashboard Renderer (Direct Memory Rendering)
+   ========================================================================= */
+function renderDashboard(data) {
+  if (!data || data.status !== 'success') {
+    showToast(data.message || "Failed to parse telemetry stream.", 'error');
+    return;
   }
 
-  // 3. Render Plotly 5-Step Horizon Forecaster Fan-Chart
-  drawPlotlyForecaster(currentHistoricalData, currentTimelineData, null);
+  // 1. Maintain in-memory active telemetry reference on global window
+  window.threatoraTelemetry = data;
 
-  // 4. Render Plotly Attack Taxonomy Distribution Donut Chart
+  // Show active dashboard, hide empty state
+  const emptyBanner = document.getElementById('awaitingTelemetryBanner');
+  if (emptyBanner) emptyBanner.style.display = 'none';
+
+  const activeContainer = document.getElementById('activeDashboardContainer');
+  if (activeContainer) activeContainer.style.display = 'block';
+
+  // Cache data for What-If sandbox and inspector
+  currentTimelineData = data.forecast_timeline || [];
+  currentHistoricalData = data.historical_trajectory || [];
+  currentActiveWindow = data.active_window_raw || null;
+  currentInspectorRows = data.inspector_rows || [];
+  currentMitigatedTimeline = null;
+
+  const kpis = data.kpis || {};
+  const meta = data.meta || {};
+
+  // 2. Render HUD (DEFCON Ribbon and 6 Executive Metric Cards) from memory
+  renderHUD(kpis, meta);
+
+  // 3. Render Plotly 5-Step Horizon Forecaster Fan-Chart from memory
+  renderForecastingCurve(currentHistoricalData, currentTimelineData, null);
+
+  // 4. Render Plotly Attack Taxonomy Distribution Donut Chart from memory
   if (data.attack_distribution && data.attack_distribution.length > 0) {
     drawPlotlyTaxonomyDonut(data.attack_distribution, meta.num_temporal_bins || 1);
   }
@@ -219,13 +398,16 @@ function renderDashboard(data) {
     drawPlotlyWaterfall(data.feature_attributions);
   }
 
-  // 7. Populate Deep Telemetry Flow Inspector Table
-  populateInspectorTable(currentInspectorRows);
+  // 7. Populate Deep Telemetry Flow Inspector Table from memory
+  renderInspectorTable(currentInspectorRows);
 
-  // 8. Update Incident & Containment Box
+  // 8. Render Topology Canvas directly from memory
+  renderTopology(data.topology_graph);
+
+  // 9. Update Incident & Containment Box
   updateIncidentBox(data);
 
-  // 9. Reset What-If Sandbox Toggles
+  // 10. Reset What-If Sandbox Toggles
   const chk1 = document.getElementById('chkRateLimitTraffic');
   const chk2 = document.getElementById('chkRateLimitSyn');
   const chk3 = document.getElementById('chkBlockPrivileged');
@@ -239,7 +421,7 @@ function renderDashboard(data) {
   if (resDiv1) resDiv1.innerText = "--%";
   if (resDiv2) resDiv2.innerText = "--%";
 
-  // 10. Update What-If Simulation Chart if present
+  // 11. Update What-If Simulation Chart if present
   if (document.getElementById('plotlySimChart')) {
     renderSimulationPlotlyChart(currentTimelineData, null);
   }
@@ -558,9 +740,9 @@ function updateMitreKillChain(kpis) {
   // Resolve stage ID from stage_id, technique_id, or stage_name
   let stageId = 0;
   const isBenign = (kpis.peak_threat !== undefined && kpis.peak_threat < 30.0) ||
-                   (kpis.defcon === 5) ||
-                   (kpis.stage_name && kpis.stage_name.toLowerCase().includes("benign")) ||
-                   (kpis.is_anomalous === false);
+    (kpis.defcon === 5) ||
+    (kpis.stage_name && kpis.stage_name.toLowerCase().includes("benign")) ||
+    (kpis.is_anomalous === false);
 
   if (isBenign) {
     stageId = 0;
@@ -693,7 +875,7 @@ function populateInspectorTable(rows) {
       <td style="padding: 8px 10px;">${(r.byte_ratio || 0).toFixed(2)}</td>
       <td style="padding: 8px 10px;"><span style="color:${r.is_priv ? 'var(--neon-cyan)' : 'var(--text-muted)'}">${r.is_priv ? 'YES' : 'NO'}</span></td>
       <td style="padding: 8px 10px; font-weight:700; color:${riskCol}">${displayRisk.toFixed(1)}%</td>
-      <td style="padding: 8px 10px;"><span style="color:${stageColor}; font-weight:600;">${stageDisplay}</span> (${techDisplay.split(' ')[0]})</td>
+      <td style="padding: 8px 10px;"><span style="color:${stageColor}; font-weight:600;">${stageDisplay}</span>${isBenign ? '' : ` (${techDisplay.split(' ')[0]})`}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -1007,11 +1189,23 @@ function handleFileUpload() {
           if (badgeText) badgeText.innerText = 'TELEMETRY ANALYZED';
         }
         const srcLabel = `UPLOADED TELEMETRY: ${file.name}`;
-        localStorage.setItem('threatora_active_telemetry', JSON.stringify(data));
-        sessionStorage.setItem('threatora_active_telemetry', JSON.stringify(data));
-        localStorage.setItem('threatora_telemetry_source_label', srcLabel);
-        sessionStorage.setItem('threatora_telemetry_source_label', srcLabel);
+
+        // 1. Store active telemetry data in-memory on global window object (Zero Quota Limit)
+        window.threatoraTelemetry = data;
+        window.threatoraTelemetrySourceLabel = srcLabel;
+
+        // 2. Safe persistent caching attempt in try...catch without throwing QuotaExceededError
+        cacheActiveTelemetry(data);
+        try {
+          localStorage.setItem('threatora_telemetry_source_label', srcLabel);
+          sessionStorage.setItem('threatora_telemetry_source_label', srcLabel);
+        } catch (storageErr) {
+          console.warn("Storage quota exceeded for source label:", storageErr);
+        }
+
         updateTelemetrySourceLabel(srcLabel);
+
+        // 3. Pass parsed JSON response directly to rendering functions from memory without depending on localStorage
         renderDashboard(data);
         showToast(`Capture ${file.name} successfully analyzed.`);
       } else {
@@ -1052,11 +1246,22 @@ async function runSelectedDatasetTest() {
         badge.className = 'status-pill status-pill-green';
         if (badgeText) badgeText.innerText = 'BENCHMARK READY';
       }
-      localStorage.setItem('threatora_active_telemetry', JSON.stringify(data));
-      sessionStorage.setItem('threatora_active_telemetry', JSON.stringify(data));
-      localStorage.setItem('threatora_telemetry_source_label', srcLabel);
-      sessionStorage.setItem('threatora_telemetry_source_label', srcLabel);
+      // 1. Store in-memory on global window object
+      window.threatoraTelemetry = data;
+      window.threatoraTelemetrySourceLabel = srcLabel;
+
+      // 2. Safe persistent caching of compact metadata
+      cacheActiveTelemetry(data);
+      try {
+        localStorage.setItem('threatora_telemetry_source_label', srcLabel);
+        sessionStorage.setItem('threatora_telemetry_source_label', srcLabel);
+      } catch (storageErr) {
+        console.warn("Storage quota exceeded for source label:", storageErr);
+      }
+
       updateTelemetrySourceLabel(srcLabel);
+
+      // 3. Render directly from in-memory payload
       renderDashboard(data);
       showToast(`Benchmark dataset '${dataset}' analyzed.`);
     } else {
@@ -1135,40 +1340,67 @@ async function triggerMitigation() {
         btn.style.color = '#00E676';
       }
 
-      // Sync active telemetry storage
-      try {
-        const storedStr = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
-        if (storedStr) {
-          const stored = JSON.parse(storedStr);
-          if (stored.topology_graph && stored.topology_graph.nodes) {
-            stored.topology_graph.nodes.forEach(n => {
-              if (n.ip === currentActiveHostIp || n.id === currentActiveHostIp) {
-                n.status = 'ISOLATED';
-                n.is_isolated = true;
-                n.is_compromised = false;
-                n.risk_score = 0.0;
-                n.stage_name = 'Air-gapped';
-                n.technique = 'Isolated';
-              }
-            });
-            const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
-            edges.forEach(e => {
-              if (e.source === currentActiveHostIp || e.target === currentActiveHostIp) {
-                e.threat = 'normal';
-                e.is_attack_route = false;
-              }
-            });
-          }
-          if (stored.flagged_hosts) {
-            stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== currentActiveHostIp);
-          }
-          if (!stored.isolated_hosts) stored.isolated_hosts = [];
-          if (!stored.isolated_hosts.includes(currentActiveHostIp)) stored.isolated_hosts.push(currentActiveHostIp);
-
-          sessionStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
-          localStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
+      // Sync active telemetry in-memory and safe storage cache
+      if (window.threatoraTelemetry) {
+        const stored = window.threatoraTelemetry;
+        if (stored.topology_graph && stored.topology_graph.nodes) {
+          stored.topology_graph.nodes.forEach(n => {
+            if (n.ip === currentActiveHostIp || n.id === currentActiveHostIp) {
+              n.status = 'ISOLATED';
+              n.is_isolated = true;
+              n.is_compromised = false;
+              n.risk_score = 0.0;
+              n.stage_name = 'Air-gapped';
+              n.technique = 'Isolated';
+            }
+          });
+          const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
+          edges.forEach(e => {
+            if (e.source === currentActiveHostIp || e.target === currentActiveHostIp) {
+              e.threat = 'normal';
+              e.is_attack_route = false;
+            }
+          });
         }
-      } catch (err) {}
+        if (stored.flagged_hosts) {
+          stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== currentActiveHostIp);
+        }
+        if (!stored.isolated_hosts) stored.isolated_hosts = [];
+        if (!stored.isolated_hosts.includes(currentActiveHostIp)) stored.isolated_hosts.push(currentActiveHostIp);
+        cacheActiveTelemetry(stored);
+      } else {
+        try {
+          const storedStr = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
+          if (storedStr) {
+            const stored = JSON.parse(storedStr);
+            if (stored.topology_graph && stored.topology_graph.nodes) {
+              stored.topology_graph.nodes.forEach(n => {
+                if (n.ip === currentActiveHostIp || n.id === currentActiveHostIp) {
+                  n.status = 'ISOLATED';
+                  n.is_isolated = true;
+                  n.is_compromised = false;
+                  n.risk_score = 0.0;
+                  n.stage_name = 'Air-gapped';
+                  n.technique = 'Isolated';
+                }
+              });
+              const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
+              edges.forEach(e => {
+                if (e.source === currentActiveHostIp || e.target === currentActiveHostIp) {
+                  e.threat = 'normal';
+                  e.is_attack_route = false;
+                }
+              });
+            }
+            if (stored.flagged_hosts) {
+              stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== currentActiveHostIp);
+            }
+            if (!stored.isolated_hosts) stored.isolated_hosts = [];
+            if (!stored.isolated_hosts.includes(currentActiveHostIp)) stored.isolated_hosts.push(currentActiveHostIp);
+            cacheActiveTelemetry(stored);
+          }
+        } catch (err) {}
+      }
 
       if (typeof topologyInstance !== 'undefined' && topologyInstance && typeof topologyInstance.isolateNode === 'function') {
         topologyInstance.isolateNode(currentActiveHostIp);
@@ -1250,7 +1482,7 @@ function showToast(msg, type) {
 
 async function triggerDirectIsolation(targetIp, playbookUid = null) {
   if (!targetIp) return;
-  
+
   try {
     const res = await fetch('/api/v1/mitigate', {
       method: 'POST',
@@ -1261,7 +1493,7 @@ async function triggerDirectIsolation(targetIp, playbookUid = null) {
         action: 'isolate'
       })
     });
-    
+
     if (res.status === 401) {
       window.location.href = '/login';
       return;
@@ -1271,54 +1503,89 @@ async function triggerDirectIsolation(targetIp, playbookUid = null) {
       showAccessDenied('can_mitigate', data.message || 'Elevated clearance required to isolate hosts.');
       return;
     }
-    
+
     const data = await res.json();
     if (data.status === 'success' || data.status === 'warning') {
       showToast(`Host ${targetIp} quarantined successfully. Zero-trust isolation active.`);
-      
-      // 1. Mutate active telemetry in sessionStorage & localStorage
-      try {
-        const storedStr = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
-        if (storedStr) {
-          const stored = JSON.parse(storedStr);
-          if (stored.topology_graph && stored.topology_graph.nodes) {
-            stored.topology_graph.nodes.forEach(n => {
-              if (n.ip === targetIp || n.id === targetIp) {
-                n.status = 'ISOLATED';
-                n.is_isolated = true;
-                n.is_compromised = false;
-                n.risk_score = 0.0;
-                n.stage_name = 'Air-gapped';
-                n.technique = 'Isolated';
-              }
-            });
-            const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
-            edges.forEach(e => {
-              if (e.source === targetIp || e.target === targetIp) {
-                e.threat = 'normal';
-                e.is_attack_route = false;
-              }
-            });
-          }
-          if (stored.flagged_hosts) {
-            stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== targetIp);
-          }
-          if (!stored.isolated_hosts) stored.isolated_hosts = [];
-          if (!stored.isolated_hosts.includes(targetIp)) stored.isolated_hosts.push(targetIp);
 
-          if (stored.playbooks) {
-            stored.playbooks.forEach(p => {
-              if (p.target_ip === targetIp || (playbookUid && p.playbook_uid === playbookUid)) {
-                p.status = 'CONTAINMENT_EXECUTED';
-              }
-            });
-          }
-
-          sessionStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
-          localStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
+      // 1. Mutate active telemetry in-memory and safe storage cache
+      if (window.threatoraTelemetry) {
+        const stored = window.threatoraTelemetry;
+        if (stored.topology_graph && stored.topology_graph.nodes) {
+          stored.topology_graph.nodes.forEach(n => {
+            if (n.ip === targetIp || n.id === targetIp) {
+              n.status = 'ISOLATED';
+              n.is_isolated = true;
+              n.is_compromised = false;
+              n.risk_score = 0.0;
+              n.stage_name = 'Air-gapped';
+              n.technique = 'Isolated';
+            }
+          });
+          const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
+          edges.forEach(e => {
+            if (e.source === targetIp || e.target === targetIp) {
+              e.threat = 'normal';
+              e.is_attack_route = false;
+            }
+          });
         }
-      } catch (err) {
-        console.warn("Could not update stored active telemetry:", err);
+        if (stored.flagged_hosts) {
+          stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== targetIp);
+        }
+        if (!stored.isolated_hosts) stored.isolated_hosts = [];
+        if (!stored.isolated_hosts.includes(targetIp)) stored.isolated_hosts.push(targetIp);
+
+        if (stored.playbooks) {
+          stored.playbooks.forEach(p => {
+            if (p.target_ip === targetIp || (playbookUid && p.playbook_uid === playbookUid)) {
+              p.status = 'CONTAINMENT_EXECUTED';
+            }
+          });
+        }
+        cacheActiveTelemetry(stored);
+      } else {
+        try {
+          const storedStr = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
+          if (storedStr) {
+            const stored = JSON.parse(storedStr);
+            if (stored.topology_graph && stored.topology_graph.nodes) {
+              stored.topology_graph.nodes.forEach(n => {
+                if (n.ip === targetIp || n.id === targetIp) {
+                  n.status = 'ISOLATED';
+                  n.is_isolated = true;
+                  n.is_compromised = false;
+                  n.risk_score = 0.0;
+                  n.stage_name = 'Air-gapped';
+                  n.technique = 'Isolated';
+                }
+              });
+              const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
+              edges.forEach(e => {
+                if (e.source === targetIp || e.target === targetIp) {
+                  e.threat = 'normal';
+                  e.is_attack_route = false;
+                }
+              });
+            }
+            if (stored.flagged_hosts) {
+              stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== targetIp);
+            }
+            if (!stored.isolated_hosts) stored.isolated_hosts = [];
+            if (!stored.isolated_hosts.includes(targetIp)) stored.isolated_hosts.push(targetIp);
+
+            if (stored.playbooks) {
+              stored.playbooks.forEach(p => {
+                if (p.target_ip === targetIp || (playbookUid && p.playbook_uid === playbookUid)) {
+                  p.status = 'CONTAINMENT_EXECUTED';
+                }
+              });
+            }
+            cacheActiveTelemetry(stored);
+          }
+        } catch (err) {
+          console.warn("Could not update stored active telemetry:", err);
+        }
       }
 
       // 2. Direct instantaneous update on topology instance
@@ -1342,7 +1609,7 @@ async function triggerDirectIsolation(targetIp, playbookUid = null) {
       if (typeof loadMitigationCenterData === 'function') {
         loadMitigationCenterData();
       }
-      
+
     } else {
       showToast("Mitigation failed: " + (data.message || "Unknown error"), 'error');
     }

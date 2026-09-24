@@ -218,11 +218,19 @@ class CanonicalFeatureExtractor:
             )
             lf = lf.filter(~multicast_mask)
 
-        # 1. Resolve timestamp column for chronological ordering/binning
         ts_candidates = ["time_s", "time", "timestamp", "stime", "ltime", "starttime", "lasttime", "flow timestamp", "window_id"]
         ts_col = self._find_column(cols, ts_candidates)
         if ts_col is not None:
-            ts_expr = pl.col(ts_col).cast(pl.Float64, strict=False).fill_null(0.0).alias("timestamp")
+            raw_ts = pl.col(ts_col)
+            ts_float = raw_ts.cast(pl.Float64, strict=False)
+            ts_str = raw_ts.cast(pl.String, strict=False)
+            ts_dt = (
+                ts_str.str.to_datetime(format="%Y/%m/%d %H:%M:%S%.f", strict=False)
+                .fill_null(ts_str.str.to_datetime(format="%Y-%m-%d %H:%M:%S%.f", strict=False))
+                .fill_null(ts_str.str.to_datetime(format="%Y/%m/%d %H:%M:%S", strict=False))
+                .fill_null(ts_str.str.to_datetime(format="%Y-%m-%d %H:%M:%S", strict=False))
+            ).cast(pl.Int64, strict=False) / 1_000_000.0
+            ts_expr = pl.coalesce([ts_float, ts_dt]).fill_null(0.0).alias("timestamp")
         else:
             ts_expr = pl.int_range(0, pl.len(), eager=False).cast(pl.Float64).alias("timestamp")
 
@@ -277,7 +285,27 @@ class CanonicalFeatureExtractor:
 
         # 5. Check for mitre_stage, technique_id, or attack category
         if "mitre_stage" in col_lower_map:
-            exprs.append(pl.col(col_lower_map["mitre_stage"]).cast(pl.String).fill_null("Benign").alias("mitre_stage"))
+            stage_raw = pl.col(col_lower_map["mitre_stage"])
+            stage_str = stage_raw.cast(pl.String).str.to_lowercase()
+            exprs.append(
+                pl.when(stage_raw.cast(pl.Int32, strict=False).is_not_null())
+                .then(stage_raw.cast(pl.Int32, strict=False))
+                .when(stage_str.is_in(["normal", "0", "benign", "background", ""]))
+                .then(pl.lit(0))
+                .when(stage_str.str.contains("fuzz|recon|analy"))
+                .then(pl.lit(1))
+                .when(stage_str.str.contains("exploit|shell"))
+                .then(pl.lit(2))
+                .when(stage_str.str.contains("generic"))
+                .then(pl.lit(3))
+                .when(stage_str.str.contains("backdoor"))
+                .then(pl.lit(4))
+                .when(stage_str.str.contains("dos|worm"))
+                .then(pl.lit(5))
+                .otherwise(pl.lit(0))
+                .cast(pl.Int32)
+                .alias("mitre_stage")
+            )
         else:
             cat_col = self._find_column(cols, ["attack_cat", "attack_category"])
             if cat_col is not None:

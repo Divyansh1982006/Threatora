@@ -39,21 +39,37 @@ class CyberNetworkTopology {
     this.displayHeight = rect.height;
   }
 
+  setData(telemetryData) {
+    if (telemetryData) {
+      if (telemetryData.topology_graph) {
+        window.threatoraTelemetry = Object.assign(window.threatoraTelemetry || {}, telemetryData);
+      } else {
+        window.threatoraTelemetry = telemetryData;
+      }
+      this.loadTopology();
+    }
+  }
+
   async loadTopology() {
     try {
-      // 1. Check for active telemetry state from sessionStorage / localStorage or /api/telemetry/active
-      let activeTelemetry = null;
-      try {
-        const stored = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
-        if (stored) activeTelemetry = JSON.parse(stored);
-      } catch (e) {}
+      // 1. Check for active telemetry state from in-memory window object first, then sessionStorage / localStorage, or /api/telemetry/active
+      let activeTelemetry = window.threatoraTelemetry || null;
+      if (!activeTelemetry) {
+        try {
+          const stored = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
+          if (stored) activeTelemetry = JSON.parse(stored);
+        } catch (e) {}
+      }
 
       if (!activeTelemetry) {
         try {
           const atRes = await fetch('/api/telemetry/active');
           if (atRes.ok) {
             const atData = await atRes.json();
-            if (atData && atData.status === 'success') activeTelemetry = atData;
+            if (atData && atData.status === 'success') {
+              activeTelemetry = atData;
+              window.threatoraTelemetry = atData;
+            }
           }
         } catch (e) {}
       }

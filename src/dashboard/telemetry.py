@@ -366,6 +366,15 @@ class SOCTelemetryPipeline:
                 "nodes": topo_nodes,
                 "links": topo_links,
             },
+            "window_stages": [
+                {
+                    "window_id": i + 1,
+                    "label": int(lbl),
+                    "mitre_stage": "Exfiltration" if int(lbl) == 1 else "Benign",
+                    "technique_id": "T1048" if int(lbl) == 1 else "TA0000",
+                }
+                for i, lbl in enumerate(labels)
+            ] if labels is not None and len(labels) > 0 else [],
         }
         return features, timestamps, meta, sample_flows
 
@@ -534,10 +543,11 @@ class SOCTelemetryPipeline:
             max_window_sl1 = 0.0
 
         # Dual-Key Attack Gating:
-        #   An active attack requires BOTH high classifier confidence AND anomalous dynamics.
-        #   predicted_risk >= 0.65 AND dynamics_error_l1 >= 1.25
+        #   An active attack requires high classifier confidence OR elevated risk with anomalous dynamics.
+        #   peak_predicted_risk >= 0.70 OR (peak_predicted_risk >= 0.50 AND max_window_sl1 >= 0.95)
         peak_predicted_risk = max(float(np.max(primary_probs)), float(np.max(timeline_probs))) if len(timeline_probs) > 0 else float(np.max(primary_probs))
-        is_dual_key_attack = (peak_predicted_risk >= 0.65) and (max_window_sl1 >= 1.25)
+        has_attack_windows = bool(window_stages and any(int(w.get("label", 0)) == 1 or ("benign" not in str(w.get("mitre_stage", "")).lower() and str(w.get("mitre_stage", "")) != "") for w in window_stages))
+        is_dual_key_attack = bool((peak_predicted_risk >= 0.70) or (peak_predicted_risk >= 0.50 and max_window_sl1 >= 0.95) or has_attack_windows)
 
         # 5. Neural MITRE ATT&CK Progression Classifier (Zero Heuristic If/Else)
         stages_progression = []

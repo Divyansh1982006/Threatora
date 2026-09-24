@@ -146,13 +146,13 @@ class InferenceEngine:
             with torch.no_grad():
                 pred_s_next, p_logit, latent, m_logits, _ = self.model(tensor_in)
                 # Temperature scaling: soften raw logits before sigmoid activation
-                curr_prob = float(torch.sigmoid(p_logit / 1.8).squeeze().cpu().item())
+                curr_prob = float(torch.sigmoid(p_logit / 1.2).squeeze().cpu().item())
                 curr_stage_idx = int(torch.argmax(m_logits, dim=-1).squeeze().cpu().item())
                 dynamics_error_l1 = float(torch.nn.functional.smooth_l1_loss(pred_s_next[:, :-1, :], tensor_in[:, 1:, :]).item()) if tensor_in.shape[1] > 1 else 0.0
 
             # Dual-Key Consensus Gating:
-            # Active threat is confirmed ONLY if: predicted_risk >= 0.65 AND dynamics_error_l1 >= 1.25
-            is_dual_key = (curr_prob >= 0.65) and (dynamics_error_l1 >= 1.25)
+            # Active threat is confirmed if: predicted_risk >= 0.70 OR (predicted_risk >= 0.50 AND dynamics_error_l1 >= 0.95)
+            is_dual_key = bool((curr_prob >= 0.70) or (curr_prob >= 0.50 and dynamics_error_l1 >= 0.95))
             if not is_dual_key:
                 curr_stage_idx = 0
                 curr_prob = min(curr_prob, 0.22)

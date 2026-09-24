@@ -140,49 +140,90 @@ async function triggerDirectIsolation(targetIp, playbookUid = null) {
         showToast(`Host ${targetIp} quarantined successfully. Zero-trust isolation active.`);
       }
 
-      // Mutate active telemetry in sessionStorage & localStorage
-      try {
-        const storedStr = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
-        if (storedStr) {
-          const stored = JSON.parse(storedStr);
-          if (stored.topology_graph && stored.topology_graph.nodes) {
-            stored.topology_graph.nodes.forEach(n => {
-              if (n.ip === targetIp || n.id === targetIp) {
-                n.status = 'ISOLATED';
-                n.is_isolated = true;
-                n.is_compromised = false;
-                n.risk_score = 0.0;
-                n.stage_name = 'Air-gapped';
-                n.technique = 'Isolated';
-              }
-            });
-            const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
-            edges.forEach(e => {
-              if (e.source === targetIp || e.target === targetIp) {
-                e.threat = 'normal';
-                e.is_attack_route = false;
-              }
-            });
-          }
-          if (stored.flagged_hosts) {
-            stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== targetIp);
-          }
-          if (!stored.isolated_hosts) stored.isolated_hosts = [];
-          if (!stored.isolated_hosts.includes(targetIp)) stored.isolated_hosts.push(targetIp);
-
-          if (stored.playbooks) {
-            stored.playbooks.forEach(p => {
-              if (p.target_ip === targetIp || (playbookUid && p.playbook_uid === playbookUid)) {
-                p.status = 'CONTAINMENT_EXECUTED';
-              }
-            });
-          }
-
-          sessionStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
-          localStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
+      // Mutate active telemetry in memory and storage cache
+      if (window.threatoraTelemetry) {
+        const stored = window.threatoraTelemetry;
+        if (stored.topology_graph && stored.topology_graph.nodes) {
+          stored.topology_graph.nodes.forEach(n => {
+            if (n.ip === targetIp || n.id === targetIp) {
+              n.status = 'ISOLATED';
+              n.is_isolated = true;
+              n.is_compromised = false;
+              n.risk_score = 0.0;
+              n.stage_name = 'Air-gapped';
+              n.technique = 'Isolated';
+            }
+          });
+          const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
+          edges.forEach(e => {
+            if (e.source === targetIp || e.target === targetIp) {
+              e.threat = 'normal';
+              e.is_attack_route = false;
+            }
+          });
         }
-      } catch (err) {
-        console.warn("Could not update stored active telemetry:", err);
+        if (stored.flagged_hosts) {
+          stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== targetIp);
+        }
+        if (!stored.isolated_hosts) stored.isolated_hosts = [];
+        if (!stored.isolated_hosts.includes(targetIp)) stored.isolated_hosts.push(targetIp);
+        if (stored.playbooks) {
+          stored.playbooks.forEach(p => {
+            if (p.target_ip === targetIp || (playbookUid && p.playbook_uid === playbookUid)) {
+              p.status = 'CONTAINMENT_EXECUTED';
+            }
+          });
+        }
+        try {
+          if (typeof cacheActiveTelemetry === 'function') {
+            cacheActiveTelemetry(stored);
+          } else {
+            sessionStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
+            localStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
+          }
+        } catch (e) {}
+      } else {
+        try {
+          const storedStr = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
+          if (storedStr) {
+            const stored = JSON.parse(storedStr);
+            if (stored.topology_graph && stored.topology_graph.nodes) {
+              stored.topology_graph.nodes.forEach(n => {
+                if (n.ip === targetIp || n.id === targetIp) {
+                  n.status = 'ISOLATED';
+                  n.is_isolated = true;
+                  n.is_compromised = false;
+                  n.risk_score = 0.0;
+                  n.stage_name = 'Air-gapped';
+                  n.technique = 'Isolated';
+                }
+              });
+              const edges = stored.topology_graph.edges || stored.topology_graph.links || [];
+              edges.forEach(e => {
+                if (e.source === targetIp || e.target === targetIp) {
+                  e.threat = 'normal';
+                  e.is_attack_route = false;
+                }
+              });
+            }
+            if (stored.flagged_hosts) {
+              stored.flagged_hosts = stored.flagged_hosts.filter(h => h !== targetIp);
+            }
+            if (!stored.isolated_hosts) stored.isolated_hosts = [];
+            if (!stored.isolated_hosts.includes(targetIp)) stored.isolated_hosts.push(targetIp);
+            if (stored.playbooks) {
+              stored.playbooks.forEach(p => {
+                if (p.target_ip === targetIp || (playbookUid && p.playbook_uid === playbookUid)) {
+                  p.status = 'CONTAINMENT_EXECUTED';
+                }
+              });
+            }
+            sessionStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
+            localStorage.setItem('threatora_active_telemetry', JSON.stringify(stored));
+          }
+        } catch (err) {
+          console.warn("Could not update stored active telemetry:", err);
+        }
       }
 
       // Re-render Mitigation Center UI
@@ -211,12 +252,14 @@ async function loadMitigationCenterData() {
   const badgeText = document.getElementById('mitigationStatusText');
   if (badgeText) badgeText.innerText = 'SYNCING TELEMETRY STATE...';
 
-  // 1. Check active telemetry from sessionStorage / localStorage or /api/telemetry/active
-  let activeTelemetry = null;
-  try {
-    const stored = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
-    if (stored) activeTelemetry = JSON.parse(stored);
-  } catch (e) {}
+  // 1. Check active telemetry from in-memory window object first, then storage or /api/telemetry/active
+  let activeTelemetry = window.threatoraTelemetry || null;
+  if (!activeTelemetry) {
+    try {
+      const stored = sessionStorage.getItem('threatora_active_telemetry') || localStorage.getItem('threatora_active_telemetry');
+      if (stored) activeTelemetry = JSON.parse(stored);
+    } catch (e) {}
+  }
 
   if (!activeTelemetry) {
     try {

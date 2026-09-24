@@ -472,9 +472,9 @@ def run_evaluation(
         mean_reconstruction_loss = 0.0
 
     # Dual-Key Attack Gating:
-    #   predicted_risk >= 0.65 AND dynamics_error_l1 >= 1.25
+    #   peak_classifier_risk >= 0.70 OR (peak_classifier_risk >= 0.50 AND max_window_sl1 >= 0.95)
     peak_classifier_risk = float(np.max(primary_probs))
-    is_dual_key_attack = (peak_classifier_risk >= 0.65) and (max_window_sl1 >= 1.25)
+    is_dual_key_attack = bool((peak_classifier_risk >= 0.70) or (peak_classifier_risk >= 0.50 and max_window_sl1 >= 0.95))
     logger.info(f"Dual-Key Gating: peak_risk={peak_classifier_risk:.4f}, max_window_sl1={max_window_sl1:.4f}, attack={is_dual_key_attack}")
 
     # 7. MITRE ATT&CK Stage progression & Mean Lead-Time to Compromise (MLTC)

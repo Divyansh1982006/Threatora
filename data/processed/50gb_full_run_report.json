@@ -1,0 +1,72 @@
+{
+  "pipeline": "Threatora 50GB Multi-File Sequential Streaming Ingestion & Fine-Tuning",
+  "dataset_source": "G:\\UNSW-NB15 Dataset",
+  "total_files_discovered": 86,
+  "total_chunks_processed": 86,
+  "total_transition_pairs": 189891,
+  "train_chunks": 69,
+  "val_chunks": 17,
+  "total_train_samples": 145036,
+  "total_val_samples": 44855,
+  "hyperparameters": {
+    "learning_rate": 5e-05,
+    "weight_decay": 0.001,
+    "batch_size": 64,
+    "epochs": 3,
+    "scheduler": "CosineAnnealingLR",
+    "loss_objective": "0.5 * SmoothL1Loss + 1.0 * BCEWithLogitsLoss"
+  },
+  "hardware": {
+    "device": "cuda",
+    "device_name": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+    "mixed_precision": "torch.amp.autocast('cuda')",
+    "peak_vram_mb": 29.07,
+    "vram_boundary_passed": true
+  },
+  "best_val_loss": 45.34148,
+  "final_val_accuracy_pct": 51.77,
+  "total_finetune_time_sec": 277.26,
+  "checkpoints": {
+    "pre50gb_backup": "models\\threatora_transformer_backup.pt",
+    "finetuned_checkpoint": "models\\threatora_transformer.pt",
+    "onnx_model": "models\\threatora_transformer.onnx"
+  },
+  "epoch_metrics": [
+    {
+      "epoch": 1,
+      "train_loss": 302.11186,
+      "train_l1": 603.37559,
+      "train_bce": 0.42306,
+      "val_loss": 262.11348,
+      "val_l1": 514.96818,
+      "val_bce": 4.62938,
+      "val_accuracy_pct": 51.37,
+      "lr": 3.78e-05,
+      "duration_sec": 94.56
+    },
+    {
+      "epoch": 2,
+      "train_loss": 127.24526,
+      "train_l1": 253.53728,
+      "train_bce": 0.47231,
+      "val_loss": 45.47759,
+      "val_l1": 84.89824,
+      "val_bce": 3.02847,
+      "val_accuracy_pct": 51.77,
+      "lr": 1.33e-05,
+      "duration_sec": 88.36
+    },
+    {
+      "epoch": 3,
+      "train_loss": 83.38514,
+      "train_l1": 165.93192,
+      "train_bce": 0.41373,
+      "val_loss": 45.34148,
+      "val_l1": 84.88228,
+      "val_bce": 2.90034,
+      "val_accuracy_pct": 51.77,
+      "lr": 1e-06,
+      "duration_sec": 90.65
+    }
+  ]
+}

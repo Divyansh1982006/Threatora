@@ -1,0 +1,70 @@
+{
+  "pipeline": "Threatora 50GB Multi-File Sequential Streaming Ingestion & Fine-Tuning",
+  "dataset_source": "G:\\UNSW-NB15 Dataset",
+  "total_chunks_processed": 4,
+  "train_chunks": 3,
+  "val_chunks": 1,
+  "total_train_samples": 36745,
+  "total_val_samples": 5867,
+  "hyperparameters": {
+    "learning_rate": 0.0001,
+    "weight_decay": 0.001,
+    "batch_size": 64,
+    "epochs": 3,
+    "scheduler": "CosineAnnealingLR",
+    "loss_objective": "0.5 * SmoothL1Loss + 1.0 * BCEWithLogitsLoss"
+  },
+  "hardware": {
+    "device": "cuda",
+    "device_name": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+    "mixed_precision": "torch.amp.autocast('cuda')",
+    "peak_vram_mb": 28.67,
+    "vram_boundary_passed": true
+  },
+  "best_val_loss": 130.33516,
+  "final_val_accuracy_pct": 97.75,
+  "total_finetune_time_sec": 49.39,
+  "checkpoints": {
+    "pre50gb_backup": "models\\threatora_transformer_pre50gb.pt",
+    "finetuned_checkpoint": "models\\threatora_transformer.pt",
+    "onnx_model": "models\\threatora_transformer.onnx"
+  },
+  "epoch_metrics": [
+    {
+      "epoch": 1,
+      "train_loss": 216.82124,
+      "train_l1": 432.70128,
+      "train_bce": 0.4706,
+      "val_loss": 130.33516,
+      "val_l1": 260.58389,
+      "val_bce": 0.04322,
+      "val_accuracy_pct": 98.7,
+      "lr": 7.52e-05,
+      "duration_sec": 16.48
+    },
+    {
+      "epoch": 2,
+      "train_loss": 216.18657,
+      "train_l1": 432.00611,
+      "train_bce": 0.18352,
+      "val_loss": 130.36166,
+      "val_l1": 260.578,
+      "val_bce": 0.07266,
+      "val_accuracy_pct": 97.12,
+      "lr": 2.58e-05,
+      "duration_sec": 14.63
+    },
+    {
+      "epoch": 3,
+      "train_loss": 216.27748,
+      "train_l1": 432.2724,
+      "train_bce": 0.14128,
+      "val_loss": 130.34218,
+      "val_l1": 260.5771,
+      "val_bce": 0.05362,
+      "val_accuracy_pct": 97.75,
+      "lr": 1e-06,
+      "duration_sec": 14.45
+    }
+  ]
+}
