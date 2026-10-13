@@ -86,7 +86,8 @@ To configure Threatora as a persistent background daemon on an air-gapped or Lin
 
 ## ⚡ Production Server Capabilities
 - **Upload Ceiling**: Configured for up to **2.5 GB** (`2684354560` bytes) via chunked multipart uploads (`/api/upload-chunk`).
-- **Low-Memory Ingestion**: Streams packet/flow data in 10 MB chunks and 4 MB binary buffers directly into `uploads/` with zero OOM risk.
+- **Low-Memory Ingestion & Training**: Streams packet/flow data in 10 MB chunks and 4 MB binary buffers directly into `uploads/` with zero OOM risk. Out-of-core batch preprocessing and PyTorch streaming fine-tuning operate under a strict **< 2.5 GB RAM** and **< 30 MB VRAM** footprint, making it ideal for resource-constrained edge servers or cloud free tiers.
+- **Client-Side Quota Resiliency**: In-memory telemetry buffer (`window.threatoraTelemetry`) avoids browser `localStorage` 5 MB limits, preventing `QuotaExceededError` crashes during sustained packet monitoring.
 - **Server-Sent Events (SSE)**: Live telemetry broadcasting on `/api/stream-telemetry` without polling overhead.
 - **Unified Entrypoint**: Run `python app.py` (or `gunicorn app:app`) to start the production WSGI server binding `0.0.0.0:5000`.
 

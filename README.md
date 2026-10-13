@@ -31,10 +31,11 @@
 [Executive Summary](#-executive-summary) •
 [Threatora vs Traditional NIDS](#-threatora-vs-traditional-nids) •
 [Architecture & Pipelines](#-system-architecture) •
+[Streaming Pipelines & Fine-Tuning](#3-out-of-core-batch-preprocessing--streaming-fine-tuning-pipeline) •
 [16-Slot Canonical Schema](#-16-slot-canonical-feature-schema) •
 [Multi-Horizon Supervision & Neural MITRE Head](#-multi-horizon-supervision--neural-mitre-head) •
-[Streamlit SOC Dashboard](#-streamlit-soc-dashboard) •
-[Empirical Validation & Zero-Day Benchmark](#-empirical-validation--benchmarking) •
+[SOC Interfaces & Storage Optimization](#-user-interfaces--soc-operations) •
+[Empirical Validation & Benchmarking](#-empirical-validation--benchmarking) •
 [Quick Start](#-quick-start)
 
 ---
@@ -137,6 +138,34 @@ sequenceDiagram
     UI-->>Operator: Displays Comparative Risk Collapse & -86.3% Risk Velocity Reduction
 ```
 
+### 3. Out-of-Core Batch Preprocessing & Streaming Fine-Tuning Pipeline
+
+To scale training across massive historical datasets (e.g., 50+ GB UNSW-NB15 / CTU-13 telemetry) on constrained hardware (16 GB system RAM / 6 GB GPU VRAM), Threatora implements a two-stage sequential streaming pipeline:
+
+```mermaid
+flowchart LR
+    subgraph INGEST ["1. Out-of-Core Batch Ingestion (src/batch_preprocess.py)"]
+        F1["Raw NetFlow / CSV / PCAP<br/>(Files &le; 2.0 GB each)"] --> P["Sequential Window Parser<br/>(0.5s Temporal Bins)"]
+        P --> RAM["Memory Watchdog<br/>Peak RAM &lt; 2.5 GB"]
+        RAM --> C["86 Snappy Parquet Chunks<br/>(189,891 Transition Pairs)"]
+        RAM --> S["Fitted RobustScaler<br/>(scaler.joblib)"]
+    end
+
+    subgraph TRAIN ["2. Continuous PyTorch Streamer (src/finetune_stream.py)"]
+        C --> D["IterableDataset Streamer<br/>(1 Chunk in Memory at a time)"]
+        D --> AMP["PyTorch AMP FP16<br/>(Peak VRAM &lt; 30 MB)"]
+        AMP --> LOSS["Multi-Task Loss<br/>0.5*SmoothL1 + 1.0*BCE"]
+        LOSS --> OPT["AdamW + CosineAnnealingLR<br/>(lr: 5e-5 &rarr; 1e-6)"]
+        OPT --> EXPORT["Checkpoint Backup &amp; ONNX Export<br/>models/threatora_transformer.onnx"]
+    end
+
+    style INGEST fill:#131722,stroke:#00E676,stroke-width:2px,color:#fff
+    style TRAIN fill:#131722,stroke:#00F5D4,stroke-width:2px,color:#fff
+```
+
+1. **`src/batch_preprocess.py`**: Sequentially processes large telemetry archives (files $\le 2.0$ GB), enforcing a strict **$< 2.5\text{ GB}$ peak RAM ceiling** on a standard 16 GB host. It derives 12 canonical continuous metrics across 0.5s temporal bins, constructs $(S_t, S_{t+1}, y_t)$ transition sequences, and writes standalone Snappy-compressed Parquet chunks to [`data/processed/chunks/`](file:///d:/Threatora/data/processed/chunks/).
+2. **`src/finetune_stream.py`**: Employs a custom PyTorch `IterableDataset` that loads one Parquet chunk into RAM at a time, yields mini-batches, and frees memory via garbage collection before loading subsequent chunks. Uses Mixed Precision (`torch.amp.autocast`) to limit GPU memory to **$< 30\text{ MB}$ VRAM**, preserving base dynamics while optimizing forward horizon prediction.
+
 ---
 
 ## 📊 16-Slot Canonical Feature Schema
@@ -197,6 +226,7 @@ Threatora offers two complementary, production-grade interface options:
 - **Chunked Ingestion (`POST /api/upload-chunk`)**: Accepts 10 MB multipart binary slices, progressively appending to `uploads/{filename}.part` and atomically reassembling to avoid out-of-memory (OOM) crashes.
 - **Low-Memory Streaming Parser**: Direct packet-by-packet ingestion with `FastPCAPParser` / `scapy.PcapReader` and Polars lazy evaluation (`pl.scan_csv`) with zero data leakage.
 - **Server-Sent Events (`GET /api/stream-telemetry`)**: Streams real-time attack forecasting horizons (`risk_score`, `entropy`, `target_node`, `mitre_stage`, `packet_velocity`, `timestamp`) as `text/event-stream`.
+- **In-Memory Telemetry Architecture & Quota Safeguards**: Replaced fragile browser `localStorage` caching with high-performance `window.threatoraTelemetry` in-memory state management (`server/static/js/cyber_dashboard.js`). Completely eliminates browser `DOMException: QuotaExceededError` crashes on large (up to 2.5 GB) multi-stage telemetry captures while maintaining responsive 60 FPS HUD and radar animations.
 - **Interactive 3D Radar Visualizer**: Canvas 3D radar (`static/js/topology.js`) with concentric range rings, orbiting nodes, dynamic packet pulses, and drag-to-rotate controls.
 - **Zero-Trust Role Elevation Modal**: Enforces NTRO PS 26153 operational clearance with 403 access denial modals and elevation to Chief CISO (Level 5).
 - **Cyberpunk Defense Design System**: Custom dark-mode terminal aesthetics (`static/css/cyberpunk.css`, `static/css/style.css`), JetBrains Mono / Orbitron typography, neon status chips, and glassmorphism containers.
@@ -250,6 +280,14 @@ This provides an autonomous, signature-free mechanism for detecting novel cyber 
 - **Throughput**: **> 5,000 windows / second**.
 - **ONNX Model Footprint**: **~0.35 MB** (Ultra-compact for embedded defense hardware).
 
+### 4. 50GB Multi-File Streaming Fine-Tuning Benchmark
+Threatora features an out-of-core fine-tuning pipeline verified on 86 raw UNSW-NB15 telemetry partitions (189,891 continuous transition pairs):
+- **Chunk Partitioning**: 69 chronological train chunks (145,036 samples) / 17 held-out validation chunks (44,855 samples).
+- **Validation Loss Convergence**: Reduced composite loss from **302.11 down to 45.34** (Dynamics $\mathcal{L}_{\text{SmoothL1}}$ dropped from 603.37 to 84.88; Binary Cross-Entropy stabilized at 2.90).
+- **Hardware Footprint**: Peak GPU VRAM strictly bounded to **29.07 MB** using PyTorch AMP FP16 on NVIDIA RTX 3050 (safely within the 2.0 GB target limit).
+- **Execution Efficiency**: 277.26 seconds total run time across 3 epochs (~92 seconds/epoch) for complete end-to-end dataset streaming.
+- **Artifacts**: Verified via [`50gb_full_run_report.json`](file:///d:/Threatora/data/processed/50gb_full_run_report.json) and exported to [`models/threatora_transformer.onnx`](file:///d:/Threatora/models/threatora_transformer.onnx).
+
 ---
 
 ## ⚡ Quick Start
@@ -271,11 +309,20 @@ pip install -r requirements.txt
 
 ### 2. Run Comprehensive Test Suite
 ```bash
-# Execute unit and integration tests (37 tests verified)
+# Execute unit, integration, and storage quota test suites (40+ tests verified)
 pytest tests/ -v
 ```
 
-### 3. Launch Option A: Threatora Defense Terminal Server (Port 5000)
+### 3. Out-of-Core Batch Preprocessing & Streaming Fine-Tuning (Optional)
+```bash
+# 1. Preprocess large raw telemetry captures into Snappy Parquet chunks (< 2.5 GB RAM ceiling)
+python src/batch_preprocess.py --input-dir "data/raw/UNSW-NB15" --output-dir "data/processed/chunks" --max-ram-gb 2.5
+
+# 2. Continuous streaming fine-tuning with PyTorch AMP (< 2 GB VRAM on consumer GPUs)
+python src/finetune_stream.py --chunks-dir "data/processed/chunks" --epochs 3 --batch-size 64
+```
+
+### 4. Launch Option A: Threatora Defense Terminal Server (Port 5000)
 ```bash
 # Start production Flask defense server with 2.5GB chunked upload and SSE streaming
 python app.py
@@ -289,7 +336,7 @@ Default credentials:
 - **Password:** `Threatora@2026`
 - **API Key:** `threatora-zero-trust`
 
-### 4. Launch Option B: Streamlit SOC Operations Dashboard (Port 8501)
+### 5. Launch Option B: Streamlit SOC Operations Dashboard (Port 8501)
 ```bash
 # Start Streamlit SOC dashboard
 streamlit run src/dashboard/app.py --server.port 8501

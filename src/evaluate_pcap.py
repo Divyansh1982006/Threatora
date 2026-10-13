@@ -294,6 +294,13 @@ def parse_pcap_to_binned_features(
     # Sanitize any NaNs / Infs
     features = np.nan_to_num(features, nan=0.0, posinf=1e6, neginf=0.0)
 
+    # Feature Clamping / Winsorization at 99.9th percentile:
+    # Ensure byte_rate (0), packet_rate (1), and bwd_to_fwd_ratio (10) do not blow up on heavy downloads
+    if len(features) > 10:
+        for col_idx in [0, 1, 10]:
+            p999 = float(np.percentile(features[:, col_idx], 99.9))
+            features[:, col_idx] = np.minimum(features[:, col_idx], p999)
+
     meta = {
         "pcap_file": pcap_path.name,
         "pcap_size_mb": round(file_size_mb, 2),
@@ -472,9 +479,9 @@ def run_evaluation(
         mean_reconstruction_loss = 0.0
 
     # Dual-Key Attack Gating:
-    #   peak_classifier_risk >= 0.70 OR (peak_classifier_risk >= 0.50 AND max_window_sl1 >= 0.95)
+    #   Calibrated consensus: is_attack = bool((predicted_risk >= 0.80) or (predicted_risk >= 0.65 and dynamics_error_l1 >= 1.30))
     peak_classifier_risk = float(np.max(primary_probs))
-    is_dual_key_attack = bool((peak_classifier_risk >= 0.70) or (peak_classifier_risk >= 0.50 and max_window_sl1 >= 0.95))
+    is_dual_key_attack = bool((peak_classifier_risk >= 0.80) or (peak_classifier_risk >= 0.65 and max_window_sl1 >= 1.30))
     logger.info(f"Dual-Key Gating: peak_risk={peak_classifier_risk:.4f}, max_window_sl1={max_window_sl1:.4f}, attack={is_dual_key_attack}")
 
     # 7. MITRE ATT&CK Stage progression & Mean Lead-Time to Compromise (MLTC)

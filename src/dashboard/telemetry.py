@@ -395,6 +395,13 @@ class SOCTelemetryPipeline:
         else:
             raw_features_16 = raw_features[:, :16]
 
+        # Feature Clamping / Winsorization at 99.9th percentile to suppress heavy download spikes
+        if len(raw_features_16) > 10:
+            for c_idx in [0, 1, 2, 10, 13]:
+                if c_idx < raw_features_16.shape[1]:
+                    p999 = float(np.percentile(raw_features_16[:, c_idx], 99.9))
+                    raw_features_16[:, c_idx] = np.minimum(raw_features_16[:, c_idx], p999)
+
         scaled_features = self.extractor.scale_features(raw_features_16)
         scaled_features = np.clip(scaled_features, -4.0, 4.0)
 
@@ -514,8 +521,8 @@ class SOCTelemetryPipeline:
 
         pred_s_next = np.concatenate(all_pred_s_next, axis=0)
         primary_logits = np.concatenate(all_primary_logits, axis=0).squeeze(-1)
-        # Temperature scaling: soften overconfident logits before sigmoid
-        primary_probs = 1.0 / (1.0 + np.exp(-primary_logits / 1.8))
+        # Temperature scaling: soften overconfident logits before sigmoid (T=1.5)
+        primary_probs = 1.0 / (1.0 + np.exp(-primary_logits / 1.5))
         timeline_probs = np.concatenate(all_timeline_probs, axis=0)  # (N, 5)
         mitre_logits = np.concatenate(all_mitre_logits, axis=0) if all_mitre_logits else np.zeros((num_windows, 6))
         attn_weights = np.concatenate(all_attn_weights, axis=0) if all_attn_weights else None
@@ -543,11 +550,10 @@ class SOCTelemetryPipeline:
             max_window_sl1 = 0.0
 
         # Dual-Key Attack Gating:
-        #   An active attack requires high classifier confidence OR elevated risk with anomalous dynamics.
-        #   peak_predicted_risk >= 0.70 OR (peak_predicted_risk >= 0.50 AND max_window_sl1 >= 0.95)
+        #   Calibrated consensus: is_attack = bool((predicted_risk >= 0.80) or (predicted_risk >= 0.65 and dynamics_error_l1 >= 1.30))
         peak_predicted_risk = max(float(np.max(primary_probs)), float(np.max(timeline_probs))) if len(timeline_probs) > 0 else float(np.max(primary_probs))
         has_attack_windows = bool(window_stages and any(int(w.get("label", 0)) == 1 or ("benign" not in str(w.get("mitre_stage", "")).lower() and str(w.get("mitre_stage", "")) != "") for w in window_stages))
-        is_dual_key_attack = bool((peak_predicted_risk >= 0.70) or (peak_predicted_risk >= 0.50 and max_window_sl1 >= 0.95) or has_attack_windows)
+        is_dual_key_attack = bool((peak_predicted_risk >= 0.80) or (peak_predicted_risk >= 0.65 and max_window_sl1 >= 1.30) or has_attack_windows)
 
         # 5. Neural MITRE ATT&CK Progression Classifier (Zero Heuristic If/Else)
         stages_progression = []

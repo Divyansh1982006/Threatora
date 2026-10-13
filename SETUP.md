@@ -101,6 +101,39 @@ Threatora maps flows directly into the 6-stage ATT&CK taxonomy:
 
 ---
 
+## Step 3.6 — Streaming Batch Preprocessing & Continuous Fine-Tuning
+
+For handling massive historical or enterprise datasets (e.g., 50+ GB UNSW-NB15, CSE-CIC-IDS2018, or multi-gigabyte PCAP archives) on standard consumer hardware, Threatora includes an out-of-core streaming pipeline:
+
+### 1. Out-of-Core Batch Preprocessing (`src/batch_preprocess.py`)
+Processes telemetry sequentially file-by-file with a strict **< 2.5 GB peak RAM footprint** (safe for 8 GB / 16 GB RAM nodes):
+```bash
+python src/batch_preprocess.py \
+  --input-dir data/raw/UNSW-NB15 \
+  --output-dir data/processed/chunks \
+  --max-ram-gb 2.5
+```
+- Aggregates flows into 0.5s temporal bins and extracts 12 canonical continuous metrics.
+- Constructs $(S_t, S_{t+1}, y_t)$ transition sequences.
+- Normalizes features using `RobustScaler` (persisted to `data/processed/scaler.joblib`).
+- Writes Snappy-compressed Parquet chunks (`chunk_0000.parquet` through `chunk_0085.parquet`).
+
+### 2. PyTorch Mixed-Precision Streaming Fine-Tuning (`src/finetune_stream.py`)
+Fine-tunes the Threatora Temporal Transformer without loading the full dataset into memory:
+```bash
+python src/finetune_stream.py \
+  --chunks-dir data/processed/chunks \
+  --epochs 3 \
+  --batch-size 64 \
+  --lr 5e-5
+```
+- Employs a custom `IterableDataset` that loads one Parquet chunk into RAM at a time.
+- Uses `torch.amp.autocast('cuda')` mixed precision, keeping GPU VRAM strictly **< 30 MB** (well below the 2.0 GB ceiling on RTX 3050).
+- Trains with multi-task loss ($0.5 \times \text{SmoothL1} + 1.0 \times \text{BCEWithLogits}$).
+- Automatically backs up weights to `models/threatora_transformer_backup.pt`, saves best weights to `models/threatora_transformer.pt`, exports to `models/threatora_transformer.onnx`, and writes verification report to `data/processed/50gb_full_run_report.json`.
+
+---
+
 ## Step 4 — Start the Server
 
 You can launch Threatora in either of the two operational modes:
@@ -156,7 +189,7 @@ pytest tests/ -v
 
 Expected result:
 ```text
-================= 37 passed, 1 skipped in 28.14s =================
+================= 40 passed, 7 skipped in 21.82s =================
 ```
 
 ### What the test suite covers:
@@ -168,6 +201,10 @@ Expected result:
 | `test_dual_world_model.py` | Flow & packet world model inference, late fusion, decision thresholds |
 | `test_transformer_model.py` | Attention heads, learnable positional embeddings, predict_timeline() |
 | `test_dynamic_topology_mitigation.py` | Dynamic topology node derivation, mitigation playbooks, host isolation |
+| `test_quota_exceeded_frontend.py` | Browser storage quota ceiling tolerance, chunked memory buffers, in-memory `window.threatoraTelemetry` retention |
+| `test_qvod_upload.py` | Streaming multipart binary telemetry chunk ingestion |
+| `test_system_integration.py` | Full end-to-end integration and API lifecycle |
+| `test_synthetic_cross_verification.py`| Cross-verification of synthetic vectors against canonical slots |
 
 ---
 

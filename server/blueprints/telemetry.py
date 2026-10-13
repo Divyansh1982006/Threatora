@@ -176,7 +176,7 @@ def _format_soc_response(
 
     # Compute dynamics error and dual-key attack flag
     dynamics_error_l1 = float(infer_res.get("max_window_sl1", infer_res.get("smooth_l1_loss", 0.0)))
-    is_attack = bool(is_dual_key_attack and (peak_risk >= 0.50 or dynamics_error_l1 >= 0.95))
+    is_attack = bool(is_dual_key_attack and ((peak_risk >= 0.80) or (peak_risk >= 0.65 and dynamics_error_l1 >= 1.30)))
 
     # Dynamic Host and Topology resolution from uploaded capture
     topo = meta.get("topology", {})

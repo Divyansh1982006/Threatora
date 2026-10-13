@@ -1,0 +1,179 @@
+1
+00:00:03,920 --> 00:00:06,458
+Welcome. Today I am demonstrating
+
+2
+00:00:06,458 --> 00:00:08,997
+Theodora, our next generation network
+
+3
+00:00:08,997 --> 00:00:11,984
+attack forecasting system. Let's
+
+4
+00:00:11,984 --> 00:00:14,556
+jump straight to our operational
+
+5
+00:00:14,556 --> 00:00:15,070
+HUD.
+
+6
+00:00:18,820 --> 00:00:21,753
+To begin, we will test how the
+
+7
+00:00:21,753 --> 00:00:23,849
+platform handles normal traffic by
+
+8
+00:00:23,849 --> 00:00:26,363
+uploading a safe elementary file called
+
+9
+00:00:26,363 --> 00:00:27,620
+benign data set.
+
+10
+00:00:31,870 --> 00:00:34,853
+As the system finished processing, we can
+
+11
+00:00:34,853 --> 00:00:37,409
+see the trade score remains low,
+
+12
+00:00:37,409 --> 00:00:38,727
+confirming that 100% of
+
+13
+00:00:39,113 --> 00:00:41,667
+our network is activity is benign.
+
+14
+00:00:41,683 --> 00:00:44,563
+In the. Switching to network topology,
+
+15
+00:00:44,563 --> 00:00:47,363
+we get a live visual radar of
+
+16
+00:00:47,363 --> 00:00:49,363
+all active endpoints across the
+
+17
+00:00:49,363 --> 00:00:49,763
+infrastructure.
+
+18
+00:00:52,593 --> 00:00:54,993
+In the mitigation center, everything
+
+19
+00:00:54,993 --> 00:00:57,873
+shows a green healthy baseline, meaning
+
+20
+00:00:57,873 --> 00:01:00,753
+no active contempts rules are required.
+
+21
+00:01:06,104 --> 00:01:08,978
+Now lets stimulate an attack by uploading
+
+22
+00:01:08,978 --> 00:01:11,032
+a malicious elementary file named
+
+23
+00:01:11,032 --> 00:01:13,884
+compromise dot binflow. The AI
+
+24
+00:01:13,884 --> 00:01:16,159
+model immediately triggers DEFCON one
+
+25
+00:01:16,159 --> 00:01:18,987
+critical. Detecting an active
+
+26
+00:01:18,987 --> 00:01:21,814
+data exfiltration attack with a 100%.
+
+27
+00:01:22,774 --> 00:01:24,134
+Peak threat score.
+
+28
+00:01:27,824 --> 00:01:30,590
+Checking network topology, the system
+
+29
+00:01:30,590 --> 00:01:33,357
+pinpoints the exact compromised gateway
+
+30
+00:01:33,357 --> 00:01:34,464
+in red.
+
+31
+00:01:36,344 --> 00:01:39,022
+Moving to mitigation Center, we
+
+32
+00:01:39,022 --> 00:01:41,699
+execute one click contamination to
+
+33
+00:01:41,699 --> 00:01:44,377
+isolate the infected host and
+
+34
+00:01:44,377 --> 00:01:45,984
+neutralize the threat.
+
+35
+00:01:46,934 --> 00:01:47,614
+Immediately.
+
+36
+00:01:56,784 --> 00:01:58,824
+Finally we upload.
+
+37
+00:02:00,124 --> 00:02:02,284
+A lateral movement data set to test.
+
+38
+00:02:03,694 --> 00:02:05,484
+Internal split detection.
+
+39
+00:02:05,497 --> 00:02:08,133
+Hetora highlights the lateral attack
+
+40
+00:02:08,133 --> 00:02:10,770
+stage and auto generate zero
+
+41
+00:02:10,770 --> 00:02:13,247
+trust. Isolation
+
+42
+00:02:13,247 --> 00:02:15,967
+rules by triggering contamination
+
+43
+00:02:15,967 --> 00:02:18,655
+once again. The
+
+44
+00:02:18,655 --> 00:02:21,327
+network is fully secured. And.
+
+45
+00:02:23,327 --> 00:02:24,527
+Thank you for watching.

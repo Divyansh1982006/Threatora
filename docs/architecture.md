@@ -127,4 +127,68 @@ Threatora's Prescriptive Defense Sandbox allows security operators to test mitig
    ```
 4. **Impact Quantification**:
    - Calculates **Risk Delta**: `Risk Delta = Unmitigated Risk - Mitigated Risk`
-   - Computes **Velocity Reduction Percentage**: Evaluates whether the proposed intervention successfully collapses the forward threat trajectory back to nominal DEFCON 5 baseline.\n
+   - Computes **Velocity Reduction Percentage**: Evaluates whether the proposed intervention successfully collapses the forward threat trajectory back to nominal DEFCON 5 baseline.
+
+---
+
+## 6. Out-of-Core Batch Preprocessing & Streaming Fine-Tuning Architecture
+
+To scale training and fine-tuning across enterprise network captures (e.g. 50+ GB UNSW-NB15 / CTU-13 telemetry) on constrained hardware environments (16 GB system RAM / 6 GB GPU VRAM), Threatora implements a decoupled out-of-core pipeline:
+
+```
+[Raw Telemetry Files (.csv / .pcap)] 
+                 │
+                 ▼
+ ┌────────────────────────────────────────┐
+ │   src/batch_preprocess.py              │
+ │   - Sequential single-file ingestion   │
+ │   - Peak RAM watchdog < 2.5 GB         │
+ │   - 0.5s temporal bin aggregation      │
+ │   - 12 canonical metrics extraction    │
+ │   - RobustScaler normalization         │
+ └───────────────────┬────────────────────┘
+                     │ Writes
+                     ▼
+ [Snappy Parquet Chunks (chunk_0000..0085.parquet)]
+                     │
+                     ▼
+ ┌────────────────────────────────────────┐
+ │   src/finetune_stream.py               │
+ │   - PyTorch IterableDataset streamer   │
+ │   - Exactly 1 chunk resident in RAM    │
+ │   - Mixed Precision (torch.amp FP16)   │
+ │   - Peak GPU VRAM < 30 MB (RTX 3050)   │
+ │   - Multi-Task Loss: 0.5*L1 + 1.0*BCE  │
+ └───────────────────┬────────────────────┘
+                     │ Exports
+                     ▼
+ [Updated Model Checkpoints (.pt) & ONNX Engine (.onnx)]
+```
+
+### 1. Ingestion Engine (`src/batch_preprocess.py`)
+- **Memory Ceiling Enforcement**: Uses `psutil` memory monitoring and explicit `gc.collect()` passes to ensure the host process never exceeds 2.5 GB RAM, safely operating within standard 16 GB machines.
+- **Continuous 0.5s Temporal Binning**: Aggregates raw flows into uniform 0.5-second time bins, extracting 12 continuous canonical traffic dynamics metrics (`byte_rate`, `packet_rate`, inter-arrival times, TCP flag ratios).
+- **Sequence Pairing**: Generates transition state pairs $(S_t, S_{t+1})$ where each window comprises 20 continuous time bins ($20 \times 16$).
+- **Parquet Snappy Compression**: Emits compact Parquet chunks to `data/processed/chunks/`, ensuring fast, columnar I/O.
+
+### 2. PyTorch Streaming Fine-Tuning Engine (`src/finetune_stream.py`)
+- **`IterableDataset` Streamer**: Bypasses standard in-memory PyTorch datasets by streaming mini-batches sequentially across chunks on disk.
+- **AMP Mixed Precision**: Leverages `torch.amp.autocast('cuda')` to keep peak VRAM under 30 MB on consumer laptop GPUs (e.g., NVIDIA GeForce RTX 3050 6GB).
+- **Zero-Catastrophic Forgetting**: Preserves foundational baseline dynamics with balanced multi-task weights ($0.5 \times \text{SmoothL1} + 1.0 \times \text{BCEWithLogits}$).
+- **Automated Checkpointing & ONNX Re-Compilation**: Pre-training weights are automatically backed up (`models/threatora_transformer_backup.pt`), optimal checkpoint saved (`models/threatora_transformer.pt`), and exported to ONNX format (`models/threatora_transformer.onnx`) with dynamic sequence batching.
+
+---
+
+## 7. Client-Side Telemetry Ingestion & In-Memory State Architecture
+
+### Browser Storage Quota Constraint (`QuotaExceededError`)
+Standard browser storage mechanisms (`window.localStorage`) enforce a hard 5 MB storage limit per origin. In proactive SOC environments where operators upload large telemetry traces (up to 2.5 GB) containing thousands of temporal flow windows, serializing telemetry into `localStorage` causes immediate browser crashes (`DOMException: The quota has been exceeded`).
+
+### In-Memory `window.threatoraTelemetry` Buffer Solution
+Threatora refactors the client-side telemetry state management (`server/static/js/cyber_dashboard.js`):
+1. **In-Memory Retention**: Telemetry payloads are received and stored directly in an in-memory application state object `window.threatoraTelemetry`.
+2. **Zero `localStorage` Mutation**: Eliminates persistent browser disk quota bottlenecks for real-time telemetry streaming.
+3. **Circular Window Buffer**: Maintains an indexed circular buffer for sliding-window exploration across time bins $t \dots t+k$.
+4. **Decoupled DOM Rendering**: Separates data reception from canvas and radar rendering loops, ensuring stable 60 FPS animation without UI freezing.
+5. **End-to-End Verification**: Covered and verified by comprehensive automated tests (`tests/test_quota_exceeded_frontend.py`).
+\n
